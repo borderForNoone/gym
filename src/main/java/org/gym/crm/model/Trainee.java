@@ -15,6 +15,7 @@ import jakarta.persistence.Table;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
@@ -23,6 +24,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Getter
+@NoArgsConstructor
 @SuperBuilder(toBuilder = true)
 @EqualsAndHashCode()
 @ToString(exclude = {"trainers", "trainings"})
