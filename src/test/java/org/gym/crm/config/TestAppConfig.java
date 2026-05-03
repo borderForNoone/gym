@@ -1,7 +1,6 @@
 package org.gym.crm.config;
 
 import liquibase.integration.spring.SpringLiquibase;
-import org.gym.crm.init.DatabaseStartupVerifier;
 import org.gym.crm.storage.StorageInitializer;
 import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,7 +25,6 @@ import java.util.Properties;
                 @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = LiquibaseConfig.class),
                 @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = DbUnitConfig.class),
                 @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = HibernateConfig.class),
-                @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = DatabaseStartupVerifier.class),
         }
 )
 @PropertySource(value = "classpath:application-test.yml", factory = YamlPropertySourceFactory.class)
