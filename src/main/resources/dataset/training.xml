@@ -1,0 +1,20 @@
+<dataset>
+    <training_types id="1" training_type_name="Yoga"/>
+    <training_types id="2" training_type_name="Pilates"/>
+    <training_types id="3" training_type_name="Cardio"/>
+
+    <users id="1" first_name="Callum" last_name="Whitfield" username="Callum.Whitfield" password="pass111" is_active="true"/>
+    <users id="2" first_name="Nora" last_name="Pemberton" username="Nora.Pemberton" password="pass222" is_active="true"/>
+    <users id="3" first_name="Ellis" last_name="Hargrove" username="Ellis.Hargrove" password="pass333" is_active="true"/>
+
+    <trainers id="1" specialization_id="1" user_id="1"/>
+
+    <trainees id="1" date_of_birth="2000-03-10" address="123 Main St" user_id="2"/>
+    <trainees id="2" date_of_birth="2002-07-15" address="567 Oak St" user_id="3"/>
+
+    <trainings id="1" training_name="Hot Yoga" training_date="2026-04-15" training_duration="60" trainee_id="1" trainer_id="1" training_type_id="1"/>
+    <trainings id="2" training_name="Hot Yoga" training_date="2026-04-20" training_duration="60" trainee_id="2" trainer_id="1" training_type_id="1"/>
+
+    <trainees_trainers trainee_id="1" trainer_id="1"/>
+    <trainees_trainers trainee_id="2" trainer_id="1"/>
+</dataset>

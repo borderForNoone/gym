@@ -1,6 +1,8 @@
 package org.gym.crm.service;
 
 import org.gym.crm.dao.TrainingDao;
+import org.gym.crm.model.Trainee;
+import org.gym.crm.model.Trainer;
 import org.gym.crm.model.Training;
 import org.gym.crm.model.TrainingType;
 import org.gym.crm.service.impl.TrainingServiceImpl;
@@ -83,19 +85,27 @@ class TrainingServiceImplTest {
     }
 
     private TrainingType buildFitnessType() {
-        TrainingType fitness = new TrainingType();
-        fitness.setTrainingTypeName(FITNESS);
-
-        return fitness;
+        return TrainingType.builder()
+                .id(ID)
+                .trainingTypeName(FITNESS)
+                .build();
     }
 
     private Training buildTraining() {
+        Trainee trainee = Trainee.builder()
+                .id(ID)
+                .build();
+
+        Trainer trainer = Trainer.builder()
+                .id(ID)
+                .build();
+
         return Training.builder()
                 .id(ID)
-                .traineeId(ID)
-                .trainerId(ID)
-                .trainingName(TRAINING_NAME)
+                .trainee(trainee)
+                .trainer(trainer)
                 .trainingType(buildFitnessType())
+                .trainingName(TRAINING_NAME)
                 .trainingDate(TRAINING_DATE)
                 .trainingDuration(DURATION)
                 .build();

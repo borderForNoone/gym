@@ -1,13 +1,15 @@
 package org.gym.crm.service.impl;
 
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 import org.gym.crm.dao.TraineeDao;
+import org.gym.crm.exception.EntityNotFoundException;
 import org.gym.crm.model.Trainee;
-import org.gym.crm.model.User;
 import org.gym.crm.service.TraineeService;
 import org.gym.crm.service.UserProfileService;
+import org.gym.crm.util.Validator;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,60 +18,78 @@ import java.util.Optional;
 @Slf4j
 @Service
 public class TraineeServiceImpl implements TraineeService {
-    @Autowired
-    @Setter
-    private TraineeDao traineeDao;
+    private static final String TRAINEE_NOT_FOUND_BY_ID = "Trainee not found by id: %s";
+    private static final String TRAINEE = "Trainee";
 
-    @Autowired
-    private UserProfileService userProfileService;
+    @Setter(onMethod_ = {@Autowired})
+    private TraineeDao dao;
+
+    @Setter(onMethod_ = {@Autowired})
+    private UserProfileService userCredentialGenerator;
+
+    @Setter(onMethod_ = {@Autowired})
+    private PasswordEncoder passwordEncoder;
 
     @Override
     public Trainee create(Trainee trainee) {
-        log.info("Creating trainee: {}, {}",
-                trainee.getUser().getFirstName(),
-                trainee.getUser().getLastName());
+        Validator.validateNotNull(trainee, TRAINEE);
 
-        String username = userProfileService.generateUsername(
-                trainee.getUser().getFirstName(),
-                trainee.getUser().getLastName());
+        log.info("Creating trainee: firstName={} lastName{}", trainee.getUser().getFirstName(), trainee.getUser().getLastName());
 
-        String password = userProfileService.generatePassword();
+        String username = userCredentialGenerator.generateUsername(trainee.getUser().getFirstName(), trainee.getUser().getLastName());
+        String rawPassword = userCredentialGenerator.generatePassword();
 
-        trainee.getUser().setUsername(username);
-        trainee.getUser().setPassword(password);
+        Trainee withCredentials = trainee.toBuilder()
+                .user(
+                        trainee.getUser().toBuilder()
+                                .username(username)
+                                .password(passwordEncoder.encode(rawPassword))
+                                .isActive(true)
+                                .build()
+                )
+                .build();
 
-        Trainee saved = traineeDao.save(trainee);
+        Trainee saved = dao.save(withCredentials);
+        log.info("Trainee created successfully: username={}", saved.getUser().getUsername());
 
-        log.info("Trainee created successfully with username: {}", username);
         return saved;
     }
 
     @Override
     public Optional<Trainee> findById(Long id) {
-        Optional<Trainee> trainee = traineeDao.findById(id);
-
-        if (trainee.isEmpty()) {
-            log.warn("Trainee not found with id: {}", id);
-        }
-
-        return trainee;
+        return Optional.of(dao.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(String.format(TRAINEE_NOT_FOUND_BY_ID, id))));
     }
 
     @Override
     public List<Trainee> findAll() {
-        log.debug("Fetching all trainees");
-        return traineeDao.findAll();
+        log.info("Fetching all trainees");
+
+        List<Trainee> trainees = dao.findAll();
+
+        log.info("Fetched {} trainees", trainees.size());
+        return trainees;
     }
 
     @Override
     public Trainee update(Trainee trainee) {
-        log.info("Updating trainee with id={}", trainee.getUserId());
-        return traineeDao.update(trainee);
+        Validator.validateNotNull(trainee, TRAINEE);
+
+        log.info("Updating trainee: id={}", trainee.getId());
+        findById(trainee.getId());
+
+        Trainee updated = dao.update(trainee);
+        log.info("Trainee updated successfully: id={}", updated.getId());
+
+        return updated;
     }
 
     @Override
     public void delete(Long id) {
-        log.warn("Deleting trainee with id={}", id);
-        traineeDao.delete(id);
+        log.info("Deleting trainee: id={}", id);
+        findById(id);
+
+        dao.delete(id);
+        log.info("Trainee deleted successfully: id={}", id);
     }
 }

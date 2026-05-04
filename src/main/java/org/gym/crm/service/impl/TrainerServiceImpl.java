@@ -58,7 +58,7 @@ public class TrainerServiceImpl implements TrainerService {
 
     @Override
     public Trainer update(Trainer trainer) {
-        log.info("Updating trainer with id={}", trainer.getUserId());
+        log.info("Updating trainer with id={}", trainer.getId());
         return trainerDao.update(trainer);
     }
 }

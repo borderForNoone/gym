@@ -13,6 +13,7 @@ import java.time.LocalDate;
 public class CsvParser {
     public Trainee parseTrainee(String[] fields) {
         return Trainee.builder()
+                .id(Long.parseLong(fields[8]))
                 .user(User.builder()
                         .firstName(fields[1])
                         .lastName(fields[2])
@@ -22,15 +23,16 @@ public class CsvParser {
                         .build())
                 .dateOfBirth(fields[6].isBlank() ? null : LocalDate.parse(fields[6]))
                 .address(fields[7])
-                .userId(Long.parseLong(fields[8]))
                 .build();
     }
 
     public Trainer parseTrainer(String[] fields) {
-        TrainingType specialization = new TrainingType();
-        specialization.setTrainingTypeName(fields[6]);
+        TrainingType specialization = TrainingType.builder()
+                .trainingTypeName(fields[6])
+                .build();
 
         return Trainer.builder()
+                .id(Long.parseLong(fields[7]))
                 .user(User.builder()
                         .firstName(fields[1])
                         .lastName(fields[2])
@@ -39,22 +41,30 @@ public class CsvParser {
                         .isActive(Boolean.parseBoolean(fields[5]))
                         .build())
                 .specialization(specialization)
-                .userId(Long.parseLong(fields[7]))
                 .build();
     }
 
     public Training parseTraining(String[] fields) {
-        TrainingType trainingType = new TrainingType();
-        trainingType.setTrainingTypeName(fields[4]);
+        TrainingType trainingType = TrainingType.builder()
+                .trainingTypeName(fields[4])
+                .build();
+
+        Trainee trainee = Trainee.builder()
+                .id(Long.parseLong(fields[1]))
+                .build();
+
+        Trainer trainer = Trainer.builder()
+                .id(Long.parseLong(fields[2]))
+                .build();
 
         return Training.builder()
                 .id(Long.parseLong(fields[0]))
-                .traineeId(Long.parseLong(fields[1]))
-                .trainerId(Long.parseLong(fields[2]))
                 .trainingName(fields[3])
                 .trainingType(trainingType)
                 .trainingDate(LocalDate.parse(fields[5]))
                 .trainingDuration(Integer.parseInt(fields[6]))
+                .trainee(trainee)
+                .trainer(trainer)
                 .build();
     }
 }

@@ -49,7 +49,7 @@ class CsvParserTest {
         assertTrue(actual.getUser().getIsActive());
         assertEquals(LocalDate.of(1990, 1, 15), actual.getDateOfBirth());
         assertEquals(ADDRESS, actual.getAddress());
-        assertEquals(Long.parseLong(ID.toString()), actual.getUserId());
+        assertEquals(Long.parseLong(ID.toString()), actual.getId());
     }
 
     @Test
@@ -82,7 +82,7 @@ class CsvParserTest {
         assertEquals(PASSWORD, actual.getUser().getPassword());
         assertTrue(actual.getUser().getIsActive());
         assertEquals(FITNESS, actual.getSpecialization().getTrainingTypeName());
-        assertEquals(Long.parseLong(SECOND_ID.toString()), actual.getUserId());
+        assertEquals(Long.parseLong(SECOND_ID.toString()), actual.getId());
     }
 
     @Test
@@ -110,8 +110,8 @@ class CsvParserTest {
         Training actual = parser.parseTraining(fields);
 
         assertEquals(1L, actual.getId());
-        assertEquals(2L, actual.getTraineeId());
-        assertEquals(3L, actual.getTrainerId());
+        assertEquals(2L, actual.getTrainee().getId());
+        assertEquals(3L, actual.getTrainer().getId());
         assertEquals(TRAINING_NAME, actual.getTrainingName());
         assertEquals(FITNESS, actual.getTrainingType().getTrainingTypeName());
         assertEquals(LocalDate.of(2024, 3, 15), actual.getTrainingDate());

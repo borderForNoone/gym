@@ -1,14 +1,11 @@
 package org.gym.crm.dao.impl;
 
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Root;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.gym.crm.config.TransactionManager;
 import org.gym.crm.dao.TrainerDao;
 import org.gym.crm.model.Trainer;
-import org.hibernate.Session;
-import org.hibernate.SessionFactory;
+import org.gym.crm.util.Validator;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -18,42 +15,69 @@ import java.util.Optional;
 @Repository
 @RequiredArgsConstructor
 public class TrainerDaoImpl implements TrainerDao {
-    private final SessionFactory sessionFactory;
+    private final TransactionManager transactionManager;
 
     @Override
     public Trainer save(Trainer trainer) {
-        sessionFactory.getCurrentSession().persist(trainer);
+        Validator.validateNotNull(trainer, "Trainer");
 
-        log.debug("Saved trainer with id={}", trainer.getUserId());
+        transactionManager.performWithinTx(manager -> manager.persist(trainer));
+
         return trainer;
     }
 
     @Override
     public Optional<Trainer> findById(Long id) {
-        return Optional.ofNullable(sessionFactory.getCurrentSession().get(Trainer.class, id));
+        Validator.validateId(id);
+
+        return transactionManager.performReturningWithinTx(manager ->
+                Optional.ofNullable(manager.find(Trainer.class, id)));
+    }
+
+    @Override
+    public Optional<Trainer> findByUsername(String username) {
+        Validator.validateNotBlank(username, "Username");
+
+        return transactionManager.performReturningWithinTx(manager ->
+                manager.createQuery("FROM Trainer t JOIN FETCH t.user WHERE t.user.username = :username", Trainer.class)
+                        .setParameter("username", username)
+                        .getResultStream()
+                        .findFirst()
+        );
     }
 
     @Override
     public List<Trainer> findAll() {
-        Session session = sessionFactory.getCurrentSession();
+        return transactionManager.performReturningWithinTx(manager -> manager
+                .createQuery("from Trainer", Trainer.class)
+                .getResultList()
+        );
+    }
 
-        CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
-        CriteriaQuery<Trainer> criteriaQuery = criteriaBuilder.createQuery(Trainer.class);
+    @Override
+    public List<Trainer> findNotAssignedToTrainee(String traineeUsername) {
+        Validator.validateNotBlank(traineeUsername, "Trainee Username");
 
-        Root<Trainer> root = criteriaQuery.from(Trainer.class);
-        criteriaQuery.select(root);
-
-        List<Trainer> result = session.createQuery(criteriaQuery).getResultList();
-
-        log.debug("Fetching all trainers, count={}", result.size());
-        return result;
+        return transactionManager.performReturningWithinTx(manager ->
+                manager.createQuery(
+                                "SELECT t FROM Trainer t " +
+                                        "WHERE t.id NOT IN (" +
+                                        "   SELECT tr.trainer.id FROM Training tr " +
+                                        "   WHERE tr.trainee.user.username = :username" +
+                                        ")",
+                                Trainer.class
+                        )
+                        .setParameter("username", traineeUsername)
+                        .getResultList()
+        );
     }
 
     @Override
     public Trainer update(Trainer trainer) {
-        Trainer merged = sessionFactory.getCurrentSession().merge(trainer);
+        Validator.validateId(trainer.getId());
 
-        log.debug("Updated trainer with id={}", merged.getUserId());
-        return merged;
+        transactionManager.performWithinTx(manager -> manager.merge(trainer));
+
+        return trainer;
     }
 }

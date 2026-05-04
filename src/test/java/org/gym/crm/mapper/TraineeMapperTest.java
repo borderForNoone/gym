@@ -1,8 +1,8 @@
 package org.gym.crm.mapper;
 
-import org.gym.crm.dto.request.TraineeRequestDto;
-import org.gym.crm.dto.response.TraineeResponseDto;
-import org.gym.crm.dto.update.TraineeUpdateDTO;
+import org.gym.crm.dto.TraineeRequestDTO;
+import org.gym.crm.dto.TraineeResponseDTO;
+import org.gym.crm.dto.TraineeUpdateDTO;
 import org.gym.crm.model.Trainee;
 import org.gym.crm.model.User;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,7 +16,6 @@ import static org.gym.crm.util.TestConstants.ID;
 import static org.gym.crm.util.TestConstants.LAST_NAME;
 import static org.gym.crm.util.TestConstants.USERNAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -30,10 +29,9 @@ class TraineeMapperTest {
 
     @Test
     void toEntity_shouldMapAllFields() {
-        TraineeRequestDto request = TraineeRequestDto.builder()
+        TraineeRequestDTO request = TraineeRequestDTO.builder()
                 .firstName(FIRST_NAME)
                 .lastName(LAST_NAME)
-                .active(true)
                 .dateOfBirth(DATE_OF_BIRTH)
                 .address(ADDRESS)
                 .build();
@@ -49,10 +47,11 @@ class TraineeMapperTest {
 
     @Test
     void toEntity_shouldNotSetUsernameAndPassword() {
-        TraineeRequestDto request = TraineeRequestDto.builder()
+        TraineeRequestDTO request = TraineeRequestDTO.builder()
                 .firstName(FIRST_NAME)
                 .lastName(LAST_NAME)
-                .active(true)
+                .dateOfBirth(DATE_OF_BIRTH)
+                .address(ADDRESS)
                 .build();
 
         Trainee actual = traineeMapper.toEntity(request);
@@ -64,8 +63,9 @@ class TraineeMapperTest {
     @Test
     void toResponseDto_shouldMapAllFields() {
         Trainee trainee = Trainee.builder()
-                .userId(ID)
+                .id(ID)
                 .user(User.builder()
+                        .id(ID)
                         .firstName(FIRST_NAME)
                         .lastName(LAST_NAME)
                         .username(USERNAME)
@@ -75,13 +75,13 @@ class TraineeMapperTest {
                 .address(ADDRESS)
                 .build();
 
-        TraineeResponseDto actual = traineeMapper.toDto(trainee);
+        TraineeResponseDTO actual = traineeMapper.toDto(trainee);
 
-        assertEquals(ID, actual.getId());
+        assertEquals(ID, actual.getUserId());
         assertEquals(USERNAME, actual.getUsername());
         assertEquals(FIRST_NAME, actual.getFirstName());
         assertEquals(LAST_NAME, actual.getLastName());
-        assertTrue(actual.isActive());
+        assertTrue(actual.getIsActive());
         assertEquals(DATE_OF_BIRTH, actual.getDateOfBirth());
         assertEquals(ADDRESS, actual.getAddress());
     }
@@ -100,29 +100,28 @@ class TraineeMapperTest {
                 .dateOfBirth(null)
                 .build();
 
-        TraineeResponseDto actual = traineeMapper.toDto(trainee);
+        TraineeResponseDTO actual = traineeMapper.toDto(trainee);
 
         assertNull(actual.getDateOfBirth());
     }
 
     @Test
     void toEntity_shouldReturnNull_whenDtoIsNull() {
-        assertNull(traineeMapper.toEntity((TraineeRequestDto) null));
+        assertNull(traineeMapper.toEntity((TraineeRequestDTO) null));
     }
 
     @Test
-    void toEntity_shouldMapInactiveUser() {
-        TraineeRequestDto request = TraineeRequestDto.builder()
+    void toEntity_shouldMapActiveUser_byDefault() {
+        TraineeRequestDTO request = TraineeRequestDTO.builder()
                 .firstName(FIRST_NAME)
                 .lastName(LAST_NAME)
-                .active(false)
                 .build();
 
         Trainee actual = traineeMapper.toEntity(request);
 
         assertEquals(FIRST_NAME, actual.getUser().getFirstName());
         assertEquals(LAST_NAME, actual.getUser().getLastName());
-        assertEquals(false, actual.getUser().getIsActive());
+        assertTrue(actual.getUser().getIsActive());
     }
 
     @Test
@@ -162,11 +161,12 @@ class TraineeMapperTest {
                 .address(ADDRESS)
                 .build();
 
-        TraineeResponseDto actual = traineeMapper.toDto(trainee);
+        TraineeResponseDTO actual = traineeMapper.toDto(trainee);
 
         assertNull(actual.getUsername());
         assertNull(actual.getFirstName());
         assertNull(actual.getLastName());
-        assertFalse(actual.isActive());
+        assertNull(actual.getUserId());
+        assertNull(actual.getIsActive());
     }
 }
