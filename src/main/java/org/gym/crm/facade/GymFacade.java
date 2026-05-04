@@ -27,6 +27,7 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class GymFacade {
+    private static final String TRAINEE_NOT_FOUND = "Trainee not found";
 
     private final TraineeService traineeService;
     private final TrainerService trainerService;
@@ -58,7 +59,7 @@ public class GymFacade {
     }
 
     public TraineeResponseDTO getTraineeById(Long id) {
-        Trainee trainee = traineeService.findById(id).orElseThrow(() -> new RuntimeException("Trainee not found"));
+        Trainee trainee = traineeService.findById(id).orElseThrow(() -> new RuntimeException(TRAINEE_NOT_FOUND));
 
         return traineeMapper.toDto(trainee);
     }
@@ -85,7 +86,7 @@ public class GymFacade {
     }
 
     public TrainerResponseDTO getTrainerById(Long id) {
-        Trainer trainer = trainerService.findById(id).orElseThrow(() -> new RuntimeException("Trainee not found"));
+        Trainer trainer = trainerService.findById(id).orElseThrow(() -> new RuntimeException(TRAINEE_NOT_FOUND));
 
         return trainerMapper.toDto(trainer);
     }
@@ -105,7 +106,7 @@ public class GymFacade {
     }
 
     public TrainingResponseDTO getTrainingById(Long id) {
-        Training training = trainingService.findById(id).orElseThrow(() -> new RuntimeException("Trainee not found"));
+        Training training = trainingService.findById(id).orElseThrow(() -> new RuntimeException(TRAINEE_NOT_FOUND));
 
         return trainingMapper.toDto(training);
     }
