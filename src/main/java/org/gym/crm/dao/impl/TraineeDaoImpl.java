@@ -1,68 +1,56 @@
 package org.gym.crm.dao.impl;
 
-import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
+import org.gym.crm.config.TransactionManager;
 import org.gym.crm.dao.TraineeDao;
 import org.gym.crm.model.Trainee;
-import org.gym.crm.storage.Storage;
-import org.gym.crm.storage.TraineeStorage;
+import org.gym.crm.util.Validator;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicLong;
 
-@Slf4j
 @Repository
+@RequiredArgsConstructor
 public class TraineeDaoImpl implements TraineeDao {
-    private static final String TRAINEE_NOT_FOUND_MESSAGE = "Trainee not found with id: ";
+    private final TransactionManager transactionManager;
 
-    private final TraineeStorage storage;
-    private final AtomicLong idGenerator = new AtomicLong(1);
-
-    public TraineeDaoImpl(Storage storage) {
-        this.storage = storage.getTraineeStorage();
-    }
-
-    @Override
     public Trainee save(Trainee trainee) {
-        Long id = idGenerator.getAndIncrement();
+        Validator.validateNotNull(trainee, "Trainee");
 
-        storage.getTrainees().put(id, trainee);
-
-        log.debug("Saved trainee with storage id={}", id);
-        return trainee;
-    }
-
-    @Override
-    public Optional<Trainee> findById(Long id) {
-        return Optional.ofNullable(storage.getTrainees().get(id));
-    }
-
-    @Override
-    public List<Trainee> findAll() {
-        log.debug("Fetching all trainees, count={}", storage.getTrainees().size());
-        return new ArrayList<>(storage.getTrainees().values());
-    }
-
-    @Override
-    public Trainee update(Long id, Trainee trainee) {
-        if (!storage.getTrainees().containsKey(id)) {
-            log.error("Failed to update trainee with id: {}", id);
-            throw new IllegalArgumentException(TRAINEE_NOT_FOUND_MESSAGE + id);
-        }
-        storage.getTrainees().put(id, trainee);
+        transactionManager.performWithinTx(manager -> manager.persist(trainee));
 
         return trainee;
     }
 
-    @Override
+    public Trainee update(Trainee trainee) {
+        Validator.validateId(trainee.getId());
+
+        transactionManager.performWithinTx(manager -> manager.merge(trainee));
+
+        return trainee;
+    }
+
     public void delete(Long id) {
-        if (storage.getTrainees().remove(id) == null) {
-            log.error("Failed to delete trainee, id not found={}", id);
-            throw new IllegalArgumentException(TRAINEE_NOT_FOUND_MESSAGE + id);
-        }
+        Validator.validateId(id);
 
-        log.info("Trainee deleted successfully id={}", id);
+        Trainee trainee = transactionManager.performReturningWithinTx(manager -> manager.find(Trainee.class, id));
+        if (trainee != null) {
+            transactionManager.performWithinTx(manager -> manager.remove(trainee));
+        }
+    }
+
+    public Optional<Trainee> findById(Long id) {
+        Validator.validateId(id);
+
+        return transactionManager.performReturningWithinTx(manager ->
+                Optional.ofNullable(manager.find(Trainee.class, id)));
+    }
+
+    public List<Trainee> findAll() {
+        return transactionManager.performReturningWithinTx(manager -> manager
+                .createQuery("from Trainee", Trainee.class)
+                .getResultList()
+        );
     }
 }

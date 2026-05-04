@@ -227,17 +227,26 @@ class StorageInitializerTest {
     }
 
     private TrainingType buildFitnessType() {
-        TrainingType type = new TrainingType();
-        type.setTrainingTypeName(FITNESS);
-
-        return type;
+        return TrainingType.builder()
+                .id(ID)
+                .trainingTypeName(FITNESS)
+                .build();
     }
 
     private Training buildTraining() {
+        Trainee trainee = Trainee.builder()
+                .id(ID)
+                .build();
+
+        Trainer trainer = Trainer.builder()
+                .id(ID)
+                .build();
+
         return Training.builder()
                 .id(ID)
-                .traineeId(ID)
-                .trainerId(ID)
+                .trainee(trainee)
+                .trainer(trainer)
+                .trainingType(buildFitnessType())
                 .trainingName(TRAINING_NAME)
                 .trainingDate(TRAINING_DATE)
                 .trainingDuration(DURATION)

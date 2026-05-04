@@ -1,8 +1,8 @@
 package org.gym.crm.mapper;
 
-import org.gym.crm.dto.request.TraineeRequestDto;
-import org.gym.crm.dto.response.TraineeResponseDto;
-import org.gym.crm.dto.update.TraineeUpdateDTO;
+import org.gym.crm.dto.TraineeRequestDTO;
+import org.gym.crm.dto.TraineeResponseDTO;
+import org.gym.crm.dto.TraineeUpdateDTO;
 import org.gym.crm.model.Trainee;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -11,24 +11,21 @@ import org.mapstruct.Mapping;
 public interface TraineeMapper {
     @Mapping(target = "user.firstName", source = "firstName")
     @Mapping(target = "user.lastName", source = "lastName")
-    @Mapping(target = "user.isActive", source = "active")
-    @Mapping(target = "dateOfBirth", source = "dateOfBirth")
-    @Mapping(target = "address", source = "address")
-    Trainee toEntity(TraineeRequestDto dto);
+    @Mapping(target = "user.username", ignore = true)
+    @Mapping(target = "user.password", ignore = true)
+    @Mapping(target = "user.isActive", constant = "true")
+    Trainee toEntity(TraineeRequestDTO traineeRequestDTO);
 
     @Mapping(target = "user.firstName", source = "firstName")
     @Mapping(target = "user.lastName", source = "lastName")
+    @Mapping(target = "user.username", ignore = true)
     @Mapping(target = "user.isActive", source = "isActive")
-    @Mapping(target = "dateOfBirth", source = "dateOfBirth")
-    @Mapping(target = "address", source = "address")
     Trainee toEntity(TraineeUpdateDTO traineeUpdateDTO);
 
-    @Mapping(target = "id", source = "userId")
-    @Mapping(target = "username", source = "user.username")
-    @Mapping(target = "firstName", source = "user.firstName")
-    @Mapping(target = "lastName", source = "user.lastName")
-    @Mapping(target = "isActive", source = "user.isActive")
-    @Mapping(target = "dateOfBirth", source = "dateOfBirth")
-    @Mapping(target = "address", source = "address")
-    TraineeResponseDto toDto(Trainee trainee);
+    @Mapping(source = "user.id", target = "userId")
+    @Mapping(source = "user.username", target = "username")
+    @Mapping(source = "user.firstName", target = "firstName")
+    @Mapping(source = "user.lastName", target = "lastName")
+    @Mapping(source = "user.isActive", target = "isActive")
+    TraineeResponseDTO toDto(Trainee trainee);
 }

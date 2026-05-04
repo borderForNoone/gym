@@ -12,7 +12,7 @@ public interface TraineeDao {
 
     List<Trainee> findAll();
 
-    Trainee update(Long id, Trainee trainee);
+    Trainee update(Trainee trainee);
 
     void delete(Long id);
 }

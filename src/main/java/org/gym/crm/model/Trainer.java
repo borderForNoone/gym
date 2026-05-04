@@ -11,9 +11,9 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
@@ -23,24 +23,24 @@ import java.util.Set;
 @Getter
 @SuperBuilder(toBuilder = true)
 @ToString(exclude = "trainees")
-@EqualsAndHashCode()
+@EqualsAndHashCode(of = "id")
+@NoArgsConstructor
 @Entity
 @Table(name = "trainers")
 public class Trainer {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    private Long userId;
+    @Column
+    private Long id;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "specialization_id", nullable = false)
     private TrainingType specialization;
 
-    @OneToOne(cascade = CascadeType.ALL, optional = false)
+    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @ManyToMany(mappedBy = "trainers")
-    @Builder.Default
     private Set<Trainee> trainees = new HashSet<>();
 }

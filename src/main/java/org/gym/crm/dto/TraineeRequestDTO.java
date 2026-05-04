@@ -1,19 +1,19 @@
-package org.gym.crm.dto.request;
+package org.gym.crm.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.ToString;
 
 import java.time.LocalDate;
 
 @Getter
 @Builder
-@AllArgsConstructor
-public class TraineeRequestDto {
+@ToString
+@EqualsAndHashCode
+public class TraineeRequestDTO {
     private final String firstName;
     private final String lastName;
-    private final boolean active;
     private final LocalDate dateOfBirth;
     private final String address;
-    private String trainingTypeName;
 }
