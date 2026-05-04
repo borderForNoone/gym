@@ -46,13 +46,17 @@ class TrainerDaoImplTest extends AbstractDaoTest<TrainerDaoImpl> {
                 .trainingTypeName("Pilates")
                 .build();
 
-        Trainer Trainer = dao.findById(10L).orElseThrow(() -> new AssertionError("Trainer not found"));
-        Trainer updated = Trainer.toBuilder()
+        Trainer trainer = dao.findById(10L)
+                .orElseThrow(() -> new AssertionError("Trainer not found"));
+
+        Trainer updated = trainer.toBuilder()
                 .specialization(newTrainingType)
                 .build();
 
         Trainer saved = dao.update(updated);
-        Trainer actual = dao.findById(saved.getId()).orElseThrow(() -> new AssertionError("Trainer not found"));
+
+        Trainer actual = dao.findById(saved.getId())
+                .orElseThrow(() -> new AssertionError("Trainer not found"));
 
         assertThat(actual.getSpecialization().getTrainingTypeName()).isEqualTo("Pilates");
     }
