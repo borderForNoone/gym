@@ -1,7 +1,6 @@
-package org.gym.crm.dao;
+package org.gym.crm.dao.impl;
 
 import com.github.springtestdbunit.annotation.DatabaseSetup;
-import org.gym.crm.dao.impl.TrainerDaoImpl;
 import org.gym.crm.model.Trainer;
 import org.gym.crm.model.TrainingType;
 import org.gym.crm.model.User;
@@ -14,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @DatabaseSetup(value = "/dataset/trainer.xml")
-public class TrainerDaoImplTest extends AbstractDaoTest<TrainerDaoImpl> {
+class TrainerDaoImplTest extends AbstractDaoTest<TrainerDaoImpl> {
     private static final String INVALID_ID_MESSAGE = "ID must be positive and not null, got: %s";
 
     @Test
@@ -43,11 +42,11 @@ public class TrainerDaoImplTest extends AbstractDaoTest<TrainerDaoImpl> {
     @Test
     void update_shouldUpdateExistingTrainer_whenExists() {
         TrainingType newTrainingType = TrainingType.builder()
-                .id(2L)
+                .id(11L)
                 .trainingTypeName("Pilates")
                 .build();
 
-        Trainer Trainer = dao.findById(1L).orElseThrow(() -> new AssertionError("Trainer not found"));
+        Trainer Trainer = dao.findById(10L).orElseThrow(() -> new AssertionError("Trainer not found"));
         Trainer updated = Trainer.toBuilder()
                 .specialization(newTrainingType)
                 .build();
@@ -70,7 +69,7 @@ public class TrainerDaoImplTest extends AbstractDaoTest<TrainerDaoImpl> {
     void findById_shouldReturnTrainer_whenExists() {
         Trainer expected = buildExpectedTrainer();
 
-        Optional<Trainer> actual = dao.findById(1L);
+        Optional<Trainer> actual = dao.findById(10L);
 
         assertThat(actual).isPresent();
         assertThat(actual.get().getUser().getUsername()).isEqualTo("Callum.Whitfield");
@@ -124,14 +123,14 @@ public class TrainerDaoImplTest extends AbstractDaoTest<TrainerDaoImpl> {
 
     private TrainingType buildTrainingType() {
         return TrainingType.builder()
-                .id(1L)
+                .id(10L)
                 .trainingTypeName("Yoga")
                 .build();
     }
 
     private Trainer buildExpectedTrainer() {
         return Trainer.builder()
-                .id(1L)
+                .id(10L)
                 .user(buildExpectedUser())
                 .specialization(buildTrainingType())
                 .build();
@@ -139,7 +138,7 @@ public class TrainerDaoImplTest extends AbstractDaoTest<TrainerDaoImpl> {
 
     private User buildExpectedUser() {
         return User.builder()
-                .id(1L)
+                .id(10L)
                 .firstName("Callum")
                 .lastName("Whitfield")
                 .username("Callum.Whitfield")
@@ -150,7 +149,7 @@ public class TrainerDaoImplTest extends AbstractDaoTest<TrainerDaoImpl> {
 
     private List<Trainer> buildExpectedTrainers() {
         User user = User.builder()
-                .id(2L)
+                .id(11L)
                 .firstName("Nora")
                 .lastName("Pemberton")
                 .username("Nora.Pemberton")
@@ -158,7 +157,7 @@ public class TrainerDaoImplTest extends AbstractDaoTest<TrainerDaoImpl> {
                 .isActive(true)
                 .build();
         Trainer trainer = Trainer.builder()
-                .id(2L)
+                .id(11L)
                 .user(user)
                 .specialization(buildTrainingType())
                 .build();

@@ -1,7 +1,6 @@
-package org.gym.crm.dao;
+package org.gym.crm.dao.impl;
 
 import com.github.springtestdbunit.annotation.DatabaseSetup;
-import org.gym.crm.dao.impl.TrainingTypeDaoImpl;
 import org.gym.crm.model.TrainingType;
 import org.junit.jupiter.api.Test;
 
@@ -12,7 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @DatabaseSetup(value = "/dataset/training-type.xml")
-public class TrainingTypeDaoImplTest extends AbstractDaoTest<TrainingTypeDaoImpl> {
+class TrainingTypeDaoImplTest extends AbstractDaoTest<TrainingTypeDaoImpl> {
     private static final String INVALID_ID_MESSAGE = "ID must be positive and not null, got: %s";
     private static final String EMPTY_STRING_EXCEPTION_MESSAGE = "%s cannot be null or empty";
 
@@ -74,6 +73,6 @@ public class TrainingTypeDaoImplTest extends AbstractDaoTest<TrainingTypeDaoImpl
 
     @Override
     protected Class<TrainingTypeDaoImpl> getDaoClass() {
-        return TrainingTypeDaoImpl.class ;
+        return TrainingTypeDaoImpl.class;
     }
 }

@@ -1,4 +1,4 @@
-package org.gym.crm.dao;
+package org.gym.crm.dao.impl;
 
 import com.github.springtestdbunit.DbUnitTestExecutionListener;
 import com.github.springtestdbunit.annotation.DbUnitConfiguration;

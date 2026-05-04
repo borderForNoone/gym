@@ -1,6 +1,7 @@
-package org.gym.crm.dao;
+package org.gym.crm.dao.impl;
 
 import com.github.springtestdbunit.annotation.DatabaseSetup;
+import org.gym.crm.dao.TrainingDao;
 import org.gym.crm.model.Trainee;
 import org.gym.crm.model.Trainer;
 import org.gym.crm.model.Training;
@@ -22,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @DatabaseSetup(value = "/dataset/training.xml")
-public class TrainingDaoImplTest extends AbstractDaoTest<TrainingDao> {
+class TrainingDaoImplTest extends AbstractDaoTest<TrainingDao> {
     @Test
     void save_shouldSaveTraining_whenValid() {
         Training training = buildTraining();

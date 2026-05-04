@@ -1,6 +1,6 @@
 <dataset>
     <users id="1" first_name="Callum" last_name="Whitfield" username="Callum.Whitfield" password="pass111" is_active="true"/>
-    <users id="2" first_name="wj" last_name="Pemberton" username="Nora.Pemberton" password="pass222" is_active="true"/>
+    <users id="2" first_name="Nora" last_name="Pemberton" username="Nora.Pemberton" password="pass222" is_active="true"/>
     <users id="3" first_name="Ellis" last_name="Hargrove" username="Ellis.Hargrove" password="pass333" is_active="true"/>
     <users id="4" first_name="John" last_name="Trainer" username="John.Trainer" password="pass444" is_active="true"/>
 
