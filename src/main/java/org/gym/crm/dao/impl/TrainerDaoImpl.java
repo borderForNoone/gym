@@ -1,57 +1,83 @@
 package org.gym.crm.dao.impl;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.gym.crm.config.TransactionManager;
 import org.gym.crm.dao.TrainerDao;
 import org.gym.crm.model.Trainer;
-import org.gym.crm.storage.Storage;
-import org.gym.crm.storage.TrainerStorage;
+import org.gym.crm.util.Validator;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 @Repository
+@RequiredArgsConstructor
 public class TrainerDaoImpl implements TrainerDao {
-    private final TrainerStorage storage;
-    private final AtomicLong idGenerator = new AtomicLong(1);
-
-    public TrainerDaoImpl(Storage storage) {
-        this.storage = storage.getTrainerStorage();
-    }
+    private final TransactionManager transactionManager;
 
     @Override
     public Trainer save(Trainer trainer) {
-        Long id = idGenerator.getAndIncrement();
+        Validator.validateNotNull(trainer, "Trainer");
 
-        storage.getTrainers().put(id, trainer);
+        transactionManager.performWithinTx(manager -> manager.persist(trainer));
 
-        log.debug("Saved trainer with id={}", id);
         return trainer;
     }
 
     @Override
     public Optional<Trainer> findById(Long id) {
-        return Optional.ofNullable(storage.getTrainers().get(id));
+        Validator.validateId(id);
+
+        return transactionManager.performReturningWithinTx(manager ->
+                Optional.ofNullable(manager.find(Trainer.class, id)));
+    }
+
+    @Override
+    public Optional<Trainer> findByUsername(String username) {
+        Validator.validateNotBlank(username, "Username");
+
+        return transactionManager.performReturningWithinTx(manager ->
+                manager.createQuery("FROM Trainer t JOIN FETCH t.user WHERE t.user.username = :username", Trainer.class)
+                        .setParameter("username", username)
+                        .getResultStream()
+                        .findFirst()
+        );
     }
 
     @Override
     public List<Trainer> findAll() {
-        log.debug("Fetching all trainers, count={}", storage.getTrainers().size());
-        return new ArrayList<>(storage.getTrainers().values());
+        return transactionManager.performReturningWithinTx(manager -> manager
+                .createQuery("from Trainer", Trainer.class)
+                .getResultList()
+        );
     }
 
     @Override
-    public Trainer update(Long id, Trainer trainer) {
-        if (!storage.getTrainers().containsKey(id)) {
-            log.error("Failed to update trainer, id not found={}", id);
-            throw new IllegalArgumentException("Trainer not found with id: " + id);
-        }
-        storage.getTrainers().put(id, trainer);
+    public List<Trainer> findNotAssignedToTrainee(String traineeUsername) {
+        Validator.validateNotBlank(traineeUsername, "Trainee Username");
 
-        log.info("Trainer updated successfully id={}", id);
+        return transactionManager.performReturningWithinTx(manager ->
+                manager.createQuery(
+                                "SELECT t FROM Trainer t " +
+                                        "WHERE t.id NOT IN (" +
+                                        "   SELECT tr.trainer.id FROM Training tr " +
+                                        "   WHERE tr.trainee.user.username = :username" +
+                                        ")",
+                                Trainer.class
+                        )
+                        .setParameter("username", traineeUsername)
+                        .getResultList()
+        );
+    }
+
+    @Override
+    public Trainer update(Trainer trainer) {
+        Validator.validateId(trainer.getId());
+
+        transactionManager.performWithinTx(manager -> manager.merge(trainer));
+
         return trainer;
     }
 }

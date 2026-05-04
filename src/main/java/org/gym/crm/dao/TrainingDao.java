@@ -1,5 +1,7 @@
 package org.gym.crm.dao;
 
+import org.gym.crm.search.filter.TraineeTrainingFilter;
+import org.gym.crm.search.filter.TrainerTrainingFilter;
 import org.gym.crm.model.Training;
 
 import java.util.List;
@@ -11,4 +13,8 @@ public interface TrainingDao {
     Optional<Training> findById(Long id);
 
     List<Training> findAll();
+
+    List<Training> findByTraineeCriteria(TraineeTrainingFilter filter);
+
+    List<Training> findByTrainerCriteria(TrainerTrainingFilter filter);
 }

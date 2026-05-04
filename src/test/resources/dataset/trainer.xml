@@ -1,0 +1,10 @@
+<dataset>
+    <training_types id="10" training_type_name="Yoga"/>
+    <training_types id="11" training_type_name="Pilates"/>
+
+    <users id="10" first_name="Callum" last_name="Whitfield" username="Callum.Whitfield" password="pass111" is_active="true"/>
+    <users id="11" first_name="Nora" last_name="Pemberton" username="Nora.Pemberton" password="pass222" is_active="true"/>
+
+    <trainers id="10" specialization_id="10" user_id="10"/>
+    <trainers id="11" specialization_id="11" user_id="11"/>
+</dataset>

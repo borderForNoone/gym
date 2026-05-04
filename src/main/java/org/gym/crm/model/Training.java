@@ -9,35 +9,38 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDate;
 
 @Getter
-@ToString
-@EqualsAndHashCode
-@Builder
+@SuperBuilder(toBuilder = true)
+@ToString(onlyExplicitlyIncluded = true)
+@EqualsAndHashCode(of = "id")
+@NoArgsConstructor
 @Entity
 @Table(name = "trainings")
 public class Training {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column
+    @ToString.Include
     private Long id;
 
-    private final Long traineeId; // toDo will be removed in future mr
-    private final Long trainerId; // toDo will be removed in future mr
-
     @Column(name = "training_name", nullable = false, length = 100)
+    @ToString.Include
     private String trainingName;
 
     @Column(name = "training_date", nullable = false)
+    @ToString.Include
     private LocalDate trainingDate;
 
     @Column(name = "training_duration", nullable = false)
+    @ToString.Include
     private int trainingDuration;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

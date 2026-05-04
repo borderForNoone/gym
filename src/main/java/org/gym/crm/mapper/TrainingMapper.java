@@ -1,23 +1,18 @@
 package org.gym.crm.mapper;
 
-import org.gym.crm.dto.request.TrainingRequestDto;
-import org.gym.crm.dto.response.TrainingResponseDto;
+import org.gym.crm.dto.TrainingRequestDTO;
+import org.gym.crm.dto.TrainingResponseDTO;
 import org.gym.crm.model.Training;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.ReportingPolicy;
 
-@Mapper(
-        componentModel = "spring",
-        unmappedTargetPolicy = ReportingPolicy.IGNORE
-)
+@Mapper(componentModel = "spring")
 public interface TrainingMapper {
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "trainingType", ignore = true)
-    @Mapping(target = "trainee", ignore = true)
-    @Mapping(target = "trainer", ignore = true)
-    Training toEntity(TrainingRequestDto dto);
+    @Mapping(target = "trainingType.trainingTypeName", source = "trainingTypeName")
+    Training toEntity(TrainingRequestDTO trainingRequestDTO);
 
-    @Mapping(target = "trainingTypeName", source = "trainingType.trainingTypeName")
-    TrainingResponseDto toDto(Training training);
+    @Mapping(source = "trainee.id", target = "traineeId")
+    @Mapping(source = "trainer.id", target = "trainerId")
+    @Mapping(source = "trainingType.trainingTypeName", target = "trainingTypeName")
+    TrainingResponseDTO toDto(Training training);
 }

@@ -1,0 +1,5 @@
+<dataset>
+    <training_types id="1" training_type_name="Yoga"/>
+    <training_types id="2" training_type_name="Pilates"/>
+    <training_types id="3" training_type_name="Cardio"/>
+</dataset>

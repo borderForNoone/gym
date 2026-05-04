@@ -1,11 +1,13 @@
 package org.gym.crm.facade;
 
-import org.gym.crm.dto.request.TraineeRequestDto;
-import org.gym.crm.dto.request.TrainerRequestDto;
-import org.gym.crm.dto.request.TrainingRequestDto;
-import org.gym.crm.dto.response.TraineeResponseDto;
-import org.gym.crm.dto.response.TrainerResponseDto;
-import org.gym.crm.dto.response.TrainingResponseDto;
+import org.gym.crm.dto.TraineeRequestDTO;
+import org.gym.crm.dto.TraineeResponseDTO;
+import org.gym.crm.dto.TraineeUpdateDTO;
+import org.gym.crm.dto.TrainerRequestDTO;
+import org.gym.crm.dto.TrainerResponseDTO;
+import org.gym.crm.dto.TrainerUpdateDTO;
+import org.gym.crm.dto.TrainingRequestDTO;
+import org.gym.crm.dto.TrainingResponseDTO;
 import org.gym.crm.mapper.TraineeMapper;
 import org.gym.crm.mapper.TrainerMapper;
 import org.gym.crm.mapper.TrainingMapper;
@@ -15,100 +17,104 @@ import org.gym.crm.model.Training;
 import org.gym.crm.service.TraineeService;
 import org.gym.crm.service.TrainerService;
 import org.gym.crm.service.TrainingService;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Component
+@RequiredArgsConstructor
 public class GymFacade {
+    private static final String TRAINEE_NOT_FOUND = "Trainee not found";
+
     private final TraineeService traineeService;
     private final TrainerService trainerService;
     private final TrainingService trainingService;
 
-    private final TraineeMapper traineeMapper;
-    private final TrainerMapper trainerMapper;
-    private final TrainingMapper trainingMapper;
+    @Setter(onMethod_={@Autowired})
+    private TraineeMapper traineeMapper;
+    @Setter(onMethod_={@Autowired})
+    private TrainerMapper trainerMapper;
+    @Setter(onMethod_={@Autowired})
+    private TrainingMapper trainingMapper;
 
-    public GymFacade(TraineeService traineeService,
-                     TrainerService trainerService,
-                     TrainingService trainingService,
-                     TraineeMapper traineeMapper,
-                     TrainerMapper trainerMapper,
-                     TrainingMapper trainingMapper) {
-        this.traineeService = traineeService;
-        this.trainerService = trainerService;
-        this.trainingService = trainingService;
-        this.traineeMapper = traineeMapper;
-        this.trainerMapper = trainerMapper;
-        this.trainingMapper = trainingMapper;
+    public TraineeResponseDTO createTrainee(TraineeRequestDTO traineeRequestDTO) {
+        Trainee trainee = traineeMapper.toEntity(traineeRequestDTO);
+        Trainee saved = traineeService.create(trainee);
+
+        return traineeMapper.toDto(saved);
     }
 
-    public TraineeResponseDto createTrainee(TraineeRequestDto request) {
-        Trainee trainee = traineeMapper.toEntity(request);
+    public TraineeResponseDTO updateTrainee(TraineeUpdateDTO traineeUpdateDTO) {
+        Trainee trainee = traineeMapper.toEntity(traineeUpdateDTO);
+        Trainee saved = traineeService.update(trainee);
 
-        return traineeMapper.toDto(traineeService.create(trainee));
-    }
-
-    public Optional<TraineeResponseDto> getTrainee(Long id) {
-        return traineeService.findById(id)
-                .map(traineeMapper::toDto);
-    }
-
-    public List<TraineeResponseDto> getAllTrainees() {
-        return traineeService.findAll().stream()
-                .map(traineeMapper::toDto)
-                .collect(Collectors.toList());
-    }
-
-    public TraineeResponseDto updateTrainee(Long id, TraineeRequestDto request) {
-        Trainee trainee = traineeMapper.toEntity(request);
-
-        return traineeMapper.toDto(traineeService.update(id, trainee));
+        return traineeMapper.toDto(saved);
     }
 
     public void deleteTrainee(Long id) {
         traineeService.delete(id);
     }
 
-    public TrainerResponseDto createTrainer(TrainerRequestDto request) {
-        Trainer trainer = trainerMapper.toEntity(request);
+    public TraineeResponseDTO getTraineeById(Long id) {
+        Trainee trainee = traineeService.findById(id).orElseThrow(() -> new RuntimeException(TRAINEE_NOT_FOUND));
 
-        return trainerMapper.toDto(trainerService.create(trainer));
+        return traineeMapper.toDto(trainee);
     }
 
-    public Optional<TrainerResponseDto> getTrainer(Long id) {
-        return trainerService.findById(id)
-                .map(trainerMapper::toDto);
+    public List<TraineeResponseDTO> getAllTrainees() {
+        return traineeService.findAll()
+                .stream()
+                .map(traineeMapper::toDto)
+                .toList();
     }
 
-    public List<TrainerResponseDto> getAllTrainers() {
-        return trainerService.findAll().stream()
+    public TrainerResponseDTO createTrainer(TrainerRequestDTO trainerRequestDTO) {
+        Trainer trainer = trainerMapper.toEntity(trainerRequestDTO);
+        Trainer saved = trainerService.create(trainer);
+
+        return trainerMapper.toDto(saved);
+    }
+
+    public TrainerResponseDTO updateTrainer(TrainerUpdateDTO trainerUpdateDTO) {
+        Trainer trainer = trainerMapper.toEntity(trainerUpdateDTO);
+        Trainer saved = trainerService.update(trainer);
+
+        return trainerMapper.toDto(saved);
+    }
+
+    public TrainerResponseDTO getTrainerById(Long id) {
+        Trainer trainer = trainerService.findById(id).orElseThrow(() -> new RuntimeException(TRAINEE_NOT_FOUND));
+
+        return trainerMapper.toDto(trainer);
+    }
+
+    public List<TrainerResponseDTO> getAllTrainers() {
+        return trainerService.findAll()
+                .stream()
                 .map(trainerMapper::toDto)
-                .collect(Collectors.toList());
+                .toList();
     }
 
-    public TrainerResponseDto updateTrainer(Long id, TrainerRequestDto request) {
-        Trainer trainer = trainerMapper.toEntity(request);
+    public TrainingResponseDTO createTraining(TrainingRequestDTO trainingRequestDTO) {
+        Training training = trainingMapper.toEntity(trainingRequestDTO);
+        Training saved = trainingService.create(training);
 
-        return trainerMapper.toDto(trainerService.update(id, trainer));
+        return trainingMapper.toDto(saved);
     }
 
-    public TrainingResponseDto createTraining(TrainingRequestDto request) {
-        Training training = trainingMapper.toEntity(request);
+    public TrainingResponseDTO getTrainingById(Long id) {
+        Training training = trainingService.findById(id).orElseThrow(() -> new RuntimeException(TRAINEE_NOT_FOUND));
 
-        return trainingMapper.toDto(trainingService.create(training));
+        return trainingMapper.toDto(training);
     }
 
-    public Optional<TrainingResponseDto> getTraining(Long id) {
-        return trainingService.findById(id)
-                .map(trainingMapper::toDto);
-    }
-
-    public List<TrainingResponseDto> getAllTrainings() {
-        return trainingService.findAll().stream()
+    public List<TrainingResponseDTO> getAllTrainings() {
+        return trainingService.findAll()
+                .stream()
                 .map(trainingMapper::toDto)
-                .collect(Collectors.toList());
+                .toList();
     }
 }
