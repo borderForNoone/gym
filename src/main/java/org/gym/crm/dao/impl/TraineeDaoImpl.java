@@ -159,10 +159,10 @@ public class TraineeDaoImpl implements TraineeDao {
 
         return transactionManager.performReturningWithinTx(manager -> manager
                 .createQuery("""
-                    SELECT tr FROM Trainer tr
-                    JOIN FETCH tr.user u
-                    WHERE u.username IN :usernames
-                    """, Trainer.class)
+                        SELECT tr FROM Trainer tr
+                        JOIN FETCH tr.user u
+                        WHERE u.username IN :usernames
+                        """, Trainer.class)
                 .setParameter("usernames", trainerUsernames)
                 .getResultList()
         );

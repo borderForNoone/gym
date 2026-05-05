@@ -1,19 +1,15 @@
 package org.gym.crm.service.impl;
 
-import io.micrometer.common.util.StringUtils;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.gym.crm.dao.TraineeDao;
 import org.gym.crm.dao.TrainerDao;
-import org.gym.crm.model.Trainee;
-import org.gym.crm.model.Trainer;
 import org.gym.crm.service.UserProfileService;
 import org.gym.crm.util.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
-import java.util.stream.Stream;
 
 @Slf4j
 @Service
