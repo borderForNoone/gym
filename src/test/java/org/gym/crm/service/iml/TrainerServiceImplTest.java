@@ -2,7 +2,6 @@ package org.gym.crm.service.iml;
 
 import org.gym.crm.dao.TrainerDao;
 import org.gym.crm.exception.EntityNotFoundException;
-import org.gym.crm.model.Trainee;
 import org.gym.crm.model.Trainer;
 import org.gym.crm.model.TrainingType;
 import org.gym.crm.model.User;
@@ -320,10 +319,9 @@ class TrainerServiceImplTest {
 
     @Test
     void updateProfile_shouldThrowException_whenUsernameBlank() {
-        Trainer trainer = Trainer.builder().build();
+        Trainer trainerToUpdate = Trainer.builder().build();
 
-        assertThrows(IllegalArgumentException.class,
-                () -> trainerService.updateProfile("", trainer));
+        assertThrows(IllegalArgumentException.class, () -> trainerService.updateProfile("", trainerToUpdate));
     }
 
     @Test

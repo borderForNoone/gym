@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -380,16 +381,19 @@ public class TraineeServiceImplTest {
 
     @Test
     void updateTrainers_shouldThrowEntityNotFound_whenTraineeNotFound() {
+        List<String> trainers = List.of("John.Smith");
+
         when(dao.findByUsername(USERNAME)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class,
-                () -> service.updateTrainers(USERNAME, List.of("John.Smith")));
+        assertThrows(EntityNotFoundException.class, () -> service.updateTrainers(USERNAME, trainers));
     }
 
     @Test
     void updateTrainers_shouldThrowException_whenUsernameBlank() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.updateTrainers("", List.of("John.Smith")));
+        List<String> trainers = List.of("John.Smith");
+        String username = "";
+
+        assertThrows(IllegalArgumentException.class, () -> service.updateTrainers(username, trainers));
     }
 
     @Test
@@ -413,7 +417,7 @@ public class TraineeServiceImplTest {
         when(dao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainee));
         when(dao.save(any())).thenReturn(savedTrainee);
 
-        Trainee result = service.updateProfile(USERNAME, updatedData);
+        service.updateProfile(USERNAME, updatedData);
 
         assertEquals("NewFirst", savedTrainee.getUser().getFirstName());
         assertEquals("NewLast", savedTrainee.getUser().getLastName());
