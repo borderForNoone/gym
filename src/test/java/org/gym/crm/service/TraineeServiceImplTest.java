@@ -493,6 +493,16 @@ public class TraineeServiceImplTest {
                 .anyMatch(message -> message.contains(USERNAME));
     }
 
+    @Test
+    void getTrainings_shouldThrowException_whenFilterIsNull() {
+        IllegalArgumentException expected = assertThrows(
+                IllegalArgumentException.class,
+                () -> service.getTrainings(null)
+        );
+
+        assertThat(expected.getMessage()).contains("Filter");
+    }
+
     private Trainee buildTrainee() {
         return Trainee.builder()
                 .user(User.builder()
