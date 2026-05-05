@@ -98,7 +98,6 @@ public class GymFacadeTest {
         trainingResponseDTO = buildTrainingResponseDTO();
     }
 
-    // ======================== Existing Tests ========================
     @Test
     void createTrainee_shouldSaveAndReturnResponseDTO() {
         Trainee saved = trainee.toBuilder()
@@ -328,9 +327,6 @@ public class GymFacadeTest {
         verify(trainingMapper, never()).toDto(training);
     }
 
-    // ======================== New Tests for Uncovered Methods ========================
-
-    // ---- updateTrainee with authentication ----
     @Test
     void updateTrainee_withAuthentication_shouldAuthenticateAndUpdateAndReturnResponseDTO() {
         Trainee updatedTrainee = trainee.toBuilder()
@@ -352,7 +348,6 @@ public class GymFacadeTest {
         verify(traineeMapper).toDto(updatedTrainee);
     }
 
-    // ---- setTraineeActive ----
     @Test
     void setTraineeActive_shouldAuthenticateAndSetActiveTrue() {
         when(traineeService.authenticate(USERNAME, PASSWORD)).thenReturn(true);
@@ -373,7 +368,6 @@ public class GymFacadeTest {
         verify(traineeService).setActive(USERNAME, false);
     }
 
-    // ---- setTrainerActive ----
     @Test
     void setTrainerActive_shouldAuthenticateAndSetActiveTrue() {
         when(trainerService.authenticate(USERNAME, PASSWORD)).thenReturn(true);
@@ -394,7 +388,6 @@ public class GymFacadeTest {
         verify(trainerService).setActive(USERNAME, false);
     }
 
-    // ---- deleteTraineeByUsername ----
     @Test
     void deleteTraineeByUsername_shouldAuthenticateAndDelete() {
         when(traineeService.authenticate(USERNAME, PASSWORD)).thenReturn(true);
