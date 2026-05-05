@@ -27,6 +27,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class TraineeServiceImpl implements TraineeService {
     private static final String TRAINEE_NOT_FOUND_BY_ID = "Trainee not found by id: %s";
+    private static final String TRAINEE_NOT_FOUND_BY_USERNAME_MESSAGE = "Trainee not found: %s";
     private static final String TRAINEE = "Trainee";
     private static final String USERNAME_LABEL = "Username";
     private static final String PASSWORD_LABEL = "Password";
@@ -133,7 +134,9 @@ public class TraineeServiceImpl implements TraineeService {
         Validator.validateNotBlank(newPassword, NEW_PASSWORD_LABEL);
 
         Trainee trainee = dao.findByUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException("Trainee not found: " + username));
+                .orElseThrow(() -> new EntityNotFoundException(
+                        String.format(TRAINEE_NOT_FOUND_BY_USERNAME_MESSAGE, username)
+                ));
 
         if (!trainee.getUser().getPassword().equals(oldPassword)) {
             throw new AuthenticationException("Current password is incorrect");

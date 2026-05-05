@@ -17,31 +17,37 @@ public class TraineeDaoImpl implements TraineeDao {
     private static final String USERNAME = "username";
     private static final String USERNAME_LABEL = "Username";
     private static final String TRAINEE_LABEL = "Trainee";
-    private static final String DELETE_TRAINEE_BY_USERNAME_QUERY = """
-        SELECT t FROM Trainee t
-        JOIN FETCH t.user u
-        WHERE u.username = :username
-        """;
+    private static final String TRAINEE_USERNAME_LABEL = "Trainee username";
+    private static final String FIND_TRAINEE_BY_USERNAME_QUERY = """
+            SELECT t FROM Trainee t
+            JOIN FETCH t.user u
+            WHERE u.username = :username
+            """;
     private static final String FIND_UNASSIGNED_TRAINERS_QUERY = """
-        SELECT tr FROM Trainer tr
-        JOIN FETCH tr.user u
-        WHERE tr.id NOT IN (
-            SELECT t.id FROM Trainee tn
-            JOIN tn.trainers t
-            WHERE tn.user.username = :username
-        )
-        """;
+            SELECT tr FROM Trainer tr
+            JOIN FETCH tr.user u
+            WHERE tr.id NOT IN (
+                SELECT t.id FROM Trainee tn
+                JOIN tn.trainers t
+                WHERE tn.user.username = :username
+            )
+            """;
     private static final String FIND_TRAINEE_WITH_TRAINERS_QUERY = """
-        SELECT t FROM Trainee t
-        JOIN FETCH t.user u
-        LEFT JOIN FETCH t.trainers
-        WHERE u.username = :username
-        """;
+            SELECT t FROM Trainee t
+            JOIN FETCH t.user u
+            LEFT JOIN FETCH t.trainers
+            WHERE u.username = :username
+            """;
     private static final String FIND_TRAINERS_BY_USERNAMES_QUERY = """
-        SELECT tr FROM Trainer tr
-        JOIN FETCH tr.user u
-        WHERE u.username IN :usernames
-        """;
+            SELECT tr FROM Trainer tr
+            JOIN FETCH tr.user u
+            WHERE u.username IN :usernames
+            """;
+    private static final String FIND_TRAINEE_BY_USERNAME_FETCH_QUERY = """
+                SELECT t FROM Trainee t
+                JOIN FETCH t.user u
+                WHERE u.username = :username
+            """;
 
     private final TransactionManager transactionManager;
 
@@ -95,11 +101,7 @@ public class TraineeDaoImpl implements TraineeDao {
         Validator.validateNotBlank(username, USERNAME_LABEL);
 
         return transactionManager.performReturningWithinTx(manager ->
-                manager.createQuery("""
-                                SELECT t FROM Trainee t
-                                JOIN FETCH t.user u
-                                WHERE u.username = :username
-                                """, Trainee.class)
+                manager.createQuery(FIND_TRAINEE_BY_USERNAME_QUERY, Trainee.class)
                         .setParameter(USERNAME, username)
                         .getResultStream()
                         .findFirst()
@@ -123,20 +125,28 @@ public class TraineeDaoImpl implements TraineeDao {
 
     @Override
     public void deleteByUsername(String username) {
-        Validator.validateNotBlank(username, "Username");
+        Validator.validateNotBlank(username, USERNAME_LABEL);
 
-        transactionManager.performWithinTx(manager ->
-                manager.createQuery(DELETE_TRAINEE_BY_USERNAME_QUERY, Trainee.class)
-                        .setParameter(USERNAME, username)
-                        .getResultStream()
-                        .findFirst()
-                        .ifPresent(manager::remove)
-        );
+        transactionManager.performWithinTx(manager -> {
+
+            Trainee trainee = manager.createQuery(
+                            FIND_TRAINEE_BY_USERNAME_FETCH_QUERY,
+                            Trainee.class
+                    )
+                    .setParameter(USERNAME, username)
+                    .getResultStream()
+                    .findFirst()
+                    .orElse(null);
+
+            if (trainee != null) {
+                manager.remove(trainee);
+            }
+        });
     }
 
     @Override
     public List<Trainer> findUnassignedTrainers(String traineeUsername) {
-        Validator.validateNotBlank(traineeUsername, "Trainee username");
+        Validator.validateNotBlank(traineeUsername, TRAINEE_USERNAME_LABEL);
 
         return transactionManager.performReturningWithinTx(manager ->
                 manager.createQuery(FIND_UNASSIGNED_TRAINERS_QUERY, Trainer.class)
@@ -147,7 +157,7 @@ public class TraineeDaoImpl implements TraineeDao {
 
     @Override
     public Trainee updateTrainers(String traineeUsername, List<Trainer> trainers) {
-        Validator.validateNotBlank(traineeUsername, "Trainee username");
+        Validator.validateNotBlank(traineeUsername, TRAINEE_USERNAME_LABEL);
         Validator.validateNotNull(trainers, "Trainers list");
 
         return transactionManager.performReturningWithinTx(manager -> {

@@ -170,10 +170,11 @@ public class TrainerServiceImpl implements TrainerService {
 
     @Override
     public List<Training> getTrainings(TrainerTrainingFilter filter) {
-        Validator.validateNotNull(filter, "Filter");
+        Validator.validateNotNull(filter, FILTER_LABEL);
 
         var cq = criteriaBuilder.build(
-                entityManager.getCriteriaBuilder(), filter);
+                entityManager.getCriteriaBuilder(), filter
+        );
 
         return entityManager.createQuery(cq).getResultList();
     }
