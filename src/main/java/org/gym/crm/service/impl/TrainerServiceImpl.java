@@ -24,6 +24,14 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class TrainerServiceImpl implements TrainerService {
+    private static final String USERNAME_LABEL = "Username";
+    private static final String PASSWORD_LABEL = "Password";
+    private static final String OLD_PASSWORD_LABEL = "Old password";
+    private static final String NEW_PASSWORD_LABEL = "New password";
+    private static final String UPDATED_DATA_LABEL = "Updated data";
+    private static final String FILTER_LABEL = "Filter";
+    private static final String TRAINER_NOT_FOUND_PREFIX = "Trainer not found: ";
+
     private final TrainerDao trainerDao;
     private final UserProfileService userProfileService;
     private final TrainerTrainingCriteriaBuilder criteriaBuilder;
@@ -72,8 +80,8 @@ public class TrainerServiceImpl implements TrainerService {
 
     @Override
     public boolean authenticate(String username, String password) {
-        Validator.validateNotBlank(username, "Username");
-        Validator.validateNotBlank(password, "Password");
+        Validator.validateNotBlank(username, USERNAME_LABEL);
+        Validator.validateNotBlank(password, PASSWORD_LABEL);
 
         return trainerDao.findByUsername(username)
                 .map(t -> t.getUser().getPassword().equals(password))
@@ -82,19 +90,19 @@ public class TrainerServiceImpl implements TrainerService {
 
     @Override
     public Optional<Trainer> findByUsername(String username) {
-        Validator.validateNotBlank(username, "Username");
+        Validator.validateNotBlank(username, USERNAME_LABEL);
 
         return trainerDao.findByUsername(username);
     }
 
     @Override
     public void changePassword(String username, String oldPassword, String newPassword) throws AuthenticationException {
-        Validator.validateNotBlank(username, "Username");
-        Validator.validateNotBlank(oldPassword, "Old password");
-        Validator.validateNotBlank(newPassword, "New password");
+        Validator.validateNotBlank(username, USERNAME_LABEL);
+        Validator.validateNotBlank(oldPassword, OLD_PASSWORD_LABEL);
+        Validator.validateNotBlank(newPassword, NEW_PASSWORD_LABEL);
 
         Trainer trainer = trainerDao.findByUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException("Trainer not found: " + username));
+                .orElseThrow(() -> new EntityNotFoundException(TRAINER_NOT_FOUND_PREFIX + username));
 
         if (!trainer.getUser().getPassword().equals(oldPassword)) {
             throw new AuthenticationException("Current password is incorrect");
@@ -102,27 +110,28 @@ public class TrainerServiceImpl implements TrainerService {
 
         trainer.getUser().setPassword(newPassword);
         trainerDao.save(trainer);
-        log.info("Password changed for trainer: {}", username);
     }
 
     @Override
     public Trainer updateProfile(String username, Trainer updatedData) {
-        Validator.validateNotBlank(username, "Username");
-        Validator.validateNotNull(updatedData, "Updated data");
+        Validator.validateNotBlank(username, USERNAME_LABEL);
+        Validator.validateNotNull(updatedData, UPDATED_DATA_LABEL);
 
         Trainer trainer = trainerDao.findByUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException("Trainer not found: " + username));
+                .orElseThrow(() -> new EntityNotFoundException(TRAINER_NOT_FOUND_PREFIX + username));
 
         User updatedUser = updatedData.getUser();
 
-        Trainer.TrainerBuilder<?, ?> trainerBuilder = trainer.toBuilder();
+        Trainer.TrainerBuilder<?, ?> builder = trainer.toBuilder();
 
         if (updatedUser != null) {
             Validator.validateNotBlank(updatedUser.getFirstName(), "First name");
             Validator.validateNotBlank(updatedUser.getLastName(), "Last name");
 
             String newUsername = userProfileService.generateUsername(
-                    updatedUser.getFirstName(), updatedUser.getLastName());
+                    updatedUser.getFirstName(),
+                    updatedUser.getLastName()
+            );
 
             User rebuiltUser = trainer.getUser().toBuilder()
                     .firstName(updatedUser.getFirstName())
@@ -130,36 +139,33 @@ public class TrainerServiceImpl implements TrainerService {
                     .username(newUsername)
                     .build();
 
-            trainerBuilder.user(rebuiltUser);
+            builder.user(rebuiltUser);
         }
 
         if (updatedData.getSpecialization() != null) {
-            trainerBuilder.specialization(updatedData.getSpecialization());
+            builder.specialization(updatedData.getSpecialization());
         }
 
-        Trainer updatedTrainer = trainerBuilder.build();
-        Trainer saved = trainerDao.update(updatedTrainer);
-
-        log.info("Updated trainer profile: {} -> {}", username, saved.getUser().getUsername());
-        return saved;
+        return trainerDao.update(builder.build());
     }
 
     @Override
     public void setActive(String username, boolean active) {
-        Validator.validateNotBlank(username, "Username");
+        Validator.validateNotBlank(username, USERNAME_LABEL);
 
         Trainer trainer = trainerDao.findByUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException("Trainer not found: " + username));
+                .orElseThrow(() -> new EntityNotFoundException(TRAINER_NOT_FOUND_PREFIX + username));
 
-        boolean currentStatus = trainer.getUser().getIsActive();
-        if (currentStatus == active) {
+        if (trainer.getUser().getIsActive() == active) {
             throw new IllegalStateException(
-                    "Trainer '" + username + "' is already " + (active ? "active" : "inactive") + ". Not idempotent.");
+                    "Trainer '" + username + "' is already " +
+                            (active ? "active" : "inactive") +
+                            ". Not idempotent."
+            );
         }
 
         trainer.getUser().setIsActive(active);
         trainerDao.save(trainer);
-        log.info("Trainer {} set active={}", username, active);
     }
 
     @Override

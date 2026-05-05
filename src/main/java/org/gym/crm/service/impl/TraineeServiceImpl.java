@@ -28,6 +28,13 @@ import java.util.Optional;
 public class TraineeServiceImpl implements TraineeService {
     private static final String TRAINEE_NOT_FOUND_BY_ID = "Trainee not found by id: %s";
     private static final String TRAINEE = "Trainee";
+    private static final String USERNAME_LABEL = "Username";
+    private static final String PASSWORD_LABEL = "Password";
+    private static final String OLD_PASSWORD_LABEL = "Old password";
+    private static final String NEW_PASSWORD_LABEL = "New password";
+    private static final String UPDATED_DATA_LABEL = "Updated data";
+    private static final String FIRST_NAME_LABEL = "First name";
+    private static final String LAST_NAME_LABEL = "Last name";
 
     private final TraineeDao dao;
     private final UserProfileService userCredentialGenerator;
@@ -102,8 +109,8 @@ public class TraineeServiceImpl implements TraineeService {
 
     @Override
     public boolean authenticate(String username, String password) {
-        Validator.validateNotBlank(username, "Username");
-        Validator.validateNotBlank(password, "Password");
+        Validator.validateNotBlank(username, USERNAME_LABEL);
+        Validator.validateNotBlank(password, PASSWORD_LABEL);
 
         return findByUsername(username)
                 .map(t -> t.getUser().getPassword().equals(password))
@@ -112,16 +119,18 @@ public class TraineeServiceImpl implements TraineeService {
 
     @Override
     public Optional<Trainee> findByUsername(String username) {
-        Validator.validateNotBlank(username, "Username");
+        Validator.validateNotBlank(username, USERNAME_LABEL);
 
         return dao.findByUsername(username);
     }
 
     @Override
-    public void changePassword(String username, String oldPassword, String newPassword) throws AuthenticationException {
-        Validator.validateNotBlank(username, "Username");
-        Validator.validateNotBlank(oldPassword, "Old password");
-        Validator.validateNotBlank(newPassword, "New password");
+    public void changePassword(String username, String oldPassword, String newPassword)
+            throws AuthenticationException {
+
+        Validator.validateNotBlank(username, USERNAME_LABEL);
+        Validator.validateNotBlank(oldPassword, OLD_PASSWORD_LABEL);
+        Validator.validateNotBlank(newPassword, NEW_PASSWORD_LABEL);
 
         Trainee trainee = dao.findByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException("Trainee not found: " + username));
@@ -132,37 +141,35 @@ public class TraineeServiceImpl implements TraineeService {
 
         trainee.getUser().setPassword(newPassword);
         dao.save(trainee);
-        log.info("Password changed for trainee: {}", username);
     }
 
     @Override
     public void setActive(String username, boolean active) {
-        Validator.validateNotBlank(username, "Username");
+        Validator.validateNotBlank(username, USERNAME_LABEL);
 
         Trainee trainee = findByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException("Trainee not found: " + username));
 
-        boolean currentStatus = trainee.getUser().getIsActive();
-        if (currentStatus == active) {
+        if (trainee.getUser().getIsActive() == active) {
             throw new IllegalStateException(
-                    String.format("Trainee '%s' is already %s. Not idempotent.", username, active ? "active" : "inactive")
+                    String.format("Trainee '%s' is already %s. Not idempotent.",
+                            username,
+                            active ? "active" : "inactive")
             );
         }
 
         trainee.getUser().setIsActive(active);
         dao.save(trainee);
-        log.info("Trainee {} set active={}", username, active);
     }
 
     @Override
     public void deleteByUsername(String username) {
-        Validator.validateNotBlank(username, "Username");
+        Validator.validateNotBlank(username, USERNAME_LABEL);
 
         Trainee trainee = findByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException("Trainee not found: " + username));
 
         dao.delete(trainee);
-        log.info("Hard deleted trainee and cascaded trainings for username={}", username);
     }
 
     @Override
@@ -200,13 +207,14 @@ public class TraineeServiceImpl implements TraineeService {
 
         Trainee saved = dao.save(trainee);
         log.info("Updated trainers list for trainee={}, trainers={}", traineeUsername, trainerUsernames);
+
         return saved;
     }
 
     @Override
     public Trainee updateProfile(String username, Trainee updatedData) {
-        Validator.validateNotBlank(username, "Username");
-        Validator.validateNotNull(updatedData, "Updated data");
+        Validator.validateNotBlank(username, USERNAME_LABEL);
+        Validator.validateNotNull(updatedData, UPDATED_DATA_LABEL);
 
         Trainee trainee = dao.findByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException("Trainee not found: " + username));
@@ -215,24 +223,22 @@ public class TraineeServiceImpl implements TraineeService {
         User updatedUser = updatedData.getUser();
 
         if (updatedUser != null) {
-            Validator.validateNotBlank(updatedUser.getFirstName(), "First name");
-            Validator.validateNotBlank(updatedUser.getLastName(), "Last name");
+            Validator.validateNotBlank(updatedUser.getFirstName(), FIRST_NAME_LABEL);
+            Validator.validateNotBlank(updatedUser.getLastName(), LAST_NAME_LABEL);
+
             user.setFirstName(updatedUser.getFirstName());
             user.setLastName(updatedUser.getLastName());
-            if (updatedUser.getIsActive() != user.getIsActive()) {
-                user.setIsActive(updatedUser.getIsActive());
-            }
+            user.setIsActive(updatedUser.getIsActive());
         }
 
         if (updatedData.getDateOfBirth() != null) {
             trainee.setDateOfBirth(updatedData.getDateOfBirth());
         }
+
         if (updatedData.getAddress() != null) {
             trainee.setAddress(updatedData.getAddress());
         }
 
-        Trainee saved = dao.save(trainee);
-        log.info("Updated trainee profile: {}", username);
-        return saved;
+        return dao.save(trainee);
     }
 }

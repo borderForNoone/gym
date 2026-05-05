@@ -15,11 +15,33 @@ import java.util.Optional;
 @Repository
 @RequiredArgsConstructor
 public class TrainerDaoImpl implements TrainerDao {
+    private static final String USERNAME = "username";
+    private static final String USERNAME_LABEL = "Username";
+    private static final String TRAINER_LABEL = "Trainer";
+    private static final String TRAINEE_USERNAME_LABEL = "Trainee Username";
+    private static final String FIND_BY_USERNAME_QUERY = """
+            FROM Trainer t
+            JOIN FETCH t.user
+            WHERE t.user.username = :username
+            """;
+    private static final String FIND_NOT_ASSIGNED_QUERY = """
+            SELECT t FROM Trainer t
+            WHERE t.id NOT IN (
+               SELECT tr.trainer.id FROM Training tr
+               WHERE tr.trainee.user.username = :username
+            )
+            """;
+    private static final String EXISTS_BY_USERNAME_QUERY = """
+            SELECT COUNT(t) FROM Trainer t
+            JOIN t.user u
+            WHERE u.username = :username
+            """;
+
     private final TransactionManager transactionManager;
 
     @Override
     public Trainer save(Trainer trainer) {
-        Validator.validateNotNull(trainer, "Trainer");
+        Validator.validateNotNull(trainer, TRAINER_LABEL);
 
         transactionManager.performWithinTx(manager -> manager.persist(trainer));
 
@@ -31,16 +53,17 @@ public class TrainerDaoImpl implements TrainerDao {
         Validator.validateId(id);
 
         return transactionManager.performReturningWithinTx(manager ->
-                Optional.ofNullable(manager.find(Trainer.class, id)));
+                Optional.ofNullable(manager.find(Trainer.class, id))
+        );
     }
 
     @Override
     public Optional<Trainer> findByUsername(String username) {
-        Validator.validateNotBlank(username, "Username");
+        Validator.validateNotBlank(username, USERNAME_LABEL);
 
         return transactionManager.performReturningWithinTx(manager ->
-                manager.createQuery("FROM Trainer t JOIN FETCH t.user WHERE t.user.username = :username", Trainer.class)
-                        .setParameter("username", username)
+                manager.createQuery(FIND_BY_USERNAME_QUERY, Trainer.class)
+                        .setParameter(USERNAME, username)
                         .getResultStream()
                         .findFirst()
         );
@@ -48,42 +71,31 @@ public class TrainerDaoImpl implements TrainerDao {
 
     @Override
     public List<Trainer> findAll() {
-        return transactionManager.performReturningWithinTx(manager -> manager
-                .createQuery("from Trainer", Trainer.class)
-                .getResultList()
+        return transactionManager.performReturningWithinTx(manager ->
+                manager.createQuery("FROM Trainer", Trainer.class)
+                        .getResultList()
         );
     }
 
     @Override
     public List<Trainer> findNotAssignedToTrainee(String traineeUsername) {
-        Validator.validateNotBlank(traineeUsername, "Trainee Username");
+        Validator.validateNotBlank(traineeUsername, TRAINEE_USERNAME_LABEL);
 
         return transactionManager.performReturningWithinTx(manager ->
-                manager.createQuery(
-                                "SELECT t FROM Trainer t " +
-                                        "WHERE t.id NOT IN (" +
-                                        "   SELECT tr.trainer.id FROM Training tr " +
-                                        "   WHERE tr.trainee.user.username = :username" +
-                                        ")",
-                                Trainer.class
-                        )
-                        .setParameter("username", traineeUsername)
+                manager.createQuery(FIND_NOT_ASSIGNED_QUERY, Trainer.class)
+                        .setParameter(USERNAME, traineeUsername)
                         .getResultList()
         );
     }
 
     @Override
     public boolean existsByUsername(String username) {
-        Validator.validateNotBlank(username, "Username");
+        Validator.validateNotBlank(username, USERNAME_LABEL);
 
-        return transactionManager.performReturningWithinTx(manager -> manager
-                .createQuery("""
-                        SELECT COUNT(t) FROM Trainer t
-                        JOIN t.user u
-                        WHERE u.username = :username
-                        """, Long.class)
-                .setParameter("username", username)
-                .getSingleResult() > 0
+        return transactionManager.performReturningWithinTx(manager ->
+                manager.createQuery(EXISTS_BY_USERNAME_QUERY, Long.class)
+                        .setParameter(USERNAME, username)
+                        .getSingleResult() > 0
         );
     }
 

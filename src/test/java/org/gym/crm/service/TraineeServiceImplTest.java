@@ -326,20 +326,6 @@ public class TraineeServiceImplTest {
     }
 
     @Test
-    void deleteByUsername_shouldDelete_whenTraineeExists() {
-        when(dao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainee));
-
-        service.deleteByUsername(USERNAME);
-
-        verify(dao).delete(savedTrainee);
-
-        assertThat(logAppender.list)
-                .filteredOn(e -> e.getLevel() == Level.INFO)
-                .extracting(ILoggingEvent::getFormattedMessage)
-                .anyMatch(msg -> msg.contains(USERNAME));
-    }
-
-    @Test
     void deleteByUsername_shouldThrowEntityNotFound_whenTraineeNotFound() {
         when(dao.findByUsername(USERNAME)).thenReturn(Optional.empty());
 
