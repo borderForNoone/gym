@@ -8,6 +8,7 @@ import org.gym.crm.dao.TrainerDao;
 import org.gym.crm.model.Trainee;
 import org.gym.crm.model.Trainer;
 import org.gym.crm.service.UserProfileService;
+import org.gym.crm.util.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -31,7 +32,11 @@ public class UserProfileServiceImpl implements UserProfileService {
 
     @Override
     public String generateUsername(String firstName, String lastName) {
+        Validator.validateNotBlank(firstName, "First name");
+        Validator.validateNotBlank(lastName, "Last name");
+
         String baseUsername = firstName + "." + lastName;
+        Validator.validateUsernameLength(baseUsername);
 
         if (!usernameExists(baseUsername)) {
             log.debug("Generated username='{}'", baseUsername);
@@ -60,18 +65,8 @@ public class UserProfileServiceImpl implements UserProfileService {
         return password.toString();
     }
 
-    private Stream<String> getExistingUsernames() {
-        return Stream.concat(
-                traineeDao.findAll().stream()
-                        .map(trainee -> trainee.getUser().getUsername()),
-                trainerDao.findAll().stream()
-                        .map(trainer -> trainer.getUser().getUsername())
-        );
-    }
-
     private boolean usernameExists(String username) {
-        return getExistingUsernames()
-                .filter(StringUtils::isNotBlank)
-                .anyMatch(username::equals);
+        return traineeDao.existsByUsername(username) ||
+                trainerDao.existsByUsername(username);
     }
 }

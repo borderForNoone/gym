@@ -73,6 +73,21 @@ public class TrainerDaoImpl implements TrainerDao {
     }
 
     @Override
+    public boolean existsByUsername(String username) {
+        Validator.validateNotBlank(username, "Username");
+
+        return transactionManager.performReturningWithinTx(manager -> manager
+                .createQuery("""
+                        SELECT COUNT(t) FROM Trainer t
+                        JOIN t.user u
+                        WHERE u.username = :username
+                        """, Long.class)
+                .setParameter("username", username)
+                .getSingleResult() > 0
+        );
+    }
+
+    @Override
     public Trainer update(Trainer trainer) {
         Validator.validateId(trainer.getId());
 

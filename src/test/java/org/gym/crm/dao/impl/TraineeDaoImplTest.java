@@ -70,7 +70,7 @@ class TraineeDaoImplTest extends AbstractDaoTest<TraineeDaoImpl> {
     @Test
     void delete_shouldThrowException_whenIdIsNull() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> dao.delete(null));
+                () -> dao.delete((Long) null));
 
         assertThat(exception.getMessage()).isEqualTo(String.format(INVALID_ID_MESSAGE, "null"));
     }
