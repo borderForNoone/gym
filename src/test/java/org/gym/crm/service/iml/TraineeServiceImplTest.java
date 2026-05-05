@@ -1,4 +1,4 @@
-package org.gym.crm.service;
+package org.gym.crm.service.iml;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -9,6 +9,7 @@ import org.gym.crm.exception.EntityNotFoundException;
 import org.gym.crm.model.Trainee;
 import org.gym.crm.model.Trainer;
 import org.gym.crm.model.User;
+import org.gym.crm.service.UserProfileService;
 import org.gym.crm.service.impl.TraineeServiceImpl;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

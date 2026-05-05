@@ -1,4 +1,4 @@
-package org.gym.crm.service;
+package org.gym.crm.service.iml;
 
 import org.gym.crm.dao.TraineeDao;
 import org.gym.crm.dao.TrainerDao;

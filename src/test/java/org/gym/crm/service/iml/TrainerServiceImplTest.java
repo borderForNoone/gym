@@ -1,10 +1,11 @@
-package org.gym.crm.service;
+package org.gym.crm.service.iml;
 
 import org.gym.crm.dao.TrainerDao;
 import org.gym.crm.exception.EntityNotFoundException;
 import org.gym.crm.model.Trainer;
 import org.gym.crm.model.TrainingType;
 import org.gym.crm.model.User;
+import org.gym.crm.service.UserProfileService;
 import org.gym.crm.service.impl.TrainerServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
