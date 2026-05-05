@@ -68,14 +68,14 @@ class UserProfileServiceImplTest {
     }
 
     @Test
-    void generateUsername_shouldReturnSuffix1_whenSuffix2TakenButSuffix1Free() {
+    void generateUsername_shouldReturnSuffix2_whenSuffix1Taken() {
         when(traineeDao.existsByUsername(USERNAME)).thenReturn(true);
-        when(traineeDao.existsByUsername(USERNAME_WITH_SUFFIX_1)).thenReturn(false);
-        when(trainerDao.existsByUsername(USERNAME_WITH_SUFFIX_1)).thenReturn(false);
+        when(traineeDao.existsByUsername(USERNAME_WITH_SUFFIX_1)).thenReturn(true);
+        when(traineeDao.existsByUsername(USERNAME_WITH_SUFFIX_2)).thenReturn(false);
 
         String actual = userProfileService.generateUsername(FIRST_NAME, LAST_NAME);
 
-        assertEquals(USERNAME_WITH_SUFFIX_1, actual);
+        assertEquals(USERNAME_WITH_SUFFIX_2, actual);
     }
 
     @Test

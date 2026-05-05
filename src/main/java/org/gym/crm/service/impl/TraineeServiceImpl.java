@@ -151,7 +151,7 @@ public class TraineeServiceImpl implements TraineeService {
         Validator.validateNotBlank(username, USERNAME_LABEL);
 
         Trainee trainee = findByUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException("Trainee not found: " + username));
+                .orElseThrow(() -> new EntityNotFoundException(String.format(TRAINEE_NOT_FOUND_BY_USERNAME_MESSAGE, username)));
 
         if (trainee.getUser().getIsActive() == active) {
             throw new IllegalStateException(
@@ -170,7 +170,7 @@ public class TraineeServiceImpl implements TraineeService {
         Validator.validateNotBlank(username, USERNAME_LABEL);
 
         Trainee trainee = findByUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException("Trainee not found: " + username));
+                .orElseThrow(() -> new EntityNotFoundException(String.format(TRAINEE_NOT_FOUND_BY_USERNAME_MESSAGE, username)));
 
         dao.delete(trainee);
     }
@@ -220,7 +220,7 @@ public class TraineeServiceImpl implements TraineeService {
         Validator.validateNotNull(updatedData, UPDATED_DATA_LABEL);
 
         Trainee trainee = dao.findByUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException("Trainee not found: " + username));
+                .orElseThrow(() -> new EntityNotFoundException(String.format(TRAINEE_NOT_FOUND_BY_USERNAME_MESSAGE, username)));
 
         User user = trainee.getUser();
         User updatedUser = updatedData.getUser();

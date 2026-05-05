@@ -460,8 +460,10 @@ public class TraineeServiceImplTest {
 
     @Test
     void updateProfile_shouldThrowException_whenUsernameBlank() {
+        Trainee trainee = Trainee.builder().build();
+
         assertThrows(IllegalArgumentException.class,
-                () -> service.updateProfile("", Trainee.builder().build()));
+                () -> service.updateProfile("", trainee));
     }
 
     @Test
