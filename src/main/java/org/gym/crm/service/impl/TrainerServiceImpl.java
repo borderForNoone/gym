@@ -112,13 +112,22 @@ public class TrainerServiceImpl implements TrainerService {
         Trainer trainer = trainerDao.findByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException(
                         String.format(TRAINER_NOT_FOUND, username)));
+        User currentUser = trainer.getUser();
 
-        if (!trainer.getUser().getPassword().equals(oldPassword)) {
+        if (!passwordEncoder.matches(oldPassword, currentUser.getPassword())) {
             throw new AuthenticationException("Current password is incorrect");
         }
 
-        trainer.getUser().setPassword(newPassword);
-        trainerDao.save(trainer);
+        String encodedPassword = passwordEncoder.encode(newPassword);
+
+        User updatedUser = currentUser.toBuilder()
+                .password(encodedPassword)
+                .build();
+        Trainer updatedTrainer = trainer.toBuilder()
+                .user(updatedUser)
+                .build();
+
+        trainerDao.save(updatedTrainer);
     }
 
     @Override
@@ -163,15 +172,22 @@ public class TrainerServiceImpl implements TrainerService {
         Trainer trainer = trainerDao.findByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException(
                         String.format(TRAINER_NOT_FOUND, username)));
+        User currentUser = trainer.getUser();
 
-        if (trainer.getUser().getIsActive() == active) {
+        if (Boolean.TRUE.equals(currentUser.getIsActive()) == active) {
             throw new IllegalStateException(
                     String.format("Trainer '%s' is already %s. Not idempotent.",
                             username, active ? "active" : "inactive"));
         }
 
-        trainer.getUser().setIsActive(active);
-        trainerDao.save(trainer);
+        User updatedUser = currentUser.toBuilder()
+                .isActive(active)
+                .build();
+        Trainer updatedTrainer = trainer.toBuilder()
+                .user(updatedUser)
+                .build();
+
+        trainerDao.save(updatedTrainer);
     }
 
     @Override

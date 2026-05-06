@@ -11,6 +11,7 @@ import org.gym.crm.util.CoreValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -213,12 +214,17 @@ class TrainerServiceImplTest {
     @Test
     void changePassword_shouldUpdate_whenOldPasswordMatches() throws Exception {
         when(trainerDao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainer));
-        when(trainerDao.save(any())).thenReturn(savedTrainer);
+        when(passwordEncoder.matches(PASSWORD, savedTrainer.getUser().getPassword())).thenReturn(true);
+        when(passwordEncoder.encode("newPassword")).thenReturn("encodedNewPassword");
+        when(trainerDao.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         service.changePassword(USERNAME, PASSWORD, "newPassword");
 
-        assertEquals("newPassword", savedTrainer.getUser().getPassword());
-        verify(trainerDao).save(savedTrainer);
+        ArgumentCaptor<Trainer> captor = ArgumentCaptor.forClass(Trainer.class);
+        verify(trainerDao).save(captor.capture());
+
+        assertEquals("encodedNewPassword",
+                captor.getValue().getUser().getPassword());
     }
 
     @Test
@@ -333,27 +339,37 @@ class TrainerServiceImplTest {
     @Test
     void setActive_shouldDeactivate_whenCurrentlyActive() {
         when(trainerDao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainer));
-        when(trainerDao.save(any())).thenReturn(savedTrainer);
+        when(trainerDao.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         service.setActive(USERNAME, false);
 
-        assertFalse(savedTrainer.getUser().getIsActive());
-        verify(trainerDao).save(savedTrainer);
+        ArgumentCaptor<Trainer> captor = ArgumentCaptor.forClass(Trainer.class);
+        verify(trainerDao).save(captor.capture());
+
+        Trainer saved = captor.getValue();
+
+        assertFalse(saved.getUser().getIsActive());
     }
 
     @Test
     void setActive_shouldActivate_whenCurrentlyInactive() {
         Trainer inactiveTrainer = savedTrainer.toBuilder()
-                .user(savedTrainer.getUser().toBuilder().isActive(false).build())
+                .user(savedTrainer.getUser().toBuilder()
+                        .isActive(false)
+                        .build())
                 .build();
 
         when(trainerDao.findByUsername(USERNAME)).thenReturn(Optional.of(inactiveTrainer));
-        when(trainerDao.save(any())).thenReturn(inactiveTrainer);
+        when(trainerDao.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         service.setActive(USERNAME, true);
 
-        assertTrue(inactiveTrainer.getUser().getIsActive());
-        verify(trainerDao).save(inactiveTrainer);
+        ArgumentCaptor<Trainer> captor = ArgumentCaptor.forClass(Trainer.class);
+        verify(trainerDao).save(captor.capture());
+
+        Trainer saved = captor.getValue();
+
+        assertTrue(saved.getUser().getIsActive());
     }
 
     @Test
