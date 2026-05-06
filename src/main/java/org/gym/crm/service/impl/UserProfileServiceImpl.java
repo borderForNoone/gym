@@ -1,39 +1,38 @@
 package org.gym.crm.service.impl;
 
-import io.micrometer.common.util.StringUtils;
-import lombok.Setter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.gym.crm.dao.TraineeDao;
 import org.gym.crm.dao.TrainerDao;
-import org.gym.crm.model.Trainee;
-import org.gym.crm.model.Trainer;
 import org.gym.crm.service.UserProfileService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.gym.crm.util.CoreValidator;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class UserProfileServiceImpl implements UserProfileService {
-    private static final String CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     private static final int PASSWORD_LENGTH = 10;
     private static final SecureRandom RANDOM = new SecureRandom();
 
-    @Autowired
-    @Setter
-    private TraineeDao traineeDao;
-
-    @Autowired
-    @Setter
-    private TrainerDao trainerDao;
+    private final TraineeDao traineeDao;
+    private final TrainerDao trainerDao;
+    private final CoreValidator validator;
 
     @Override
     public String generateUsername(String firstName, String lastName) {
-        String baseUsername = firstName + "." + lastName;
+        validator.validateNotBlank(firstName, "First name");
+        validator.validateNotBlank(lastName, "Last name");
 
-        if (!usernameExists(baseUsername)) {
+        String baseUsername = firstName.trim() + "." + lastName.trim();
+        validator.validateUsernameLength(baseUsername);
+
+        if (!isUsernameTaken(baseUsername)) {
             log.debug("Generated username='{}'", baseUsername);
             return baseUsername;
         }
@@ -43,7 +42,7 @@ public class UserProfileServiceImpl implements UserProfileService {
         do {
             candidate = baseUsername + suffix;
             suffix++;
-        } while (usernameExists(candidate));
+        } while (isUsernameTaken(candidate));
 
         log.debug("Generated username='{}' with suffix due to duplicates", candidate);
         return candidate;
@@ -51,27 +50,12 @@ public class UserProfileServiceImpl implements UserProfileService {
 
     @Override
     public String generatePassword() {
-        StringBuilder password = new StringBuilder(PASSWORD_LENGTH);
-        for (int i = 0; i < PASSWORD_LENGTH; i++) {
-            password.append(CHARS.charAt(RANDOM.nextInt(CHARS.length())));
-        }
-
-        log.debug("Generated password of length={}", PASSWORD_LENGTH);
-        return password.toString();
+        return IntStream.range(0, PASSWORD_LENGTH)
+                .mapToObj(i -> String.valueOf(CHARACTERS.charAt(RANDOM.nextInt(CHARACTERS.length()))))
+                .collect(Collectors.joining());
     }
 
-    private Stream<String> getExistingUsernames() {
-        return Stream.concat(
-                traineeDao.findAll().stream()
-                        .map(trainee -> trainee.getUser().getUsername()),
-                trainerDao.findAll().stream()
-                        .map(trainer -> trainer.getUser().getUsername())
-        );
-    }
-
-    private boolean usernameExists(String username) {
-        return getExistingUsernames()
-                .filter(StringUtils::isNotBlank)
-                .anyMatch(username::equals);
+    private boolean isUsernameTaken(String username) {
+        return traineeDao.existsByUsername(username) || trainerDao.existsByUsername(username);
     }
 }

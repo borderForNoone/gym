@@ -1,8 +1,11 @@
 package org.gym.crm.util;
 
+import org.gym.crm.exception.UsernameTooLongException;
+
 import java.util.Objects;
 
 public class Validator {
+    private static final int MAX_USERNAME_LENGTH = 110;
     private static final String INVALID_ID_EXCEPTION_MESSAGE = "ID must be positive and not null, got: %s";
     private static final String EMPTY_STRING_EXCEPTION_MESSAGE = "%s cannot be null or empty";
     private static final String NULL_OBJECT_EXCEPTION_MESSAGE = "%s cannot be null";
@@ -22,6 +25,14 @@ public class Validator {
     public static void validateNotBlank(String value, String fieldName) {
         if (Objects.isNull(value) || value.isBlank()) {
             throw new IllegalArgumentException(String.format(EMPTY_STRING_EXCEPTION_MESSAGE, fieldName));
+        }
+    }
+
+    public static void validateUsernameLength(String username) {
+        validateNotBlank(username, "Username");
+
+        if (username.length() > MAX_USERNAME_LENGTH) {
+            throw new UsernameTooLongException(username);
         }
     }
 }
