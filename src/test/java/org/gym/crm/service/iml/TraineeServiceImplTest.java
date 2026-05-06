@@ -16,6 +16,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -270,12 +271,17 @@ public class TraineeServiceImplTest {
     @Test
     void changePassword_shouldUpdatePassword_whenOldPasswordMatches() throws Exception {
         when(dao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainee));
-        when(dao.save(any(Trainee.class))).thenReturn(savedTrainee);
+        when(passwordEncoder.matches("oldPassword", savedTrainee.getUser().getPassword())).thenReturn(true);
+        when(passwordEncoder.encode("newPassword")).thenReturn("encodedNewPassword");
 
-        service.changePassword(USERNAME, ENCODED_PASSWORD, "newPassword");
+        service.changePassword(USERNAME, "oldPassword", "newPassword");
 
-        assertEquals("newPassword", savedTrainee.getUser().getPassword());
-        verify(dao).save(savedTrainee);
+        ArgumentCaptor<Trainee> captor = ArgumentCaptor.forClass(Trainee.class);
+        verify(dao).save(captor.capture());
+
+        Trainee updated = captor.getValue();
+
+        assertEquals("encodedNewPassword", updated.getUser().getPassword());
     }
 
     @Test
@@ -304,12 +310,12 @@ public class TraineeServiceImplTest {
     @Test
     void setActive_shouldDeactivate_whenCurrentlyActive() {
         when(dao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainee));
-        when(dao.save(any())).thenReturn(savedTrainee);
+        when(dao.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        service.setActive(USERNAME, false);
+        Trainee result = service.setActive(USERNAME, false);
 
-        assertFalse(savedTrainee.getUser().getIsActive());
-        verify(dao).save(savedTrainee);
+        assertFalse(result.getUser().getIsActive());
+        verify(dao).save(any());
     }
 
     @Test
@@ -437,15 +443,16 @@ public class TraineeServiceImplTest {
                 .build();
 
         when(dao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainee));
-        when(dao.save(any())).thenReturn(savedTrainee);
+        when(dao.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        service.updateProfile(USERNAME, updatedData);
+        Trainee result = service.updateProfile(USERNAME, updatedData);
 
-        assertEquals("NewFirst", savedTrainee.getUser().getFirstName());
-        assertEquals("NewLast", savedTrainee.getUser().getLastName());
-        assertEquals("New Address", savedTrainee.getAddress());
-        assertEquals(LocalDate.of(1995, 5, 15), savedTrainee.getDateOfBirth());
-        verify(dao).save(savedTrainee);
+        assertEquals("NewFirst", result.getUser().getFirstName());
+        assertEquals("NewLast", result.getUser().getLastName());
+        assertEquals("New Address", result.getAddress());
+        assertEquals(LocalDate.of(1995, 5, 15), result.getDateOfBirth());
+
+        verify(dao).save(any());
     }
 
     @Test

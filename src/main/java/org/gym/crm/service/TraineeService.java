@@ -26,7 +26,7 @@ public interface TraineeService {
 
     void changePassword(String username, String oldPassword, String newPassword) throws AuthenticationException;
 
-    void setActive(String username, boolean active);
+    Trainee setActive(String username, boolean active);
 
     void deleteByUsername(String username);
 
