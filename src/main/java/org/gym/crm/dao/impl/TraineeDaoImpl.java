@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.gym.crm.config.TransactionManager;
 import org.gym.crm.dao.TraineeDao;
 import org.gym.crm.model.Trainee;
+import org.gym.crm.model.Trainer;
 import org.gym.crm.util.Validator;
 import org.springframework.stereotype.Repository;
 
@@ -13,16 +14,53 @@ import java.util.Optional;
 @Repository
 @RequiredArgsConstructor
 public class TraineeDaoImpl implements TraineeDao {
+    private static final String USERNAME = "username";
+    private static final String USERNAME_LABEL = "Username";
+    private static final String TRAINEE_LABEL = "Trainee";
+    private static final String TRAINEE_USERNAME_LABEL = "Trainee username";
+    private static final String FIND_TRAINEE_BY_USERNAME_QUERY = """
+            SELECT t FROM Trainee t
+            JOIN FETCH t.user u
+            WHERE u.username = :username
+            """;
+    private static final String FIND_UNASSIGNED_TRAINERS_QUERY = """
+            SELECT tr FROM Trainer tr
+            JOIN FETCH tr.user u
+            WHERE tr.id NOT IN (
+                SELECT t.id FROM Trainee tn
+                JOIN tn.trainers t
+                WHERE tn.user.username = :username
+            )
+            """;
+    private static final String FIND_TRAINEE_WITH_TRAINERS_QUERY = """
+            SELECT t FROM Trainee t
+            JOIN FETCH t.user u
+            LEFT JOIN FETCH t.trainers
+            WHERE u.username = :username
+            """;
+    private static final String FIND_TRAINERS_BY_USERNAMES_QUERY = """
+            SELECT tr FROM Trainer tr
+            JOIN FETCH tr.user u
+            WHERE u.username IN :usernames
+            """;
+    private static final String FIND_TRAINEE_BY_USERNAME_FETCH_QUERY = """
+                SELECT t FROM Trainee t
+                JOIN FETCH t.user u
+                WHERE u.username = :username
+            """;
+
     private final TransactionManager transactionManager;
 
+    @Override
     public Trainee save(Trainee trainee) {
-        Validator.validateNotNull(trainee, "Trainee");
+        Validator.validateNotNull(trainee, TRAINEE_LABEL);
 
         transactionManager.performWithinTx(manager -> manager.persist(trainee));
 
         return trainee;
     }
 
+    @Override
     public Trainee update(Trainee trainee) {
         Validator.validateId(trainee.getId());
 
@@ -31,26 +69,141 @@ public class TraineeDaoImpl implements TraineeDao {
         return trainee;
     }
 
+    @Override
     public void delete(Long id) {
         Validator.validateId(id);
 
-        Trainee trainee = transactionManager.performReturningWithinTx(manager -> manager.find(Trainee.class, id));
+        Trainee trainee = transactionManager.performReturningWithinTx(
+                manager -> manager.find(Trainee.class, id)
+        );
+
         if (trainee != null) {
             transactionManager.performWithinTx(manager -> manager.remove(trainee));
         }
+    }
+
+    @Override
+    public void delete(Trainee trainee) {
+        Validator.validateNotNull(trainee, TRAINEE_LABEL);
+        Validator.validateId(trainee.getId());
+
+        transactionManager.performWithinTx(manager -> {
+            Trainee managed = manager.contains(trainee)
+                    ? trainee
+                    : manager.merge(trainee);
+
+            manager.remove(managed);
+        });
+    }
+
+    @Override
+    public Optional<Trainee> findByUsername(String username) {
+        Validator.validateNotBlank(username, USERNAME_LABEL);
+
+        return transactionManager.performReturningWithinTx(manager ->
+                manager.createQuery(FIND_TRAINEE_BY_USERNAME_QUERY, Trainee.class)
+                        .setParameter(USERNAME, username)
+                        .getResultStream()
+                        .findFirst()
+        );
+    }
+
+    @Override
+    public boolean existsByUsername(String username) {
+        Validator.validateNotBlank(username, USERNAME_LABEL);
+
+        return transactionManager.performReturningWithinTx(manager ->
+                manager.createQuery("""
+                                SELECT COUNT(t) FROM Trainee t
+                                JOIN t.user u
+                                WHERE u.username = :username
+                                """, Long.class)
+                        .setParameter(USERNAME, username)
+                        .getSingleResult() > 0
+        );
+    }
+
+    @Override
+    public void deleteByUsername(String username) {
+        Validator.validateNotBlank(username, USERNAME_LABEL);
+
+        transactionManager.performWithinTx(manager -> {
+            Trainee trainee = manager.createQuery(
+                            FIND_TRAINEE_BY_USERNAME_FETCH_QUERY,
+                            Trainee.class
+                    )
+                    .setParameter(USERNAME, username)
+                    .getResultStream()
+                    .findFirst()
+                    .orElse(null);
+
+            if (trainee != null) {
+                manager.remove(trainee);
+            }
+        });
+    }
+
+    @Override
+    public List<Trainer> findUnassignedTrainers(String traineeUsername) {
+        Validator.validateNotBlank(traineeUsername, TRAINEE_USERNAME_LABEL);
+
+        return transactionManager.performReturningWithinTx(manager ->
+                manager.createQuery(FIND_UNASSIGNED_TRAINERS_QUERY, Trainer.class)
+                        .setParameter(USERNAME, traineeUsername)
+                        .getResultList()
+        );
+    }
+
+    @Override
+    public Trainee updateTrainers(String traineeUsername, List<Trainer> trainers) {
+        Validator.validateNotBlank(traineeUsername, TRAINEE_USERNAME_LABEL);
+        Validator.validateNotNull(trainers, "Trainers list");
+
+        return transactionManager.performReturningWithinTx(manager -> {
+
+            Trainee trainee = manager
+                    .createQuery(FIND_TRAINEE_WITH_TRAINERS_QUERY, Trainee.class)
+                    .setParameter(USERNAME, traineeUsername)
+                    .getSingleResult();
+
+            List<Trainer> managedTrainers = trainers.stream()
+                    .map(manager::merge)
+                    .toList();
+
+            trainee.getTrainers().clear();
+            trainee.getTrainers().addAll(managedTrainers);
+
+            return manager.merge(trainee);
+        });
+    }
+
+    @Override
+    public List<Trainer> findAllByUsernames(List<String> trainerUsernames) {
+        Validator.validateNotNull(trainerUsernames, "Trainer usernames");
+
+        if (trainerUsernames.isEmpty()) {
+            return List.of();
+        }
+
+        return transactionManager.performReturningWithinTx(manager ->
+                manager.createQuery(FIND_TRAINERS_BY_USERNAMES_QUERY, Trainer.class)
+                        .setParameter("usernames", trainerUsernames)
+                        .getResultList()
+        );
     }
 
     public Optional<Trainee> findById(Long id) {
         Validator.validateId(id);
 
         return transactionManager.performReturningWithinTx(manager ->
-                Optional.ofNullable(manager.find(Trainee.class, id)));
+                Optional.ofNullable(manager.find(Trainee.class, id))
+        );
     }
 
     public List<Trainee> findAll() {
-        return transactionManager.performReturningWithinTx(manager -> manager
-                .createQuery("from Trainee", Trainee.class)
-                .getResultList()
+        return transactionManager.performReturningWithinTx(manager ->
+                manager.createQuery("FROM Trainee", Trainee.class)
+                        .getResultList()
         );
     }
 }

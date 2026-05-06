@@ -12,9 +12,11 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
@@ -37,9 +39,11 @@ public class Trainee {
     private Long id;
 
     @Column(name = "date_of_birth", nullable = true)
+    @Setter
     private LocalDate dateOfBirth;
 
     @Column(nullable = true, length = 255)
+    @Setter
     private String address;
 
     @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, optional = false)
@@ -48,8 +52,10 @@ public class Trainee {
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(joinColumns = @JoinColumn(name = "trainee_id"), inverseJoinColumns = @JoinColumn(name = "trainer_id"))
+    @Builder.Default
     private Set<Trainer> trainers = new HashSet<>();
 
     @OneToMany(mappedBy = "trainee", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @Builder.Default
     private Set<Training> trainings = new HashSet<>();
 }

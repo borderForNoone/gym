@@ -108,6 +108,78 @@ class TrainerDaoImplTest extends AbstractDaoTest<TrainerDaoImpl> {
         assertThat(actual).containsAll(expected);
     }
 
+    @Test
+    void findNotAssignedToTrainee_shouldReturnOnlyUnassignedTrainers() {
+        List<Trainer> actual = dao.findNotAssignedToTrainee("some.trainee");
+
+        assertThat(actual)
+                .extracting(t -> t.getUser().getUsername())
+                .containsExactlyInAnyOrder("Callum.Whitfield", "Nora.Pemberton");
+    }
+
+    @Test
+    void findNotAssignedToTrainee_shouldReturnAll_whenTraineeHasNoTrainings() {
+        List<Trainer> actual = dao.findNotAssignedToTrainee("Unknown.User");
+
+        assertThat(actual).isNotEmpty();
+    }
+
+    @Test
+    void findNotAssignedToTrainee_shouldThrowException_whenUsernameBlank() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> dao.findNotAssignedToTrainee(""));
+
+        assertThat(exception.getMessage())
+                .isEqualTo("Trainee Username cannot be null or empty");
+    }
+
+    @Test
+    void existsByUsername_shouldReturnTrue_whenTrainerExists() {
+        boolean result = dao.existsByUsername("Callum.Whitfield");
+
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    void existsByUsername_shouldReturnFalse_whenTrainerNotExists() {
+        boolean result = dao.existsByUsername("No.Such.User");
+
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    void existsByUsername_shouldThrowException_whenBlank() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> dao.existsByUsername(" "));
+
+        assertThat(exception.getMessage())
+                .isEqualTo("Username cannot be null or empty");
+    }
+
+    @Test
+    void findByUsername_shouldReturnTrainer_whenExists() {
+        Optional<Trainer> actual = dao.findByUsername("Callum.Whitfield");
+
+        assertThat(actual).isPresent();
+        assertThat(actual.get().getUser().getFirstName()).isEqualTo("Callum");
+    }
+
+    @Test
+    void findByUsername_shouldReturnEmpty_whenNotExists() {
+        Optional<Trainer> actual = dao.findByUsername("unknown.user");
+
+        assertThat(actual).isEmpty();
+    }
+
+    @Test
+    void findByUsername_shouldThrowException_whenBlank() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> dao.findByUsername(null));
+
+        assertThat(exception.getMessage())
+                .isEqualTo("Username cannot be null or empty");
+    }
+
     private Trainer buildTrainer() {
         return Trainer.builder()
                 .user(buildUser())

@@ -1,52 +1,67 @@
 package org.gym.crm.service.impl;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.criteria.CriteriaQuery;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.gym.crm.dao.TraineeDao;
 import org.gym.crm.exception.EntityNotFoundException;
 import org.gym.crm.model.Trainee;
+import org.gym.crm.model.Trainer;
+import org.gym.crm.model.Training;
+import org.gym.crm.model.User;
+import org.gym.crm.search.criteria.TraineeTrainingCriteriaBuilder;
+import org.gym.crm.search.filter.TraineeTrainingFilter;
 import org.gym.crm.service.TraineeService;
 import org.gym.crm.service.UserProfileService;
-import org.gym.crm.util.Validator;
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.gym.crm.util.CoreValidator;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import javax.naming.AuthenticationException;
 import java.util.List;
 import java.util.Optional;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class TraineeServiceImpl implements TraineeService {
     private static final String TRAINEE_NOT_FOUND_BY_ID = "Trainee not found by id: %s";
+    private static final String TRAINEE_NOT_FOUND_BY_USERNAME = "Trainee not found: %s";
     private static final String TRAINEE = "Trainee";
+    private static final String USERNAME_LABEL = "Username";
+    private static final String PASSWORD_LABEL = "Password";
+    private static final String OLD_PASSWORD_LABEL = "Old password";
+    private static final String NEW_PASSWORD_LABEL = "New password";
+    private static final String UPDATED_DATA_LABEL = "Updated data";
+    private static final String FIRST_NAME_LABEL = "First name";
+    private static final String LAST_NAME_LABEL = "Last name";
 
-    @Setter(onMethod_ = {@Autowired})
-    private TraineeDao dao;
+    private final TraineeDao dao;
+    private final UserProfileService userCredentialGenerator;
+    private final PasswordEncoder passwordEncoder;
+    private final TraineeTrainingCriteriaBuilder criteriaBuilder;
+    private final CoreValidator validator;
 
-    @Setter(onMethod_ = {@Autowired})
-    private UserProfileService userCredentialGenerator;
-
-    @Setter(onMethod_ = {@Autowired})
-    private PasswordEncoder passwordEncoder;
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Override
     public Trainee create(Trainee trainee) {
-        Validator.validateNotNull(trainee, TRAINEE);
+        validator.validateNotNull(trainee, TRAINEE);
 
-        log.info("Creating trainee: firstName={} lastName{}", trainee.getUser().getFirstName(), trainee.getUser().getLastName());
+        log.info("Creating trainee: firstName={} lastName={}", trainee.getUser().getFirstName(), trainee.getUser().getLastName());
 
         String username = userCredentialGenerator.generateUsername(trainee.getUser().getFirstName(), trainee.getUser().getLastName());
         String rawPassword = userCredentialGenerator.generatePassword();
 
         Trainee withCredentials = trainee.toBuilder()
-                .user(
-                        trainee.getUser().toBuilder()
-                                .username(username)
-                                .password(passwordEncoder.encode(rawPassword))
-                                .isActive(true)
-                                .build()
-                )
+                .user(trainee.getUser().toBuilder()
+                        .username(username)
+                        .password(passwordEncoder.encode(rawPassword))
+                        .isActive(true)
+                        .build())
                 .build();
 
         Trainee saved = dao.save(withCredentials);
@@ -64,16 +79,14 @@ public class TraineeServiceImpl implements TraineeService {
     @Override
     public List<Trainee> findAll() {
         log.info("Fetching all trainees");
-
         List<Trainee> trainees = dao.findAll();
-
         log.info("Fetched {} trainees", trainees.size());
         return trainees;
     }
 
     @Override
     public Trainee update(Trainee trainee) {
-        Validator.validateNotNull(trainee, TRAINEE);
+        validator.validateNotNull(trainee, TRAINEE);
 
         log.info("Updating trainee: id={}", trainee.getId());
         findById(trainee.getId());
@@ -91,5 +104,142 @@ public class TraineeServiceImpl implements TraineeService {
 
         dao.delete(id);
         log.info("Trainee deleted successfully: id={}", id);
+    }
+
+    @Override
+    public boolean authenticate(String username, String password) {
+        validator.validateNotBlank(username, USERNAME_LABEL);
+        validator.validateNotBlank(password, PASSWORD_LABEL);
+
+        return findByUsername(username)
+                .map(t -> t.getUser().getPassword().equals(password))
+                .orElse(false);
+    }
+
+    @Override
+    public Optional<Trainee> findByUsername(String username) {
+        validator.validateNotBlank(username, USERNAME_LABEL);
+
+        return dao.findByUsername(username);
+    }
+
+    @Override
+    public void changePassword(String username, String oldPassword, String newPassword)
+            throws AuthenticationException {
+        validator.validateNotBlank(username, USERNAME_LABEL);
+        validator.validateNotBlank(oldPassword, OLD_PASSWORD_LABEL);
+        validator.validateNotBlank(newPassword, NEW_PASSWORD_LABEL);
+
+        Trainee trainee = dao.findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        String.format(TRAINEE_NOT_FOUND_BY_USERNAME, username)));
+
+        if (!trainee.getUser().getPassword().equals(oldPassword)) {
+            throw new AuthenticationException("Current password is incorrect");
+        }
+
+        trainee.getUser().setPassword(newPassword);
+        dao.save(trainee);
+    }
+
+    @Override
+    public void setActive(String username, boolean active) {
+        validator.validateNotBlank(username, USERNAME_LABEL);
+
+        Trainee trainee = findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        String.format(TRAINEE_NOT_FOUND_BY_USERNAME, username)));
+
+        if (trainee.getUser().getIsActive() == active) {
+            throw new IllegalStateException(
+                    String.format("Trainee '%s' is already %s. Not idempotent.",
+                            username, active ? "active" : "inactive"));
+        }
+
+        trainee.getUser().setIsActive(active);
+        dao.save(trainee);
+    }
+
+    @Override
+    public void deleteByUsername(String username) {
+        validator.validateNotBlank(username, USERNAME_LABEL);
+
+        Trainee trainee = findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        String.format(TRAINEE_NOT_FOUND_BY_USERNAME, username)));
+
+        dao.delete(trainee);
+    }
+
+    @Override
+    public List<Training> getTrainings(TraineeTrainingFilter filter) {
+        validator.validateNotNull(filter, "Filter");
+
+        CriteriaQuery<Training> searchQuery =
+                criteriaBuilder.build(entityManager.getCriteriaBuilder(), filter);
+
+        return entityManager.createQuery(searchQuery).getResultList();
+    }
+
+    @Override
+    public List<Trainer> getUnassignedTrainers(String traineeUsername) {
+        validator.validateNotBlank(traineeUsername, "Trainee username");
+
+        if (!dao.existsByUsername(traineeUsername)) {
+            throw new EntityNotFoundException(
+                    String.format(TRAINEE_NOT_FOUND_BY_USERNAME, traineeUsername));
+        }
+
+        return dao.findUnassignedTrainers(traineeUsername);
+    }
+
+    @Override
+    public Trainee updateTrainers(String traineeUsername, List<String> trainerUsernames) {
+        validator.validateNotBlank(traineeUsername, "Trainee username");
+        validator.validateNotNull(trainerUsernames, "Trainer usernames");
+
+        Trainee trainee = findByUsername(traineeUsername)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        String.format(TRAINEE_NOT_FOUND_BY_USERNAME, traineeUsername)));
+
+        List<Trainer> trainers = dao.findAllByUsernames(trainerUsernames);
+        trainee.getTrainers().clear();
+        trainee.getTrainers().addAll(trainers);
+
+        Trainee saved = dao.save(trainee);
+        log.info("Updated trainers list for trainee={}, trainers={}", traineeUsername, trainerUsernames);
+
+        return saved;
+    }
+
+    @Override
+    public Trainee updateProfile(String username, Trainee updatedData) {
+        validator.validateNotBlank(username, USERNAME_LABEL);
+        validator.validateNotNull(updatedData, UPDATED_DATA_LABEL);
+
+        Trainee trainee = dao.findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        String.format(TRAINEE_NOT_FOUND_BY_USERNAME, username)));
+
+        User user = trainee.getUser();
+        User updatedUser = updatedData.getUser();
+
+        if (updatedUser != null) {
+            validator.validateNotBlank(updatedUser.getFirstName(), FIRST_NAME_LABEL);
+            validator.validateNotBlank(updatedUser.getLastName(), LAST_NAME_LABEL);
+
+            user.setFirstName(updatedUser.getFirstName());
+            user.setLastName(updatedUser.getLastName());
+            user.setIsActive(updatedUser.getIsActive());
+        }
+
+        if (updatedData.getDateOfBirth() != null) {
+            trainee.setDateOfBirth(updatedData.getDateOfBirth());
+        }
+        if (updatedData.getAddress() != null) {
+            trainee.setAddress(updatedData.getAddress());
+        }
+
+        return dao.save(trainee);
     }
 }
