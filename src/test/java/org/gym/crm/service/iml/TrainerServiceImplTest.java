@@ -325,8 +325,9 @@ class TrainerServiceImplTest {
 
     @Test
     void updateProfile_shouldThrowException_whenUsernameBlank() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.updateProfile("", Trainer.builder().build()));
+        Trainer trainer = Trainer.builder().build();
+
+        assertThrows(IllegalArgumentException.class, () -> service.updateProfile("", trainer));
     }
 
     @Test

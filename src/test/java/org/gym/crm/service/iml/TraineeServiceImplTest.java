@@ -406,14 +406,16 @@ public class TraineeServiceImplTest {
     void updateTrainers_shouldThrowEntityNotFound_whenTraineeNotFound() {
         when(dao.findByUsername(USERNAME)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class,
-                () -> service.updateTrainers(USERNAME, List.of("John.Smith")));
+        List<String> trainerUsernames = List.of("John.Smith");
+
+        assertThrows(EntityNotFoundException.class, () -> service.updateTrainers(USERNAME, trainerUsernames));
     }
 
     @Test
     void updateTrainers_shouldThrowException_whenUsernameBlank() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.updateTrainers("", List.of("John.Smith")));
+        List<String> trainerUsernames = List.of("John.Smith");
+
+        assertThrows(IllegalArgumentException.class, () -> service.updateTrainers("", trainerUsernames));
     }
 
     @Test
@@ -484,8 +486,9 @@ public class TraineeServiceImplTest {
 
     @Test
     void updateProfile_shouldThrowException_whenUsernameBlank() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.updateProfile("", Trainee.builder().build()));
+        Trainee trainee = Trainee.builder().build();
+
+        assertThrows(IllegalArgumentException.class, () -> service.updateProfile("", trainee));
     }
 
     @Test
