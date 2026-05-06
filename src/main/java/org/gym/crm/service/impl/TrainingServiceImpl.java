@@ -7,6 +7,7 @@ import org.gym.crm.model.Training;
 import org.gym.crm.service.TrainingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,6 +19,7 @@ public class TrainingServiceImpl implements TrainingService {
     @Setter
     private TrainingDao trainingDao;
 
+    @Transactional
     @Override
     public Training create(Training training) {
         log.info("Creating training: {}", training.getTrainingName());

@@ -3,6 +3,7 @@ package org.gym.crm.service.impl;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.gym.crm.dao.TrainerDao;
@@ -45,6 +46,7 @@ public class TrainerServiceImpl implements TrainerService {
     @PersistenceContext
     private EntityManager entityManager;
 
+    @Transactional
     @Override
     public Trainer create(Trainer trainer) {
         log.info("Creating trainer: {} {}", trainer.getUser().getFirstName(), trainer.getUser().getLastName());
@@ -76,6 +78,7 @@ public class TrainerServiceImpl implements TrainerService {
         return trainerDao.findAll();
     }
 
+    @Transactional
     @Override
     public Trainer update(Trainer trainer) {
         log.info("Updating trainer with id={}", trainer.getId());

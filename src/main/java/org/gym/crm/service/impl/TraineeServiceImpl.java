@@ -18,6 +18,7 @@ import org.gym.crm.service.UserProfileService;
 import org.gym.crm.util.CoreValidator;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.naming.AuthenticationException;
 import java.util.List;
@@ -47,6 +48,7 @@ public class TraineeServiceImpl implements TraineeService {
     @PersistenceContext
     private EntityManager entityManager;
 
+    @Transactional
     @Override
     public Trainee create(Trainee trainee) {
         validator.validateNotNull(trainee, TRAINEE);
@@ -84,6 +86,7 @@ public class TraineeServiceImpl implements TraineeService {
         return trainees;
     }
 
+    @Transactional
     @Override
     public Trainee update(Trainee trainee) {
         validator.validateNotNull(trainee, TRAINEE);
@@ -97,6 +100,7 @@ public class TraineeServiceImpl implements TraineeService {
         return updated;
     }
 
+    @Transactional
     @Override
     public void delete(Long id) {
         log.info("Deleting trainee: id={}", id);
@@ -160,6 +164,7 @@ public class TraineeServiceImpl implements TraineeService {
         dao.save(trainee);
     }
 
+    @Transactional
     @Override
     public void deleteByUsername(String username) {
         validator.validateNotBlank(username, USERNAME_LABEL);
@@ -193,6 +198,7 @@ public class TraineeServiceImpl implements TraineeService {
         return dao.findUnassignedTrainers(traineeUsername);
     }
 
+    @Transactional
     @Override
     public Trainee updateTrainers(String traineeUsername, List<String> trainerUsernames) {
         validator.validateNotBlank(traineeUsername, "Trainee username");
