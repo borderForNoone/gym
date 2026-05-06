@@ -4,10 +4,12 @@ import org.gym.crm.dao.TraineeDao;
 import org.gym.crm.dao.TrainerDao;
 import org.gym.crm.exception.UsernameTooLongException;
 import org.gym.crm.service.impl.UserProfileServiceImpl;
+import org.gym.crm.util.CoreValidator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.gym.crm.util.TestConstants.ALLOWED_CHARS;
@@ -30,15 +32,17 @@ class UserProfileServiceImplTest {
     private TraineeDao traineeDao;
     @Mock
     private TrainerDao trainerDao;
+    @Spy
+    private CoreValidator validator;
     @InjectMocks
-    private UserProfileServiceImpl userProfileService;
+    private UserProfileServiceImpl service;
 
     @Test
     void generateUsername_shouldReturnBaseUsername_whenNoDuplicates() {
         when(traineeDao.existsByUsername(USERNAME)).thenReturn(false);
         when(trainerDao.existsByUsername(USERNAME)).thenReturn(false);
 
-        String actual = userProfileService.generateUsername(FIRST_NAME, LAST_NAME);
+        String actual = service.generateUsername(FIRST_NAME, LAST_NAME);
 
         assertEquals(USERNAME, actual);
     }
@@ -49,7 +53,7 @@ class UserProfileServiceImplTest {
         when(traineeDao.existsByUsername(USERNAME_WITH_SUFFIX_1)).thenReturn(false);
         when(trainerDao.existsByUsername(USERNAME_WITH_SUFFIX_1)).thenReturn(false);
 
-        String actual = userProfileService.generateUsername(FIRST_NAME, LAST_NAME);
+        String actual = service.generateUsername(FIRST_NAME, LAST_NAME);
 
         assertEquals(USERNAME_WITH_SUFFIX_1, actual);
     }
@@ -62,7 +66,7 @@ class UserProfileServiceImplTest {
         when(traineeDao.existsByUsername(USERNAME_WITH_SUFFIX_2)).thenReturn(false);
         when(trainerDao.existsByUsername(USERNAME_WITH_SUFFIX_2)).thenReturn(false);
 
-        String actual = userProfileService.generateUsername(FIRST_NAME, LAST_NAME);
+        String actual = service.generateUsername(FIRST_NAME, LAST_NAME);
 
         assertEquals(USERNAME_WITH_SUFFIX_2, actual);
     }
@@ -73,7 +77,7 @@ class UserProfileServiceImplTest {
         when(traineeDao.existsByUsername(USERNAME_WITH_SUFFIX_1)).thenReturn(true);
         when(traineeDao.existsByUsername(USERNAME_WITH_SUFFIX_2)).thenReturn(false);
 
-        String actual = userProfileService.generateUsername(FIRST_NAME, LAST_NAME);
+        String actual = service.generateUsername(FIRST_NAME, LAST_NAME);
 
         assertEquals(USERNAME_WITH_SUFFIX_2, actual);
     }
@@ -81,25 +85,25 @@ class UserProfileServiceImplTest {
     @Test
     void generateUsername_shouldThrowException_whenFirstNameBlank() {
         assertThrows(IllegalArgumentException.class,
-                () -> userProfileService.generateUsername("", LAST_NAME));
+                () -> service.generateUsername("", LAST_NAME));
     }
 
     @Test
     void generateUsername_shouldThrowException_whenLastNameBlank() {
         assertThrows(IllegalArgumentException.class,
-                () -> userProfileService.generateUsername(FIRST_NAME, ""));
+                () -> service.generateUsername(FIRST_NAME, ""));
     }
 
     @Test
     void generateUsername_shouldThrowException_whenFirstNameNull() {
         assertThrows(IllegalArgumentException.class,
-                () -> userProfileService.generateUsername(null, LAST_NAME));
+                () -> service.generateUsername(null, LAST_NAME));
     }
 
     @Test
     void generateUsername_shouldThrowException_whenLastNameNull() {
         assertThrows(IllegalArgumentException.class,
-                () -> userProfileService.generateUsername(FIRST_NAME, null));
+                () -> service.generateUsername(FIRST_NAME, null));
     }
 
     @Test
@@ -108,12 +112,12 @@ class UserProfileServiceImplTest {
         String longLast = "B".repeat(60);
 
         assertThrows(UsernameTooLongException.class,
-                () -> userProfileService.generateUsername(longFirst, longLast));
+                () -> service.generateUsername(longFirst, longLast));
     }
 
     @Test
     void generatePassword_shouldReturn10CharString() {
-        String actual = userProfileService.generatePassword();
+        String actual = service.generatePassword();
 
         assertNotNull(actual);
         assertEquals(PASSWORD_LENGTH, actual.length());
@@ -121,15 +125,15 @@ class UserProfileServiceImplTest {
 
     @Test
     void generatePassword_shouldContainOnlyAllowedChars() {
-        String actual = userProfileService.generatePassword();
+        String actual = service.generatePassword();
 
         assertTrue(actual.chars().allMatch(c -> ALLOWED_CHARS.indexOf(c) >= 0));
     }
 
     @Test
     void generatePassword_shouldReturnDifferentPasswordsEachTime() {
-        String first = userProfileService.generatePassword();
-        String second = userProfileService.generatePassword();
+        String first = service.generatePassword();
+        String second = service.generatePassword();
 
         assertNotEquals(first, second);
     }

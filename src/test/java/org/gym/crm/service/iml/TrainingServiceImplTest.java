@@ -32,7 +32,7 @@ class TrainingServiceImplTest {
     @Mock
     private TrainingDao trainingDao;
     @InjectMocks
-    private TrainingServiceImpl trainingService;
+    private TrainingServiceImpl service;
 
     private Training training;
 
@@ -45,7 +45,7 @@ class TrainingServiceImplTest {
     void create_shouldSaveAndReturnTraining() {
         when(trainingDao.save(training)).thenReturn(training);
 
-        Training actual = trainingService.create(training);
+        Training actual = service.create(training);
 
         assertEquals(training, actual);
         verify(trainingDao).save(training);
@@ -55,7 +55,7 @@ class TrainingServiceImplTest {
     void findById_shouldReturnTraining_whenExists() {
         when(trainingDao.findById(ID)).thenReturn(Optional.of(training));
 
-        Optional<Training> actual = trainingService.findById(ID);
+        Optional<Training> actual = service.findById(ID);
 
         assertTrue(actual.isPresent());
         assertEquals(training, actual.get());
@@ -66,7 +66,7 @@ class TrainingServiceImplTest {
     void findById_shouldReturnEmpty_whenNotExists() {
         when(trainingDao.findById(NON_EXISTING_ID)).thenReturn(Optional.empty());
 
-        Optional<Training> actual = trainingService.findById(NON_EXISTING_ID);
+        Optional<Training> actual = service.findById(NON_EXISTING_ID);
 
         assertTrue(actual.isEmpty());
         verify(trainingDao).findById(NON_EXISTING_ID);
@@ -77,7 +77,7 @@ class TrainingServiceImplTest {
         List<Training> expected = List.of(training);
         when(trainingDao.findAll()).thenReturn(expected);
 
-        List<Training> actual = trainingService.findAll();
+        List<Training> actual = service.findAll();
 
         assertEquals(expected.size(), actual.size());
         assertEquals(expected.getFirst(), actual.getFirst());

@@ -128,7 +128,6 @@ public class TraineeDaoImpl implements TraineeDao {
         Validator.validateNotBlank(username, USERNAME_LABEL);
 
         transactionManager.performWithinTx(manager -> {
-
             Trainee trainee = manager.createQuery(
                             FIND_TRAINEE_BY_USERNAME_FETCH_QUERY,
                             Trainee.class

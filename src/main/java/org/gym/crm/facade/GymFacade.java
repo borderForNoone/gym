@@ -173,11 +173,15 @@ public class GymFacade {
         return traineeMapper.toDto(trainee);
     }
 
-    public void changeTraineePassword(String username, String oldPassword, String newPassword) throws AuthenticationException {
+    public void changeTraineePassword(String username, String oldPassword, String newPassword)
+            throws AuthenticationException {
+        traineeService.authenticate(username, oldPassword);
         traineeService.changePassword(username, oldPassword, newPassword);
     }
 
-    public void changeTrainerPassword(String username, String oldPassword, String newPassword) throws AuthenticationException {
+    public void changeTrainerPassword(String username, String oldPassword, String newPassword)
+            throws AuthenticationException {
+        trainerService.authenticate(username, oldPassword);
         trainerService.changePassword(username, oldPassword, newPassword);
     }
 

@@ -11,12 +11,14 @@ import org.gym.crm.model.Trainer;
 import org.gym.crm.model.User;
 import org.gym.crm.service.UserProfileService;
 import org.gym.crm.service.impl.TraineeServiceImpl;
+import org.gym.crm.util.CoreValidator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -54,6 +56,8 @@ public class TraineeServiceImplTest {
     private UserProfileService userCredentialGenerator;
     @Mock
     private PasswordEncoder passwordEncoder;
+    @Spy
+    private CoreValidator validator;
 
     @InjectMocks
     private TraineeServiceImpl service;
@@ -68,14 +72,12 @@ public class TraineeServiceImplTest {
 
         savedTrainee = trainee.toBuilder()
                 .id(VALID_ID)
-                .user(
-                        trainee.getUser().toBuilder()
-                                .id(VALID_ID)
-                                .username(USERNAME)
-                                .password(ENCODED_PASSWORD)
-                                .isActive(true)
-                                .build()
-                )
+                .user(trainee.getUser().toBuilder()
+                        .id(VALID_ID)
+                        .username(USERNAME)
+                        .password(ENCODED_PASSWORD)
+                        .isActive(true)
+                        .build())
                 .build();
 
         Logger logger = (Logger) LoggerFactory.getLogger(TraineeServiceImpl.class);
@@ -107,16 +109,15 @@ public class TraineeServiceImplTest {
 
     @Test
     void createTrainee_shouldThrowException_whenTraineeIsNull() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.create(null));
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> service.create(null));
 
         assertEquals(TRAINEE_CANNOT_BE_NULL, exception.getMessage());
     }
 
     @Test
     void updateTrainee_shouldUpdateTrainee_whenTraineeExists() {
-        Trainee expected = savedTrainee.toBuilder()
-                .address("new address")
-                .build();
+        Trainee expected = savedTrainee.toBuilder().address("new address").build();
 
         when(dao.findById(VALID_ID)).thenReturn(Optional.of(savedTrainee));
         when(dao.update(savedTrainee)).thenReturn(expected);
@@ -129,7 +130,8 @@ public class TraineeServiceImplTest {
 
     @Test
     void updateTrainee_shouldThrowException_whenTraineeIsNull() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.update(null));
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> service.update(null));
 
         assertEquals(TRAINEE_CANNOT_BE_NULL, exception.getMessage());
     }
@@ -139,7 +141,8 @@ public class TraineeServiceImplTest {
         Trainee nonExistent = savedTrainee.toBuilder().id(NOT_FOUND_ID).build();
         when(dao.findById(NOT_FOUND_ID)).thenReturn(Optional.empty());
 
-        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> service.update(nonExistent));
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> service.update(nonExistent));
 
         assertEquals(String.format(TRAINEE_NOT_FOUND_BY_ID, NOT_FOUND_ID), exception.getMessage());
         verify(dao, never()).update(any(Trainee.class));
@@ -176,7 +179,9 @@ public class TraineeServiceImplTest {
     void findById_shouldThrowException_whenTraineeNotFound() {
         when(dao.findById(NOT_FOUND_ID)).thenReturn(Optional.empty());
 
-        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> service.findById(NOT_FOUND_ID));
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> service.findById(NOT_FOUND_ID));
+
         assertEquals(String.format(TRAINEE_NOT_FOUND_BY_ID, NOT_FOUND_ID), exception.getMessage());
     }
 
@@ -227,12 +232,14 @@ public class TraineeServiceImplTest {
 
     @Test
     void authenticate_shouldThrowException_whenUsernameIsBlank() {
-        assertThrows(IllegalArgumentException.class, () -> service.authenticate("", ENCODED_PASSWORD));
+        assertThrows(IllegalArgumentException.class,
+                () -> service.authenticate("", ENCODED_PASSWORD));
     }
 
     @Test
     void authenticate_shouldThrowException_whenPasswordIsBlank() {
-        assertThrows(IllegalArgumentException.class, () -> service.authenticate(USERNAME, ""));
+        assertThrows(IllegalArgumentException.class,
+                () -> service.authenticate(USERNAME, ""));
     }
 
     @Test
@@ -256,7 +263,8 @@ public class TraineeServiceImplTest {
 
     @Test
     void findByUsername_shouldThrowException_whenUsernameIsBlank() {
-        assertThrows(IllegalArgumentException.class, () -> service.findByUsername("  "));
+        assertThrows(IllegalArgumentException.class,
+                () -> service.findByUsername("  "));
     }
 
     @Test
@@ -266,15 +274,16 @@ public class TraineeServiceImplTest {
 
         service.changePassword(USERNAME, ENCODED_PASSWORD, "newPassword");
 
-        verify(dao).save(savedTrainee);
         assertEquals("newPassword", savedTrainee.getUser().getPassword());
+        verify(dao).save(savedTrainee);
     }
 
     @Test
     void changePassword_shouldThrowAuthException_whenOldPasswordWrong() {
         when(dao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainee));
 
-        assertThrows(Exception.class, () -> service.changePassword(USERNAME, "wrongOld", "newPassword"));
+        assertThrows(Exception.class,
+                () -> service.changePassword(USERNAME, "wrongOld", "newPassword"));
         verify(dao, never()).save(any());
     }
 
@@ -318,25 +327,38 @@ public class TraineeServiceImplTest {
     void setActive_shouldThrowEntityNotFound_whenTraineeNotFound() {
         when(dao.findByUsername(USERNAME)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () -> service.setActive(USERNAME, false));
+        assertThrows(EntityNotFoundException.class,
+                () -> service.setActive(USERNAME, false));
     }
 
     @Test
     void setActive_shouldThrowException_whenUsernameBlank() {
-        assertThrows(IllegalArgumentException.class, () -> service.setActive("", false));
+        assertThrows(IllegalArgumentException.class,
+                () -> service.setActive("", false));
+    }
+
+    @Test
+    void deleteByUsername_shouldDelete_whenTraineeExists() {
+        when(dao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainee));
+
+        service.deleteByUsername(USERNAME);
+
+        verify(dao).delete(savedTrainee);
     }
 
     @Test
     void deleteByUsername_shouldThrowEntityNotFound_whenTraineeNotFound() {
         when(dao.findByUsername(USERNAME)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () -> service.deleteByUsername(USERNAME));
+        assertThrows(EntityNotFoundException.class,
+                () -> service.deleteByUsername(USERNAME));
         verify(dao, never()).delete(any(Trainee.class));
     }
 
     @Test
     void deleteByUsername_shouldThrowException_whenUsernameBlank() {
-        assertThrows(IllegalArgumentException.class, () -> service.deleteByUsername(""));
+        assertThrows(IllegalArgumentException.class,
+                () -> service.deleteByUsername(""));
     }
 
     @Test
@@ -355,13 +377,15 @@ public class TraineeServiceImplTest {
     void getUnassignedTrainers_shouldThrowEntityNotFound_whenTraineeNotFound() {
         when(dao.existsByUsername(USERNAME)).thenReturn(false);
 
-        assertThrows(EntityNotFoundException.class, () -> service.getUnassignedTrainers(USERNAME));
+        assertThrows(EntityNotFoundException.class,
+                () -> service.getUnassignedTrainers(USERNAME));
         verify(dao, never()).findUnassignedTrainers(any());
     }
 
     @Test
     void getUnassignedTrainers_shouldThrowException_whenUsernameBlank() {
-        assertThrows(IllegalArgumentException.class, () -> service.getUnassignedTrainers("  "));
+        assertThrows(IllegalArgumentException.class,
+                () -> service.getUnassignedTrainers("  "));
     }
 
     @Test
@@ -380,19 +404,16 @@ public class TraineeServiceImplTest {
 
     @Test
     void updateTrainers_shouldThrowEntityNotFound_whenTraineeNotFound() {
-        List<String> trainers = List.of("John.Smith");
-
         when(dao.findByUsername(USERNAME)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () -> service.updateTrainers(USERNAME, trainers));
+        assertThrows(EntityNotFoundException.class,
+                () -> service.updateTrainers(USERNAME, List.of("John.Smith")));
     }
 
     @Test
     void updateTrainers_shouldThrowException_whenUsernameBlank() {
-        List<String> trainers = List.of("John.Smith");
-        String username = "";
-
-        assertThrows(IllegalArgumentException.class, () -> service.updateTrainers(username, trainers));
+        assertThrows(IllegalArgumentException.class,
+                () -> service.updateTrainers("", List.of("John.Smith")));
     }
 
     @Test
@@ -463,10 +484,16 @@ public class TraineeServiceImplTest {
 
     @Test
     void updateProfile_shouldThrowException_whenUsernameBlank() {
-        Trainee testTrainee = Trainee.builder().build();
-
         assertThrows(IllegalArgumentException.class,
-                () -> service.updateProfile("", testTrainee));
+                () -> service.updateProfile("", Trainee.builder().build()));
+    }
+
+    @Test
+    void getTrainings_shouldThrowException_whenFilterIsNull() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> service.getTrainings(null));
+
+        assertThat(exception.getMessage()).contains("Filter");
     }
 
     @Test
@@ -483,16 +510,6 @@ public class TraineeServiceImplTest {
                 .extracting(ILoggingEvent::getFormattedMessage)
                 .anyMatch(message -> message.contains(FIRST_NAME) && message.contains(LAST_NAME))
                 .anyMatch(message -> message.contains(USERNAME));
-    }
-
-    @Test
-    void getTrainings_shouldThrowException_whenFilterIsNull() {
-        IllegalArgumentException expected = assertThrows(
-                IllegalArgumentException.class,
-                () -> service.getTrainings(null)
-        );
-
-        assertThat(expected.getMessage()).contains("Filter");
     }
 
     private Trainee buildTrainee() {

@@ -7,12 +7,15 @@ import org.gym.crm.model.TrainingType;
 import org.gym.crm.model.User;
 import org.gym.crm.service.UserProfileService;
 import org.gym.crm.service.impl.TrainerServiceImpl;
+import org.gym.crm.util.CoreValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 import java.util.Optional;
@@ -40,8 +43,12 @@ class TrainerServiceImplTest {
     private TrainerDao trainerDao;
     @Mock
     private UserProfileService userProfileService;
+    @Mock
+    private PasswordEncoder passwordEncoder;
+    @Spy
+    private CoreValidator validator;
     @InjectMocks
-    private TrainerServiceImpl trainerService;
+    private TrainerServiceImpl service;
 
     private Trainer trainer;
     private Trainer savedTrainer;
@@ -60,27 +67,29 @@ class TrainerServiceImplTest {
                 .build();
     }
 
-    // ------------------------------------------------------------------ create
     @Test
     void create_shouldGenerateUsernameAndPasswordAndSave() {
         when(userProfileService.generateUsername(FIRST_NAME, LAST_NAME)).thenReturn(USERNAME);
         when(userProfileService.generatePassword()).thenReturn(PASSWORD);
+        when(passwordEncoder.encode(PASSWORD)).thenReturn("encodedPassword");
 
         Trainer expected = trainer.toBuilder()
                 .user(trainer.getUser().toBuilder()
                         .username(USERNAME)
-                        .password(PASSWORD)
+                        .password("encodedPassword")
                         .build())
                 .build();
 
         when(trainerDao.save(expected)).thenReturn(expected);
 
-        Trainer actual = trainerService.create(trainer);
+        Trainer actual = service.create(trainer);
 
         assertEquals(USERNAME, actual.getUser().getUsername());
-        assertEquals(PASSWORD, actual.getUser().getPassword());
+        assertEquals("encodedPassword", actual.getUser().getPassword());
+
         verify(userProfileService).generateUsername(FIRST_NAME, LAST_NAME);
         verify(userProfileService).generatePassword();
+        verify(passwordEncoder).encode(PASSWORD);
         verify(trainerDao).save(expected);
     }
 
@@ -88,7 +97,7 @@ class TrainerServiceImplTest {
     void findById_shouldReturnTrainer_whenExists() {
         when(trainerDao.findById(ID)).thenReturn(Optional.of(trainer));
 
-        Optional<Trainer> actual = trainerService.findById(ID);
+        Optional<Trainer> actual = service.findById(ID);
 
         assertTrue(actual.isPresent());
         assertEquals(trainer, actual.get());
@@ -99,7 +108,7 @@ class TrainerServiceImplTest {
     void findById_shouldReturnEmpty_whenNotExists() {
         when(trainerDao.findById(NON_EXISTING_ID)).thenReturn(Optional.empty());
 
-        Optional<Trainer> actual = trainerService.findById(NON_EXISTING_ID);
+        Optional<Trainer> actual = service.findById(NON_EXISTING_ID);
 
         assertTrue(actual.isEmpty());
         verify(trainerDao).findById(NON_EXISTING_ID);
@@ -110,7 +119,7 @@ class TrainerServiceImplTest {
         List<Trainer> expected = List.of(trainer);
         when(trainerDao.findAll()).thenReturn(expected);
 
-        List<Trainer> actual = trainerService.findAll();
+        List<Trainer> actual = service.findAll();
 
         assertEquals(expected.size(), actual.size());
         assertEquals(expected.getFirst(), actual.getFirst());
@@ -121,7 +130,7 @@ class TrainerServiceImplTest {
     void findAll_shouldReturnEmptyList_whenNoTrainers() {
         when(trainerDao.findAll()).thenReturn(List.of());
 
-        List<Trainer> actual = trainerService.findAll();
+        List<Trainer> actual = service.findAll();
 
         assertTrue(actual.isEmpty());
         verify(trainerDao).findAll();
@@ -131,7 +140,7 @@ class TrainerServiceImplTest {
     void update_shouldUpdateAndReturnTrainer() {
         when(trainerDao.update(trainer)).thenReturn(trainer);
 
-        Trainer actual = trainerService.update(trainer);
+        Trainer actual = service.update(trainer);
 
         assertEquals(trainer, actual);
         verify(trainerDao).update(trainer);
@@ -141,7 +150,7 @@ class TrainerServiceImplTest {
     void authenticate_shouldReturnTrue_whenCredentialsMatch() {
         when(trainerDao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainer));
 
-        boolean result = trainerService.authenticate(USERNAME, PASSWORD);
+        boolean result = service.authenticate(USERNAME, PASSWORD);
 
         assertTrue(result);
     }
@@ -150,7 +159,7 @@ class TrainerServiceImplTest {
     void authenticate_shouldReturnFalse_whenPasswordWrong() {
         when(trainerDao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainer));
 
-        boolean result = trainerService.authenticate(USERNAME, "wrongPassword");
+        boolean result = service.authenticate(USERNAME, "wrongPassword");
 
         assertFalse(result);
     }
@@ -159,7 +168,7 @@ class TrainerServiceImplTest {
     void authenticate_shouldReturnFalse_whenUsernameNotFound() {
         when(trainerDao.findByUsername(USERNAME)).thenReturn(Optional.empty());
 
-        boolean result = trainerService.authenticate(USERNAME, PASSWORD);
+        boolean result = service.authenticate(USERNAME, PASSWORD);
 
         assertFalse(result);
     }
@@ -167,20 +176,20 @@ class TrainerServiceImplTest {
     @Test
     void authenticate_shouldThrowException_whenUsernameBlank() {
         assertThrows(IllegalArgumentException.class,
-                () -> trainerService.authenticate("", PASSWORD));
+                () -> service.authenticate("", PASSWORD));
     }
 
     @Test
     void authenticate_shouldThrowException_whenPasswordBlank() {
         assertThrows(IllegalArgumentException.class,
-                () -> trainerService.authenticate(USERNAME, ""));
+                () -> service.authenticate(USERNAME, ""));
     }
 
     @Test
     void findByUsername_shouldReturnTrainer_whenExists() {
         when(trainerDao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainer));
 
-        Optional<Trainer> result = trainerService.findByUsername(USERNAME);
+        Optional<Trainer> result = service.findByUsername(USERNAME);
 
         assertTrue(result.isPresent());
         assertEquals(savedTrainer, result.get());
@@ -190,7 +199,7 @@ class TrainerServiceImplTest {
     void findByUsername_shouldReturnEmpty_whenNotFound() {
         when(trainerDao.findByUsername(USERNAME)).thenReturn(Optional.empty());
 
-        Optional<Trainer> result = trainerService.findByUsername(USERNAME);
+        Optional<Trainer> result = service.findByUsername(USERNAME);
 
         assertTrue(result.isEmpty());
     }
@@ -198,7 +207,7 @@ class TrainerServiceImplTest {
     @Test
     void findByUsername_shouldThrowException_whenUsernameBlank() {
         assertThrows(IllegalArgumentException.class,
-                () -> trainerService.findByUsername("  "));
+                () -> service.findByUsername("  "));
     }
 
     @Test
@@ -206,7 +215,7 @@ class TrainerServiceImplTest {
         when(trainerDao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainer));
         when(trainerDao.save(any())).thenReturn(savedTrainer);
 
-        trainerService.changePassword(USERNAME, PASSWORD, "newPassword");
+        service.changePassword(USERNAME, PASSWORD, "newPassword");
 
         assertEquals("newPassword", savedTrainer.getUser().getPassword());
         verify(trainerDao).save(savedTrainer);
@@ -217,7 +226,7 @@ class TrainerServiceImplTest {
         when(trainerDao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainer));
 
         assertThrows(Exception.class,
-                () -> trainerService.changePassword(USERNAME, "wrongOld", "newPassword"));
+                () -> service.changePassword(USERNAME, "wrongOld", "newPassword"));
         verify(trainerDao, never()).save(any());
     }
 
@@ -226,35 +235,32 @@ class TrainerServiceImplTest {
         when(trainerDao.findByUsername(USERNAME)).thenReturn(Optional.empty());
 
         assertThrows(EntityNotFoundException.class,
-                () -> trainerService.changePassword(USERNAME, PASSWORD, "newPass"));
+                () -> service.changePassword(USERNAME, PASSWORD, "newPass"));
     }
 
     @Test
     void changePassword_shouldThrowException_whenUsernameBlank() {
         assertThrows(IllegalArgumentException.class,
-                () -> trainerService.changePassword("", PASSWORD, "newPass"));
+                () -> service.changePassword("", PASSWORD, "newPass"));
     }
 
     @Test
     void changePassword_shouldThrowException_whenOldPasswordBlank() {
         assertThrows(IllegalArgumentException.class,
-                () -> trainerService.changePassword(USERNAME, "", "newPass"));
+                () -> service.changePassword(USERNAME, "", "newPass"));
     }
 
     @Test
     void changePassword_shouldThrowException_whenNewPasswordBlank() {
         assertThrows(IllegalArgumentException.class,
-                () -> trainerService.changePassword(USERNAME, PASSWORD, ""));
+                () -> service.changePassword(USERNAME, PASSWORD, ""));
     }
 
     @Test
     void updateProfile_shouldUpdateNameAndSpecialization() {
         TrainingType newType = TrainingType.builder().trainingTypeName("YOGA").build();
         Trainer updatedData = Trainer.builder()
-                .user(User.builder()
-                        .firstName("NewFirst")
-                        .lastName("NewLast")
-                        .build())
+                .user(User.builder().firstName("NewFirst").lastName("NewLast").build())
                 .specialization(newType)
                 .build();
 
@@ -272,7 +278,7 @@ class TrainerServiceImplTest {
         when(userProfileService.generateUsername("NewFirst", "NewLast")).thenReturn(newUsername);
         when(trainerDao.update(any())).thenReturn(expectedSaved);
 
-        Trainer actual = trainerService.updateProfile(USERNAME, updatedData);
+        Trainer actual = service.updateProfile(USERNAME, updatedData);
 
         assertEquals("NewFirst", actual.getUser().getFirstName());
         assertEquals("NewLast", actual.getUser().getLastName());
@@ -290,7 +296,7 @@ class TrainerServiceImplTest {
         when(trainerDao.findByUsername(USERNAME)).thenReturn(Optional.empty());
 
         assertThrows(EntityNotFoundException.class,
-                () -> trainerService.updateProfile(USERNAME, updatedData));
+                () -> service.updateProfile(USERNAME, updatedData));
     }
 
     @Test
@@ -302,7 +308,7 @@ class TrainerServiceImplTest {
         when(trainerDao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainer));
 
         assertThrows(IllegalArgumentException.class,
-                () -> trainerService.updateProfile(USERNAME, updatedData));
+                () -> service.updateProfile(USERNAME, updatedData));
     }
 
     @Test
@@ -314,14 +320,13 @@ class TrainerServiceImplTest {
         when(trainerDao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainer));
 
         assertThrows(IllegalArgumentException.class,
-                () -> trainerService.updateProfile(USERNAME, updatedData));
+                () -> service.updateProfile(USERNAME, updatedData));
     }
 
     @Test
     void updateProfile_shouldThrowException_whenUsernameBlank() {
-        Trainer trainerToUpdate = Trainer.builder().build();
-
-        assertThrows(IllegalArgumentException.class, () -> trainerService.updateProfile("", trainerToUpdate));
+        assertThrows(IllegalArgumentException.class,
+                () -> service.updateProfile("", Trainer.builder().build()));
     }
 
     @Test
@@ -329,7 +334,7 @@ class TrainerServiceImplTest {
         when(trainerDao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainer));
         when(trainerDao.save(any())).thenReturn(savedTrainer);
 
-        trainerService.setActive(USERNAME, false);
+        service.setActive(USERNAME, false);
 
         assertFalse(savedTrainer.getUser().getIsActive());
         verify(trainerDao).save(savedTrainer);
@@ -344,7 +349,7 @@ class TrainerServiceImplTest {
         when(trainerDao.findByUsername(USERNAME)).thenReturn(Optional.of(inactiveTrainer));
         when(trainerDao.save(any())).thenReturn(inactiveTrainer);
 
-        trainerService.setActive(USERNAME, true);
+        service.setActive(USERNAME, true);
 
         assertTrue(inactiveTrainer.getUser().getIsActive());
         verify(trainerDao).save(inactiveTrainer);
@@ -355,7 +360,7 @@ class TrainerServiceImplTest {
         when(trainerDao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainer));
 
         IllegalStateException exception = assertThrows(IllegalStateException.class,
-                () -> trainerService.setActive(USERNAME, true));
+                () -> service.setActive(USERNAME, true));
 
         assertTrue(exception.getMessage().contains("already active"));
         verify(trainerDao, never()).save(any());
@@ -366,19 +371,17 @@ class TrainerServiceImplTest {
         when(trainerDao.findByUsername(USERNAME)).thenReturn(Optional.empty());
 
         assertThrows(EntityNotFoundException.class,
-                () -> trainerService.setActive(USERNAME, false));
+                () -> service.setActive(USERNAME, false));
     }
 
     @Test
     void setActive_shouldThrowException_whenUsernameBlank() {
         assertThrows(IllegalArgumentException.class,
-                () -> trainerService.setActive("", false));
+                () -> service.setActive("", false));
     }
 
     private TrainingType buildFitnessType() {
-        return TrainingType.builder()
-                .trainingTypeName(FITNESS)
-                .build();
+        return TrainingType.builder().trainingTypeName(FITNESS).build();
     }
 
     private Trainer buildTrainer() {
