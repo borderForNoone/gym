@@ -17,14 +17,12 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.util.List;
 import java.util.Optional;
 
 import static org.gym.crm.util.TestConstants.FIRST_NAME;
 import static org.gym.crm.util.TestConstants.FITNESS;
 import static org.gym.crm.util.TestConstants.ID;
 import static org.gym.crm.util.TestConstants.LAST_NAME;
-import static org.gym.crm.util.TestConstants.NON_EXISTING_ID;
 import static org.gym.crm.util.TestConstants.PASSWORD;
 import static org.gym.crm.util.TestConstants.TRAINER_USERNAME;
 import static org.gym.crm.util.TestConstants.USERNAME;

@@ -162,43 +162,6 @@ class TrainerDaoImplTest extends AbstractDaoTest<TrainerDaoImpl> {
                 .build();
     }
 
-    private Trainer buildExpectedTrainer() {
-        return Trainer.builder()
-                .id(10L)
-                .user(buildExpectedUser())
-                .specialization(buildTrainingType())
-                .build();
-    }
-
-    private User buildExpectedUser() {
-        return User.builder()
-                .id(10L)
-                .firstName("Callum")
-                .lastName("Whitfield")
-                .username("Callum.Whitfield")
-                .password("pass111")
-                .isActive(true)
-                .build();
-    }
-
-    private List<Trainer> buildExpectedTrainers() {
-        User user = User.builder()
-                .id(11L)
-                .firstName("Nora")
-                .lastName("Pemberton")
-                .username("Nora.Pemberton")
-                .password("pass222")
-                .isActive(true)
-                .build();
-        Trainer trainer = Trainer.builder()
-                .id(11L)
-                .user(user)
-                .specialization(buildTrainingType())
-                .build();
-
-        return List.of(buildExpectedTrainer(), trainer);
-    }
-
     @Override
     protected Class<TrainerDaoImpl> getDaoClass() {
         return TrainerDaoImpl.class;

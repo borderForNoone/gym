@@ -45,10 +45,7 @@ public class TraineeServiceImplTest {
     private static final String ENCODED_PASSWORD = "encodedPassword";
     private static final String RAW_PASSWORD = "rawPassword";
     private static final long VALID_ID = 1L;
-    private static final long NOT_FOUND_ID = 999L;
-
     private static final String TRAINEE_CANNOT_BE_NULL = "Trainee cannot be null";
-    private static final String TRAINEE_NOT_FOUND_BY_ID = "Trainee not found by id: %s";
 
     @Mock
     private TraineeDao dao;

@@ -16,7 +16,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -340,45 +339,6 @@ class TrainingDaoImplTest extends AbstractDaoTest<TrainingDao> {
                 .trainer(buildTrainer())
                 .trainee(buildTrainee())
                 .build();
-    }
-
-    private Training buildExpectedTraining() {
-        return Training.builder()
-                .id(1L)
-                .trainingName("Hot Yoga")
-                .trainingDate(LocalDate.of(2026, 4, 15))
-                .trainingDuration(60)
-                .trainingType(buildTrainingType())
-                .trainee(buildTrainee())
-                .trainer(buildTrainer())
-                .build();
-    }
-
-    private List<Training> buildExpectedTrainings() {
-        User user = User.builder()
-                .id(3L)
-                .firstName("Ellis")
-                .lastName("Hargrove")
-                .username("Ellis.Hargrove")
-                .password("pass333")
-                .isActive(true)
-                .build();
-        Trainee trainee = Trainee.builder()
-                .id(2L)
-                .user(user)
-                .dateOfBirth(LocalDate.of(2002, 7, 15))
-                .build();
-        Training training = Training.builder()
-                .id(2L)
-                .trainingName("Hot Yoga")
-                .trainingDate(LocalDate.of(2026, 4, 20))
-                .trainingDuration(60)
-                .trainingType(buildTrainingType())
-                .trainee(trainee)
-                .trainer(buildTrainer())
-                .build();
-
-        return List.of(buildExpectedTraining(), training);
     }
 
     @Override
