@@ -25,23 +25,25 @@
             <column name="first_name" value="Callum"/>
             <column name="last_name" value="Whitfield"/>
             <column name="username" value="Callum.Whitfield"/>
-            <column name="password" value="pass111"/>
+            <column name="password" value="$2a$10$7QJ9cQ0bQmY9bZQ1vX9k0eQ6uZ0m0Ykqv1QmQzGm0bq8vZ9mKx2aG"/>
             <column name="is_active" valueBoolean="true"/>
         </insert>
+
         <insert tableName="users">
             <column name="id" valueNumeric="2"/>
             <column name="first_name" value="Nora"/>
             <column name="last_name" value="Pemberton"/>
             <column name="username" value="Nora.Pemberton"/>
-            <column name="password" value="pass222"/>
+            <column name="password" value="$2a$10$Wz1hX9mQpQ8eYt0cQv1l5eYp1dQmZzQ0pQ9mX1bQk8sVt0aZx9bC"/>
             <column name="is_active" valueBoolean="true"/>
         </insert>
+
         <insert tableName="users">
             <column name="id" valueNumeric="3"/>
             <column name="first_name" value="Ellis"/>
             <column name="last_name" value="Hargrove"/>
             <column name="username" value="Ellis.Hargrove"/>
-            <column name="password" value="pass333"/>
+            <column name="password" value="$2a$10$Lk9mQ0vX1cQz9bQmY8t0eQp2dZ0mX1aQv9sQk8bYt0cQmZ1nX3p"/>
             <column name="is_active" valueBoolean="true"/>
         </insert>
     </changeSet>
