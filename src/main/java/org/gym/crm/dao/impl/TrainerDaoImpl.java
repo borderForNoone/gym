@@ -49,15 +49,6 @@ public class TrainerDaoImpl implements TrainerDao {
     }
 
     @Override
-    public Optional<Trainer> findById(Long id) {
-        Validator.validateId(id);
-
-        return transactionManager.performReturningWithinTx(manager ->
-                Optional.ofNullable(manager.find(Trainer.class, id))
-        );
-    }
-
-    @Override
     public Optional<Trainer> findByUsername(String username) {
         Validator.validateNotBlank(username, USERNAME_LABEL);
 
@@ -66,14 +57,6 @@ public class TrainerDaoImpl implements TrainerDao {
                         .setParameter(USERNAME, username)
                         .getResultStream()
                         .findFirst()
-        );
-    }
-
-    @Override
-    public List<Trainer> findAll() {
-        return transactionManager.performReturningWithinTx(manager ->
-                manager.createQuery("FROM Trainer", Trainer.class)
-                        .getResultList()
         );
     }
 

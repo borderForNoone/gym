@@ -1,9 +1,8 @@
-package org.gym.crm.service.iml;
+package org.gym.crm.service.impl;
 
 import org.gym.crm.dao.TraineeDao;
 import org.gym.crm.dao.TrainerDao;
-import org.gym.crm.exception.UsernameTooLongException;
-import org.gym.crm.service.impl.UserProfileServiceImpl;
+import org.gym.crm.exception.CoreValidationException;
 import org.gym.crm.util.CoreValidator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -111,7 +110,7 @@ class UserProfileServiceImplTest {
         String longFirst = "A".repeat(60);
         String longLast = "B".repeat(60);
 
-        assertThrows(UsernameTooLongException.class,
+        assertThrows(CoreValidationException.class,
                 () -> service.generateUsername(longFirst, longLast));
     }
 

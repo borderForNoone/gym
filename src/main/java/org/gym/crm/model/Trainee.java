@@ -40,7 +40,7 @@ public class Trainee {
     @Column(name = "date_of_birth", nullable = true)
     private LocalDate dateOfBirth;
 
-    @Column(nullable = true, length = 255)
+    @Column(name = "address", nullable = true, length = 255)
     private String address;
 
     @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, optional = false)

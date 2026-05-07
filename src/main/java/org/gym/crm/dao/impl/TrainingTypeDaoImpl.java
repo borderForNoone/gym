@@ -7,21 +7,12 @@ import org.gym.crm.model.TrainingType;
 import org.gym.crm.util.Validator;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
 public class TrainingTypeDaoImpl implements TrainingTypeDao {
     private final TransactionManager transactionManager;
-
-    @Override
-    public Optional<TrainingType> findById(Long id) {
-        Validator.validateId(id);
-
-        return transactionManager.performReturningWithinTx(manager ->
-                Optional.ofNullable(manager.find(TrainingType.class, id)));
-    }
 
     @Override
     public Optional<TrainingType> findByTrainingTypeName(String name) {
@@ -32,14 +23,6 @@ public class TrainingTypeDaoImpl implements TrainingTypeDao {
                 .setParameter("name", name)
                 .getResultStream()
                 .findFirst()
-        );
-    }
-
-    @Override
-    public List<TrainingType> findAll() {
-        return transactionManager.performReturningWithinTx(manager -> manager
-                .createQuery("from TrainingType", TrainingType.class)
-                .getResultList()
         );
     }
 }

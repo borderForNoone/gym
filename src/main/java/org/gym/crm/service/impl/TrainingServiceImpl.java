@@ -9,9 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
-
 @Slf4j
 @Service
 public class TrainingServiceImpl implements TrainingService {
@@ -24,17 +21,5 @@ public class TrainingServiceImpl implements TrainingService {
     public Training create(Training training) {
         log.info("Creating training: {}", training.getTrainingName());
         return trainingDao.save(training);
-    }
-
-    @Override
-    public Optional<Training> findById(Long id) {
-        log.debug("Searching training by id={}", id);
-        return trainingDao.findById(id);
-    }
-
-    @Override
-    public List<Training> findAll() {
-        log.debug("Fetching all trainings");
-        return trainingDao.findAll();
     }
 }

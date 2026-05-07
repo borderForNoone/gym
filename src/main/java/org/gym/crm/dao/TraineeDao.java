@@ -9,13 +9,7 @@ import java.util.Optional;
 public interface TraineeDao {
     Trainee save(Trainee trainee);
 
-    Optional<Trainee> findById(Long id);
-
-    List<Trainee> findAll();
-
     Trainee update(Trainee trainee);
-
-    void delete(Long id);
 
     void delete(Trainee trainee);
 

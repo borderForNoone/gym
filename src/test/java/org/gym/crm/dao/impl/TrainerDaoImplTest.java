@@ -19,15 +19,13 @@ class TrainerDaoImplTest extends AbstractDaoTest<TrainerDaoImpl> {
     @Test
     void save_shouldSaveTrainer_whenValid() {
         Trainer trainer = buildTrainer();
-
         Trainer actual = dao.save(trainer);
 
-        assertThat(actual.getId()).isNotNull();
-        assertThat(dao.findById(actual.getId())).isPresent();
         assertThat(actual.getUser().getUsername()).isEqualTo("Simone.Radcliffe");
+        assertThat(dao.findByUsername(actual.getUser().getUsername())).isPresent();
         assertThat(actual.getUser().getFirstName()).isEqualTo("Simone");
         assertThat(actual.getUser().getLastName()).isEqualTo("Radcliffe");
-        assertThat(actual.getUser().getIsActive()).isEqualTo(true);
+        assertThat(actual.getUser().getIsActive()).isTrue();
         assertThat(actual.getSpecialization().getTrainingTypeName()).isEqualTo("Yoga");
     }
 
@@ -41,24 +39,23 @@ class TrainerDaoImplTest extends AbstractDaoTest<TrainerDaoImpl> {
 
     @Test
     void update_shouldUpdateExistingTrainer_whenExists() {
+        Trainer trainer = dao.findByUsername("Callum.Whitfield")
+                .orElseThrow(() -> new AssertionError("Trainer not found"));
+
         TrainingType newTrainingType = TrainingType.builder()
                 .id(11L)
                 .trainingTypeName("Pilates")
                 .build();
-
-        Trainer trainer = dao.findById(10L)
-                .orElseThrow(() -> new AssertionError("Trainer not found"));
-
         Trainer updated = trainer.toBuilder()
                 .specialization(newTrainingType)
                 .build();
 
         Trainer saved = dao.update(updated);
-
-        Trainer actual = dao.findById(saved.getId())
+        Trainer actual = dao.findByUsername(saved.getUser().getUsername())
                 .orElseThrow(() -> new AssertionError("Trainer not found"));
 
-        assertThat(actual.getSpecialization().getTrainingTypeName()).isEqualTo("Pilates");
+        assertThat(actual.getSpecialization().getTrainingTypeName())
+                .isEqualTo("Pilates");
     }
 
     @Test
@@ -67,45 +64,6 @@ class TrainerDaoImplTest extends AbstractDaoTest<TrainerDaoImpl> {
                 () -> dao.update(buildTrainer()));
 
         assertThat(exception.getMessage()).isEqualTo(String.format(INVALID_ID_MESSAGE, "null"));
-    }
-
-    @Test
-    void findById_shouldReturnTrainer_whenExists() {
-        Trainer expected = buildExpectedTrainer();
-
-        Optional<Trainer> actual = dao.findById(10L);
-
-        assertThat(actual).isPresent();
-        assertThat(actual.get().getUser().getUsername()).isEqualTo("Callum.Whitfield");
-        assertThat(actual.get()).isEqualTo(expected);
-    }
-
-    @Test
-    void findById_shouldReturnEmptyOptional_whenNotFound() {
-        Optional<Trainer> actual = dao.findById(999L);
-
-        assertThat(actual).isEmpty();
-    }
-
-    @Test
-    void findById_shouldThrowException_whenIdIsZero() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> dao.findById(0L));
-
-        assertThat(exception.getMessage()).isEqualTo(String.format(INVALID_ID_MESSAGE, "0"));
-    }
-
-    @Test
-    void findAll_shouldReturnAllTrainers_whenExist() {
-        List<Trainer> expected = buildExpectedTrainers();
-
-        List<Trainer> actual = dao.findAll();
-
-        assertThat(actual)
-                .hasSize(2)
-                .extracting(t -> t.getUser().getUsername())
-                .contains("Callum.Whitfield");
-        assertThat(actual).containsAll(expected);
     }
 
     @Test
@@ -202,43 +160,6 @@ class TrainerDaoImplTest extends AbstractDaoTest<TrainerDaoImpl> {
                 .id(10L)
                 .trainingTypeName("Yoga")
                 .build();
-    }
-
-    private Trainer buildExpectedTrainer() {
-        return Trainer.builder()
-                .id(10L)
-                .user(buildExpectedUser())
-                .specialization(buildTrainingType())
-                .build();
-    }
-
-    private User buildExpectedUser() {
-        return User.builder()
-                .id(10L)
-                .firstName("Callum")
-                .lastName("Whitfield")
-                .username("Callum.Whitfield")
-                .password("pass111")
-                .isActive(true)
-                .build();
-    }
-
-    private List<Trainer> buildExpectedTrainers() {
-        User user = User.builder()
-                .id(11L)
-                .firstName("Nora")
-                .lastName("Pemberton")
-                .username("Nora.Pemberton")
-                .password("pass222")
-                .isActive(true)
-                .build();
-        Trainer trainer = Trainer.builder()
-                .id(11L)
-                .user(user)
-                .specialization(buildTrainingType())
-                .build();
-
-        return List.of(buildExpectedTrainer(), trainer);
     }
 
     @Override

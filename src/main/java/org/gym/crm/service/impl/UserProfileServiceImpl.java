@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.gym.crm.dao.TraineeDao;
 import org.gym.crm.dao.TrainerDao;
+import org.gym.crm.model.FieldName;
 import org.gym.crm.service.UserProfileService;
 import org.gym.crm.util.CoreValidator;
 import org.springframework.stereotype.Service;
@@ -30,7 +31,7 @@ public class UserProfileServiceImpl implements UserProfileService {
         validator.validateNotBlank(lastName, "Last name");
 
         String baseUsername = firstName.trim() + "." + lastName.trim();
-        validator.validateUsernameLength(baseUsername);
+        validator.validateTextFieldSize(baseUsername, FieldName.USERNAME, 110);
 
         if (!isUsernameTaken(baseUsername)) {
             log.debug("Generated username='{}'", baseUsername);

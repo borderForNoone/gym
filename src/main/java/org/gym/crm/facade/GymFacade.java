@@ -32,7 +32,6 @@ import java.util.List;
 public class GymFacade {
     private static final String TRAINEE_NOT_FOUND = "Trainee not found";
     private static final String TRAINER_NOT_FOUND = "Trainer not found";
-    private static final String TRAINING_NOT_FOUND = "Training not found";
 
     private final TraineeService traineeService;
     private final TrainerService trainerService;
@@ -63,16 +62,19 @@ public class GymFacade {
 
     public void setTraineeActive(String username, String password, boolean active) {
         traineeService.authenticate(username, password);
+
         traineeService.setActive(username, active);
     }
 
     public void setTrainerActive(String username, String password, boolean active) {
         trainerService.authenticate(username, password);
+
         trainerService.setActive(username, active);
     }
 
     public void deleteTraineeByUsername(String username, String password) {
         traineeService.authenticate(username, password);
+
         traineeService.deleteByUsername(username);
     }
 
@@ -127,23 +129,6 @@ public class GymFacade {
         return traineeMapper.toDto(saved);
     }
 
-    public void deleteTrainee(Long id) {
-        traineeService.delete(id);
-    }
-
-    public TraineeResponseDTO getTraineeById(Long id) {
-        Trainee trainee = traineeService.findById(id).orElseThrow(() -> new RuntimeException(TRAINEE_NOT_FOUND));
-
-        return traineeMapper.toDto(trainee);
-    }
-
-    public List<TraineeResponseDTO> getAllTrainees() {
-        return traineeService.findAll()
-                .stream()
-                .map(traineeMapper::toDto)
-                .toList();
-    }
-
     public TrainerResponseDTO createTrainer(TrainerRequestDTO trainerRequestDTO) {
         Trainer trainer = trainerMapper.toEntity(trainerRequestDTO);
         Trainer saved = trainerService.create(trainer);
@@ -151,22 +136,18 @@ public class GymFacade {
         return trainerMapper.toDto(saved);
     }
 
-    public boolean authenticateTrainee(String username, String password) {
-        return traineeService.authenticate(username, password);
-    }
+    public TrainerResponseDTO getTrainerByUsername(String username, String password) {
+        trainerService.authenticate(username, password);
 
-    public boolean authenticateTrainer(String username, String password) {
-        return trainerService.authenticate(username, password);
-    }
-
-    public TrainerResponseDTO getTrainerByUsername(String username) {
         Trainer trainer = trainerService.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException(TRAINER_NOT_FOUND));
 
         return trainerMapper.toDto(trainer);
     }
 
-    public TraineeResponseDTO getTraineeByUsername(String username) {
+    public TraineeResponseDTO getTraineeByUsername(String username, String password) {
+        traineeService.authenticate(username, password);
+
         Trainee trainee = traineeService.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException(TRAINEE_NOT_FOUND));
 
@@ -176,16 +157,20 @@ public class GymFacade {
     public void changeTraineePassword(String username, String oldPassword, String newPassword)
             throws AuthenticationException {
         traineeService.authenticate(username, oldPassword);
+
         traineeService.changePassword(username, oldPassword, newPassword);
     }
 
     public void changeTrainerPassword(String username, String oldPassword, String newPassword)
             throws AuthenticationException {
         trainerService.authenticate(username, oldPassword);
+
         trainerService.changePassword(username, oldPassword, newPassword);
     }
 
     public TrainerResponseDTO updateTrainer(TrainerUpdateDTO trainerUpdateDTO) {
+        trainerService.authenticate(trainerUpdateDTO.getUsername(), trainerUpdateDTO.getPassword());
+
         Trainer trainer = trainerMapper.toEntity(trainerUpdateDTO);
         Trainer saved = trainerService.update(trainer);
 
@@ -199,38 +184,5 @@ public class GymFacade {
         Trainer saved = trainerService.updateProfile(username, updatedData);
 
         return trainerMapper.toDto(saved);
-    }
-
-    public TrainerResponseDTO getTrainerById(Long id) {
-        Trainer trainer = trainerService.findById(id).orElseThrow(() -> new RuntimeException(TRAINEE_NOT_FOUND));
-
-        return trainerMapper.toDto(trainer);
-    }
-
-    public List<TrainerResponseDTO> getAllTrainers() {
-        return trainerService.findAll()
-                .stream()
-                .map(trainerMapper::toDto)
-                .toList();
-    }
-
-    public TrainingResponseDTO createTraining(TrainingRequestDTO trainingRequestDTO) {
-        Training training = trainingMapper.toEntity(trainingRequestDTO);
-        Training saved = trainingService.create(training);
-
-        return trainingMapper.toDto(saved);
-    }
-
-    public TrainingResponseDTO getTrainingById(Long id) {
-        Training training = trainingService.findById(id).orElseThrow(() -> new RuntimeException(TRAINING_NOT_FOUND));
-
-        return trainingMapper.toDto(training);
-    }
-
-    public List<TrainingResponseDTO> getAllTrainings() {
-        return trainingService.findAll()
-                .stream()
-                .map(trainingMapper::toDto)
-                .toList();
     }
 }
