@@ -25,16 +25,4 @@ public class TrainingServiceImpl implements TrainingService {
         log.info("Creating training: {}", training.getTrainingName());
         return trainingDao.save(training);
     }
-
-    @Override
-    public Optional<Training> findById(Long id) {
-        log.debug("Searching training by id={}", id);
-        return trainingDao.findById(id);
-    }
-
-    @Override
-    public List<Training> findAll() {
-        log.debug("Fetching all trainings");
-        return trainingDao.findAll();
-    }
 }

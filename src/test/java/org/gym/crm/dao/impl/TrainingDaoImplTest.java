@@ -30,8 +30,6 @@ class TrainingDaoImplTest extends AbstractDaoTest<TrainingDao> {
 
         Training actual = dao.save(training);
 
-        assertThat(actual.getId()).isNotNull();
-        assertThat(dao.findById(actual.getId())).isPresent();
         assertThat(actual.getTrainingName()).isEqualTo("Morning Yoga");
         assertThat(actual.getTrainingDate()).isEqualTo(LocalDate.of(2026, 4, 30));
         assertThat(actual.getTrainingDuration()).isEqualTo(60);
@@ -41,6 +39,7 @@ class TrainingDaoImplTest extends AbstractDaoTest<TrainingDao> {
         assertThat(actual.getTrainee().getDateOfBirth()).isEqualTo(LocalDate.of(2000, 3, 10));
         assertThat(actual.getTrainee().getAddress()).isEqualTo("123 Main St");
         assertThat(actual.getTrainer().getUser().getUsername()).isEqualTo("Callum.Whitfield");
+        assertThat(actual.getId()).isNotNull();
     }
 
     @Test
@@ -49,53 +48,6 @@ class TrainingDaoImplTest extends AbstractDaoTest<TrainingDao> {
                 () -> dao.save(null));
 
         assertThat(exception.getMessage()).isEqualTo("Training cannot be null");
-    }
-
-    @Test
-    void findById_shouldReturnTraining_whenExists() {
-        Training expected = buildExpectedTraining();
-
-        Optional<Training> actual = dao.findById(1L);
-
-        assertThat(actual).isPresent();
-        assertThat(actual.get().getTrainingName()).isEqualTo("Hot Yoga");
-        assertThat(actual.get().getTrainingDate()).isEqualTo(LocalDate.of(2026, 4, 15));
-        assertThat(actual.get()).isEqualTo(expected);
-    }
-
-    @Test
-    void findById_shouldReturnEmptyOptional_whenNotFound() {
-        Optional<Training> actual = dao.findById(999L);
-
-        assertThat(actual).isEmpty();
-    }
-
-    @Test
-    void findById_shouldThrowException_whenIdIsZero() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> dao.findById(0L));
-
-        assertThat(exception.getMessage()).isEqualTo("ID must be positive and not null, got: 0");
-    }
-
-    @Test
-    void findAll_shouldReturnAllTrainings_whenExist() {
-        List<Training> expected = buildExpectedTrainings();
-
-        List<Training> actual = dao.findAll();
-
-        assertThat(actual).isNotEmpty();
-        assertThat(actual).containsAll(expected);
-        assertThat(actual)
-                .hasSize(2)
-                .extracting(Training::getTrainingName)
-                .containsExactly("Hot Yoga", "Hot Yoga");
-        assertThat(actual)
-                .extracting(Training::getTrainingDate)
-                .containsExactlyInAnyOrder(LocalDate.of(2026, 4, 20), LocalDate.of(2026, 4, 15));
-        assertThat(actual)
-                .extracting(Training::getTrainingDuration)
-                .contains(60);
     }
 
     @Test

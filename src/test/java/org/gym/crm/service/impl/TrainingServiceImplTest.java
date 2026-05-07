@@ -1,11 +1,10 @@
-package org.gym.crm.service.iml;
+package org.gym.crm.service.impl;
 
 import org.gym.crm.dao.TrainingDao;
 import org.gym.crm.model.Trainee;
 import org.gym.crm.model.Trainer;
 import org.gym.crm.model.Training;
 import org.gym.crm.model.TrainingType;
-import org.gym.crm.service.impl.TrainingServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,39 +48,6 @@ class TrainingServiceImplTest {
 
         assertEquals(training, actual);
         verify(trainingDao).save(training);
-    }
-
-    @Test
-    void findById_shouldReturnTraining_whenExists() {
-        when(trainingDao.findById(ID)).thenReturn(Optional.of(training));
-
-        Optional<Training> actual = service.findById(ID);
-
-        assertTrue(actual.isPresent());
-        assertEquals(training, actual.get());
-        verify(trainingDao).findById(ID);
-    }
-
-    @Test
-    void findById_shouldReturnEmpty_whenNotExists() {
-        when(trainingDao.findById(NON_EXISTING_ID)).thenReturn(Optional.empty());
-
-        Optional<Training> actual = service.findById(NON_EXISTING_ID);
-
-        assertTrue(actual.isEmpty());
-        verify(trainingDao).findById(NON_EXISTING_ID);
-    }
-
-    @Test
-    void findAll_shouldReturnAllTrainings() {
-        List<Training> expected = List.of(training);
-        when(trainingDao.findAll()).thenReturn(expected);
-
-        List<Training> actual = service.findAll();
-
-        assertEquals(expected.size(), actual.size());
-        assertEquals(expected.getFirst(), actual.getFirst());
-        verify(trainingDao).findAll();
     }
 
     private TrainingType buildFitnessType() {

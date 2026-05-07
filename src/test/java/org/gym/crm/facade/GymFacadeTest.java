@@ -35,6 +35,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -151,48 +152,6 @@ public class GymFacadeTest {
     }
 
     @Test
-    void deleteTrainee_shouldDeleteTrainee() {
-        facade.deleteTrainee(VALID_ID);
-
-        verify(traineeService).delete(VALID_ID);
-    }
-
-    @Test
-    void getTraineeById_shouldReturnTraineeResponseDTO_whenExists() {
-        when(traineeService.findById(VALID_ID)).thenReturn(Optional.ofNullable(trainee));
-        when(traineeMapper.toDto(trainee)).thenReturn(traineeResponseDTO);
-
-        TraineeResponseDTO actual = facade.getTraineeById(VALID_ID);
-
-        assertEquals(traineeResponseDTO, actual);
-        verify(traineeService).findById(VALID_ID);
-        verify(traineeMapper).toDto(trainee);
-    }
-
-    @Test
-    void getAllTrainees_shouldReturnAllTraineesAsResponseDTOs_whenExist() {
-        when(traineeService.findAll()).thenReturn(List.of(trainee));
-        when(traineeMapper.toDto(trainee)).thenReturn(traineeResponseDTO);
-
-        List<TraineeResponseDTO> actual = facade.getAllTrainees();
-
-        assertEquals(1, actual.size());
-        assertEquals(traineeResponseDTO, actual.getFirst());
-        verify(traineeService).findAll();
-    }
-
-    @Test
-    void getAllTrainees_shouldReturnEmptyList_whenNoTrainees() {
-        when(traineeService.findAll()).thenReturn(List.of());
-
-        List<TraineeResponseDTO> actual = facade.getAllTrainees();
-
-        assertTrue(actual.isEmpty());
-        verify(traineeService).findAll();
-        verify(traineeMapper, never()).toDto(trainee);
-    }
-
-    @Test
     void createTrainer_shouldSaveAndReturnResponseDTO() {
         Trainer saved = trainer.toBuilder()
                 .user(
@@ -243,88 +202,17 @@ public class GymFacadeTest {
     }
 
     @Test
-    void getTrainerById_shouldReturnTrainerResponseDTO_whenExists() {
-        when(trainerService.findById(TRAINER_ID)).thenReturn(Optional.ofNullable(trainer));
-        when(trainerMapper.toDto(trainer)).thenReturn(trainerResponseDTO);
-
-        TrainerResponseDTO actual = facade.getTrainerById(TRAINER_ID);
-
-        assertEquals(trainerResponseDTO, actual);
-        verify(trainerService).findById(TRAINER_ID);
-        verify(trainerMapper).toDto(trainer);
-    }
-
-    @Test
-    void getAllTrainers_shouldReturnAllTrainersAsResponseDTOs_whenExist() {
-        when(trainerService.findAll()).thenReturn(List.of(trainer));
-        when(trainerMapper.toDto(trainer)).thenReturn(trainerResponseDTO);
-
-        List<TrainerResponseDTO> actual = facade.getAllTrainers();
-
-        assertEquals(1, actual.size());
-        assertEquals(trainerResponseDTO, actual.getFirst());
-        verify(trainerService).findAll();
-    }
-
-    @Test
-    void getAllTrainers_shouldReturnEmptyList_whenNoTrainers() {
-        when(trainerService.findAll()).thenReturn(List.of());
-
-        List<TrainerResponseDTO> actual = facade.getAllTrainers();
-
-        assertTrue(actual.isEmpty());
-        verify(trainerService).findAll();
-        verify(trainerMapper, never()).toDto(trainer);
-    }
-
-    @Test
     void createTraining_shouldSaveAndReturnResponseDTO() {
         when(trainingMapper.toEntity(trainingRequestDTO)).thenReturn(training);
         when(trainingService.create(training)).thenReturn(training);
         when(trainingMapper.toDto(training)).thenReturn(trainingResponseDTO);
 
-        TrainingResponseDTO actual = facade.createTraining(trainingRequestDTO);
+        TrainingResponseDTO actual = facade.createTraining(USERNAME, PASSWORD, trainingRequestDTO);
 
         assertEquals(trainingResponseDTO, actual);
         verify(trainingMapper).toEntity(trainingRequestDTO);
         verify(trainingService).create(training);
         verify(trainingMapper).toDto(training);
-    }
-
-    @Test
-    void getTrainingById_shouldReturnResponseDTO_whenExists() {
-        when(trainingService.findById(VALID_ID)).thenReturn(Optional.ofNullable(training));
-        when(trainingMapper.toDto(training)).thenReturn(trainingResponseDTO);
-
-        TrainingResponseDTO result = facade.getTrainingById(VALID_ID);
-
-        assertEquals(trainingResponseDTO, result);
-        verify(trainingService).findById(VALID_ID);
-        verify(trainingMapper).toDto(training);
-    }
-
-    @Test
-    void getAllTrainings_shouldReturnAllTrainingsAsResponseDTOs_whenExist() {
-        when(trainingService.findAll()).thenReturn(List.of(training));
-        when(trainingMapper.toDto(training)).thenReturn(trainingResponseDTO);
-
-        List<TrainingResponseDTO> actual = facade.getAllTrainings();
-
-        assertEquals(1, actual.size());
-        assertEquals(trainingResponseDTO, actual.getFirst());
-        verify(trainingService).findAll();
-        verify(trainingMapper).toDto(training);
-    }
-
-    @Test
-    void getAllTrainings_shouldReturnEmptyList_whenNoTrainings() {
-        when(trainingService.findAll()).thenReturn(List.of());
-
-        List<TrainingResponseDTO> actual = facade.getAllTrainings();
-
-        assertTrue(actual.isEmpty());
-        verify(trainingService).findAll();
-        verify(trainingMapper, never()).toDto(training);
     }
 
     @Test
@@ -526,31 +414,11 @@ public class GymFacadeTest {
     }
 
     @Test
-    void authenticateTrainee_shouldReturnTrue_whenCredentialsAreValid() {
-        when(traineeService.authenticate(USERNAME, PASSWORD)).thenReturn(true);
-
-        boolean actual = facade.authenticateTrainee(USERNAME, PASSWORD);
-
-        assertTrue(actual);
-        verify(traineeService).authenticate(USERNAME, PASSWORD);
-    }
-
-    @Test
-    void authenticateTrainer_shouldReturnTrue_whenCredentialsAreValid() {
-        when(trainerService.authenticate(USERNAME, PASSWORD)).thenReturn(true);
-
-        boolean actual = facade.authenticateTrainer(USERNAME, PASSWORD);
-
-        assertTrue(actual);
-        verify(trainerService).authenticate(USERNAME, PASSWORD);
-    }
-
-    @Test
     void getTrainerByUsername_shouldReturnTrainerResponseDTO_whenExists() {
         when(trainerService.findByUsername(USERNAME)).thenReturn(Optional.of(trainer));
         when(trainerMapper.toDto(trainer)).thenReturn(trainerResponseDTO);
 
-        TrainerResponseDTO actual = facade.getTrainerByUsername(USERNAME);
+        TrainerResponseDTO actual = facade.getTrainerByUsername(USERNAME, PASSWORD);
 
         assertEquals(trainerResponseDTO, actual);
         verify(trainerService).findByUsername(USERNAME);
@@ -562,7 +430,7 @@ public class GymFacadeTest {
         when(traineeService.findByUsername(USERNAME)).thenReturn(Optional.of(trainee));
         when(traineeMapper.toDto(trainee)).thenReturn(traineeResponseDTO);
 
-        TraineeResponseDTO actual = facade.getTraineeByUsername(USERNAME);
+        TraineeResponseDTO actual = facade.getTraineeByUsername(USERNAME, PASSWORD);
 
         assertEquals(traineeResponseDTO, actual);
         verify(traineeService).findByUsername(USERNAME);

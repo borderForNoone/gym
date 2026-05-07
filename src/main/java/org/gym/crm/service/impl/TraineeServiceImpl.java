@@ -28,16 +28,12 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class TraineeServiceImpl implements TraineeService {
-    private static final String TRAINEE_NOT_FOUND_BY_ID = "Trainee not found by id: %s";
     private static final String TRAINEE_NOT_FOUND_BY_USERNAME = "Trainee not found: %s";
     private static final String TRAINEE = "Trainee";
     private static final String USERNAME_LABEL = "Username";
     private static final String PASSWORD_LABEL = "Password";
     private static final String OLD_PASSWORD_LABEL = "Old password";
     private static final String NEW_PASSWORD_LABEL = "New password";
-    private static final String UPDATED_DATA_LABEL = "Updated data";
-    private static final String FIRST_NAME_LABEL = "First name";
-    private static final String LAST_NAME_LABEL = "Last name";
 
     private final TraineeDao dao;
     private final UserProfileService userCredentialGenerator;
@@ -51,19 +47,21 @@ public class TraineeServiceImpl implements TraineeService {
     @Transactional
     @Override
     public Trainee create(Trainee trainee) {
-        validator.validateNotNull(trainee, TRAINEE);
+        validator.validateTrainee(trainee);
 
         log.info("Creating trainee: firstName={} lastName={}", trainee.getUser().getFirstName(), trainee.getUser().getLastName());
 
         String username = userCredentialGenerator.generateUsername(trainee.getUser().getFirstName(), trainee.getUser().getLastName());
         String rawPassword = userCredentialGenerator.generatePassword();
+        String encodedPassword = passwordEncoder.encode(rawPassword);
 
+        User newUser = trainee.getUser().toBuilder()
+                .username(username)
+                .password(encodedPassword)
+                .isActive(true)
+                .build();
         Trainee withCredentials = trainee.toBuilder()
-                .user(trainee.getUser().toBuilder()
-                        .username(username)
-                        .password(passwordEncoder.encode(rawPassword))
-                        .isActive(true)
-                        .build())
+                .user(newUser)
                 .build();
 
         Trainee saved = dao.save(withCredentials);
@@ -72,42 +70,18 @@ public class TraineeServiceImpl implements TraineeService {
         return saved;
     }
 
-    @Override
-    public Optional<Trainee> findById(Long id) {
-        return Optional.of(dao.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(String.format(TRAINEE_NOT_FOUND_BY_ID, id))));
-    }
-
-    @Override
-    public List<Trainee> findAll() {
-        log.info("Fetching all trainees");
-        List<Trainee> trainees = dao.findAll();
-        log.info("Fetched {} trainees", trainees.size());
-        return trainees;
-    }
-
     @Transactional
     @Override
     public Trainee update(Trainee trainee) {
         validator.validateNotNull(trainee, TRAINEE);
 
         log.info("Updating trainee: id={}", trainee.getId());
-        findById(trainee.getId());
+        findByUsername(trainee.getUser().getUsername());
 
         Trainee updated = dao.update(trainee);
         log.info("Trainee updated successfully: id={}", updated.getId());
 
         return updated;
-    }
-
-    @Transactional
-    @Override
-    public void delete(Long id) {
-        log.info("Deleting trainee: id={}", id);
-        findById(id);
-
-        dao.delete(id);
-        log.info("Trainee deleted successfully: id={}", id);
     }
 
     @Override
@@ -116,7 +90,7 @@ public class TraineeServiceImpl implements TraineeService {
         validator.validateNotBlank(password, PASSWORD_LABEL);
 
         return findByUsername(username)
-                .map(t -> t.getUser().getPassword().equals(password))
+                .map(t -> passwordEncoder.matches(password, t.getUser().getPassword()))
                 .orElse(false);
     }
 
@@ -240,7 +214,7 @@ public class TraineeServiceImpl implements TraineeService {
     @Override
     public Trainee updateProfile(String username, Trainee updatedData) {
         validator.validateNotBlank(username, USERNAME_LABEL);
-        validator.validateNotNull(updatedData, UPDATED_DATA_LABEL);
+        validator.validateTrainee(updatedData);
 
         Trainee trainee = dao.findByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException(
@@ -251,9 +225,6 @@ public class TraineeServiceImpl implements TraineeService {
         User resultUser = currentUser;
 
         if (incomingUser != null) {
-            validator.validateNotBlank(incomingUser.getFirstName(), FIRST_NAME_LABEL);
-            validator.validateNotBlank(incomingUser.getLastName(), LAST_NAME_LABEL);
-
             resultUser = currentUser.toBuilder()
                     .firstName(incomingUser.getFirstName())
                     .lastName(incomingUser.getLastName())
@@ -267,13 +238,10 @@ public class TraineeServiceImpl implements TraineeService {
         if (updatedData.getDateOfBirth() != null) {
             builder.dateOfBirth(updatedData.getDateOfBirth());
         }
-
         if (updatedData.getAddress() != null) {
             builder.address(updatedData.getAddress());
         }
 
-        Trainee updatedTrainee = builder.build();
-
-        return dao.save(updatedTrainee);
+        return dao.save(builder.build());
     }
 }

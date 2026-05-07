@@ -15,7 +15,6 @@ import org.gym.crm.util.Validator;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Repository
@@ -32,22 +31,6 @@ public class TrainingDaoImpl implements TrainingDao {
         transactionManager.performWithinTx(manager -> manager.persist(training));
 
         return training;
-    }
-
-    @Override
-    public Optional<Training> findById(Long id) {
-        Validator.validateId(id);
-
-        return transactionManager.performReturningWithinTx(manager ->
-                Optional.ofNullable(manager.find(Training.class, id)));
-    }
-
-    @Override
-    public List<Training> findAll() {
-        return transactionManager.performReturningWithinTx(manager -> manager
-                .createQuery("from Training", Training.class)
-                .getResultList()
-        );
     }
 
     @Override
