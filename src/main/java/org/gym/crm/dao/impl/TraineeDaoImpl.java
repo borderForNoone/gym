@@ -70,19 +70,6 @@ public class TraineeDaoImpl implements TraineeDao {
     }
 
     @Override
-    public void delete(Long id) {
-        Validator.validateId(id);
-
-        Trainee trainee = transactionManager.performReturningWithinTx(
-                manager -> manager.find(Trainee.class, id)
-        );
-
-        if (trainee != null) {
-            transactionManager.performWithinTx(manager -> manager.remove(trainee));
-        }
-    }
-
-    @Override
     public void delete(Trainee trainee) {
         Validator.validateNotNull(trainee, TRAINEE_LABEL);
         Validator.validateId(trainee.getId());
@@ -188,21 +175,6 @@ public class TraineeDaoImpl implements TraineeDao {
         return transactionManager.performReturningWithinTx(manager ->
                 manager.createQuery(FIND_TRAINERS_BY_USERNAMES_QUERY, Trainer.class)
                         .setParameter("usernames", trainerUsernames)
-                        .getResultList()
-        );
-    }
-
-    public Optional<Trainee> findById(Long id) {
-        Validator.validateId(id);
-
-        return transactionManager.performReturningWithinTx(manager ->
-                Optional.ofNullable(manager.find(Trainee.class, id))
-        );
-    }
-
-    public List<Trainee> findAll() {
-        return transactionManager.performReturningWithinTx(manager ->
-                manager.createQuery("FROM Trainee", Trainee.class)
                         .getResultList()
         );
     }

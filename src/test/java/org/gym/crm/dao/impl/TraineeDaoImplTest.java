@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -19,16 +20,28 @@ class TraineeDaoImplTest extends AbstractDaoTest<TraineeDaoImpl> {
 
     @Test
     void save_shouldSaveTrainee_whenValid() {
-        Trainee trainee = buildTrainee();
+        String uniqueUsername = "Simone.Radcliffe_" + UUID.randomUUID();
+        User user = User.builder()
+                .firstName("Simone")
+                .lastName("Radcliffe")
+                .username(uniqueUsername)
+                .password("pass444")
+                .isActive(true)
+                .build();
+        Trainee trainee = Trainee.builder()
+                .user(user)
+                .dateOfBirth(LocalDate.of(2000, 3, 10))
+                .address("123 Main St")
+                .build();
 
         Trainee actual = dao.save(trainee);
 
         assertThat(actual.getId()).isNotNull();
-        assertThat(dao.findById(actual.getId())).isPresent();
-        assertThat(actual.getUser().getUsername()).isEqualTo("Simone.Radcliffe");
+        assertThat(actual.getUser().getUsername()).isEqualTo(uniqueUsername);
+        assertThat(dao.findByUsername(uniqueUsername)).isPresent();
         assertThat(actual.getUser().getFirstName()).isEqualTo("Simone");
         assertThat(actual.getUser().getLastName()).isEqualTo("Radcliffe");
-        assertThat(actual.getUser().getIsActive()).isEqualTo(true);
+        assertThat(actual.getUser().getIsActive()).isTrue();
         assertThat(actual.getDateOfBirth()).isEqualTo(LocalDate.of(2000, 3, 10));
         assertThat(actual.getAddress()).isEqualTo("123 Main St");
     }
@@ -43,11 +56,15 @@ class TraineeDaoImplTest extends AbstractDaoTest<TraineeDaoImpl> {
 
     @Test
     void update_shouldUpdateExistingTrainee_whenExists() {
-        Trainee trainee = dao.findById(1L).orElseThrow(() -> new AssertionError("Trainee not found"));
-        Trainee updated = trainee.toBuilder().address("new address").build();
+        Trainee trainee = dao.findByUsername("Simone.Radcliffe")
+                .orElseThrow(() -> new AssertionError("Trainee not found"));
+        Trainee updated = trainee.toBuilder()
+                .address("new address")
+                .build();
 
         Trainee saved = dao.update(updated);
-        Trainee actual = dao.findById(saved.getId()).orElseThrow(() -> new AssertionError("Trainee not found"));
+        Trainee actual = dao.findByUsername(saved.getUser().getUsername())
+                .orElseThrow(() -> new AssertionError("Trainee not found"));
 
         assertThat(actual.getAddress()).isEqualTo("new address");
     }
@@ -58,56 +75,6 @@ class TraineeDaoImplTest extends AbstractDaoTest<TraineeDaoImpl> {
                 () -> dao.update(buildTrainee()));
 
         assertThat(exception.getMessage()).isEqualTo(String.format(INVALID_ID_MESSAGE, "null"));
-    }
-
-    @Test
-    void delete_shouldDeleteTrainee_whenExists() {
-        dao.delete(1L);
-
-        assertThat(dao.findById(1L)).isEmpty();
-        assertThat(dao.findAll().size()).isEqualTo(1);
-    }
-
-    @Test
-    void delete_shouldThrowException_whenIdIsNull() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> dao.delete((Long) null));
-
-        assertThat(exception.getMessage()).isEqualTo(String.format(INVALID_ID_MESSAGE, "null"));
-    }
-
-
-    @Test
-    void findById_shouldReturnTrainee_whenExists() {
-        Optional<Trainee> actual = dao.findById(1L);
-
-        assertThat(actual).isPresent();
-        assertThat(actual.get().getUser().getUsername()).isEqualTo("Nora.Pemberton");
-    }
-
-    @Test
-    void findById_shouldReturnEmptyOptional_whenNotFound() {
-        Optional<Trainee> actual = dao.findById(999L);
-
-        assertThat(actual).isEmpty();
-    }
-
-    @Test
-    void findById_shouldThrowException_whenIdIsZero() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> dao.findById(0L));
-
-        assertThat(exception.getMessage()).isEqualTo(String.format(INVALID_ID_MESSAGE, "0"));
-    }
-
-    @Test
-    void findAll_shouldReturnAllTrainees_whenExist() {
-        List<Trainee> actual = dao.findAll();
-
-        assertThat(actual)
-                .hasSize(2)
-                .extracting(t -> t.getUser().getUsername())
-                .containsExactlyInAnyOrder("Nora.Pemberton", "Ellis.Hargrove");
     }
 
     @Test
@@ -122,16 +89,6 @@ class TraineeDaoImplTest extends AbstractDaoTest<TraineeDaoImpl> {
         boolean result = dao.existsByUsername("unknown.user");
 
         assertThat(result).isFalse();
-    }
-
-    @Test
-    void delete_shouldRemove_whenEntityIsDetached() {
-        Trainee trainee = dao.findById(1L).orElseThrow();
-
-        Trainee detached = trainee.toBuilder().build();
-        dao.delete(detached);
-
-        assertThat(dao.findById(1L)).isEmpty();
     }
 
     @Test
@@ -164,15 +121,6 @@ class TraineeDaoImplTest extends AbstractDaoTest<TraineeDaoImpl> {
         dao.deleteByUsername("Nora.Pemberton");
 
         assertThat(dao.findByUsername("Nora.Pemberton")).isEmpty();
-    }
-
-    @Test
-    void deleteByUsername_shouldNotFail_whenUserNotExists() {
-        int before = dao.findAll().size();
-
-        dao.deleteByUsername("unknown.user");
-
-        assertThat(dao.findAll()).hasSize(before);
     }
 
     @Test

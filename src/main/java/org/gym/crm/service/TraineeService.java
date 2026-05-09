@@ -12,13 +12,7 @@ import java.util.Optional;
 public interface TraineeService {
     Trainee create(Trainee trainee);
 
-    Optional<Trainee> findById(Long id);
-
-    List<Trainee> findAll();
-
     Trainee update(Trainee trainee);
-
-    void delete(Long id);
 
     boolean authenticate(String username, String password);
 
@@ -26,7 +20,7 @@ public interface TraineeService {
 
     void changePassword(String username, String oldPassword, String newPassword) throws AuthenticationException;
 
-    void setActive(String username, boolean active);
+    Trainee setActive(String username, boolean active);
 
     void deleteByUsername(String username);
 

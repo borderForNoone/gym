@@ -1,6 +1,6 @@
 package org.gym.crm.util;
 
-import org.gym.crm.exception.UsernameTooLongException;
+import org.gym.crm.exception.CoreValidationException;
 
 import java.util.Objects;
 
@@ -32,7 +32,7 @@ public class Validator {
         validateNotBlank(username, "Username");
 
         if (username.length() > MAX_USERNAME_LENGTH) {
-            throw new UsernameTooLongException(username);
+            throw new CoreValidationException(username);
         }
     }
 }

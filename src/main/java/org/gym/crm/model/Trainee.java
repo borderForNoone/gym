@@ -32,18 +32,15 @@ import java.util.Set;
 @Entity
 @Table(name = "trainees")
 public class Trainee {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column
     private Long id;
 
     @Column(name = "date_of_birth", nullable = true)
-    @Setter
     private LocalDate dateOfBirth;
 
-    @Column(nullable = true, length = 255)
-    @Setter
+    @Column(name = "address", nullable = true, length = 255)
     private String address;
 
     @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, optional = false)

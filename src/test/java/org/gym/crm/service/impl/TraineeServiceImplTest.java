@@ -1,4 +1,4 @@
-package org.gym.crm.service.iml;
+package org.gym.crm.service.impl;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -10,12 +10,12 @@ import org.gym.crm.model.Trainee;
 import org.gym.crm.model.Trainer;
 import org.gym.crm.model.User;
 import org.gym.crm.service.UserProfileService;
-import org.gym.crm.service.impl.TraineeServiceImpl;
 import org.gym.crm.util.CoreValidator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -45,10 +45,7 @@ public class TraineeServiceImplTest {
     private static final String ENCODED_PASSWORD = "encodedPassword";
     private static final String RAW_PASSWORD = "rawPassword";
     private static final long VALID_ID = 1L;
-    private static final long NOT_FOUND_ID = 999L;
-
     private static final String TRAINEE_CANNOT_BE_NULL = "Trainee cannot be null";
-    private static final String TRAINEE_NOT_FOUND_BY_ID = "Trainee not found by id: %s";
 
     @Mock
     private TraineeDao dao;
@@ -117,15 +114,20 @@ public class TraineeServiceImplTest {
 
     @Test
     void updateTrainee_shouldUpdateTrainee_whenTraineeExists() {
-        Trainee expected = savedTrainee.toBuilder().address("new address").build();
+        Trainee existing = savedTrainee;
+        Trainee updated = savedTrainee.toBuilder()
+                .address("new address")
+                .build();
 
-        when(dao.findById(VALID_ID)).thenReturn(Optional.of(savedTrainee));
-        when(dao.update(savedTrainee)).thenReturn(expected);
+        when(dao.findByUsername(USERNAME))
+                .thenReturn(Optional.of(existing));
+        when(dao.save(any(Trainee.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
 
-        Trainee actual = service.update(savedTrainee);
+        Trainee actual = service.updateProfile(USERNAME, updated);
 
-        assertEquals(expected, actual);
-        verify(dao).update(savedTrainee);
+        assertEquals("new address", actual.getAddress());
+        verify(dao).save(any(Trainee.class));
     }
 
     @Test
@@ -138,74 +140,45 @@ public class TraineeServiceImplTest {
 
     @Test
     void updateTrainee_shouldThrowException_whenTraineeNotFound() {
-        Trainee nonExistent = savedTrainee.toBuilder().id(NOT_FOUND_ID).build();
-        when(dao.findById(NOT_FOUND_ID)).thenReturn(Optional.empty());
+        Trainee updated = savedTrainee.toBuilder()
+                .address("new address")
+                .build();
 
-        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
-                () -> service.update(nonExistent));
+        when(dao.findByUsername(USERNAME)).thenReturn(Optional.empty());
 
-        assertEquals(String.format(TRAINEE_NOT_FOUND_BY_ID, NOT_FOUND_ID), exception.getMessage());
-        verify(dao, never()).update(any(Trainee.class));
+        assertThrows(EntityNotFoundException.class, () -> service.updateProfile(USERNAME, updated));
+        verify(dao, never()).update(any());
     }
 
     @Test
     void deleteTrainee_shouldDeleteTrainee_whenTraineeExists() {
-        when(dao.findById(VALID_ID)).thenReturn(Optional.of(savedTrainee));
+        when(dao.findByUsername(USERNAME))
+                .thenReturn(Optional.of(savedTrainee));
 
-        service.delete(VALID_ID);
+        service.deleteByUsername(USERNAME);
 
-        verify(dao).delete(VALID_ID);
+        verify(dao).delete(savedTrainee);
     }
 
     @Test
     void deleteTrainee_shouldThrowException_whenTraineeNotFound() {
-        when(dao.findById(NOT_FOUND_ID)).thenReturn(Optional.empty());
+        when(dao.findByUsername(USERNAME)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () -> service.delete(NOT_FOUND_ID));
-        verify(dao, never()).delete((Long) any());
-    }
+        assertThrows(EntityNotFoundException.class,
+                () -> service.deleteByUsername(USERNAME));
 
-    @Test
-    void getTraineeById_shouldReturnTrainee_whenTraineeExists() {
-        when(dao.findById(VALID_ID)).thenReturn(Optional.of(savedTrainee));
-
-        Optional<Trainee> actual = service.findById(VALID_ID);
-
-        assertTrue(actual.isPresent());
-        assertEquals(savedTrainee, actual.get());
-    }
-
-    @Test
-    void findById_shouldThrowException_whenTraineeNotFound() {
-        when(dao.findById(NOT_FOUND_ID)).thenReturn(Optional.empty());
-
-        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
-                () -> service.findById(NOT_FOUND_ID));
-
-        assertEquals(String.format(TRAINEE_NOT_FOUND_BY_ID, NOT_FOUND_ID), exception.getMessage());
-    }
-
-    @Test
-    void getAllTrainees_shouldReturnAllTrainees_whenExist() {
-        when(dao.findAll()).thenReturn(List.of(savedTrainee));
-
-        List<Trainee> actual = service.findAll();
-
-        assertEquals(1, actual.size());
-    }
-
-    @Test
-    void getAllTrainees_shouldReturnEmptyList_whenNoTrainees() {
-        when(dao.findAll()).thenReturn(List.of());
-
-        List<Trainee> actual = service.findAll();
-
-        assertTrue(actual.isEmpty());
+        verify(dao, never()).deleteByUsername(any());
     }
 
     @Test
     void authenticate_shouldReturnTrue_whenCredentialsMatch() {
-        when(dao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainee));
+        when(dao.findByUsername(USERNAME))
+                .thenReturn(Optional.of(savedTrainee));
+
+        when(passwordEncoder.matches(
+                ENCODED_PASSWORD,
+                savedTrainee.getUser().getPassword()))
+                .thenReturn(true);
 
         boolean result = service.authenticate(USERNAME, ENCODED_PASSWORD);
 
@@ -270,12 +243,17 @@ public class TraineeServiceImplTest {
     @Test
     void changePassword_shouldUpdatePassword_whenOldPasswordMatches() throws Exception {
         when(dao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainee));
-        when(dao.save(any(Trainee.class))).thenReturn(savedTrainee);
+        when(passwordEncoder.matches("oldPassword", savedTrainee.getUser().getPassword())).thenReturn(true);
+        when(passwordEncoder.encode("newPassword")).thenReturn("encodedNewPassword");
 
-        service.changePassword(USERNAME, ENCODED_PASSWORD, "newPassword");
+        service.changePassword(USERNAME, "oldPassword", "newPassword");
 
-        assertEquals("newPassword", savedTrainee.getUser().getPassword());
-        verify(dao).save(savedTrainee);
+        ArgumentCaptor<Trainee> captor = ArgumentCaptor.forClass(Trainee.class);
+        verify(dao).save(captor.capture());
+
+        Trainee updated = captor.getValue();
+
+        assertEquals("encodedNewPassword", updated.getUser().getPassword());
     }
 
     @Test
@@ -304,12 +282,12 @@ public class TraineeServiceImplTest {
     @Test
     void setActive_shouldDeactivate_whenCurrentlyActive() {
         when(dao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainee));
-        when(dao.save(any())).thenReturn(savedTrainee);
+        when(dao.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        service.setActive(USERNAME, false);
+        Trainee result = service.setActive(USERNAME, false);
 
-        assertFalse(savedTrainee.getUser().getIsActive());
-        verify(dao).save(savedTrainee);
+        assertFalse(result.getUser().getIsActive());
+        verify(dao).save(any());
     }
 
     @Test
@@ -437,15 +415,16 @@ public class TraineeServiceImplTest {
                 .build();
 
         when(dao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainee));
-        when(dao.save(any())).thenReturn(savedTrainee);
+        when(dao.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        service.updateProfile(USERNAME, updatedData);
+        Trainee result = service.updateProfile(USERNAME, updatedData);
 
-        assertEquals("NewFirst", savedTrainee.getUser().getFirstName());
-        assertEquals("NewLast", savedTrainee.getUser().getLastName());
-        assertEquals("New Address", savedTrainee.getAddress());
-        assertEquals(LocalDate.of(1995, 5, 15), savedTrainee.getDateOfBirth());
-        verify(dao).save(savedTrainee);
+        assertEquals("NewFirst", result.getUser().getFirstName());
+        assertEquals("NewLast", result.getUser().getLastName());
+        assertEquals("New Address", result.getAddress());
+        assertEquals(LocalDate.of(1995, 5, 15), result.getDateOfBirth());
+
+        verify(dao).save(any());
     }
 
     @Test
@@ -462,11 +441,14 @@ public class TraineeServiceImplTest {
 
     @Test
     void updateProfile_shouldThrowException_whenFirstNameBlank() {
-        Trainee updatedData = Trainee.builder()
-                .user(User.builder().firstName("").lastName("B").isActive(true).build())
+        User updatedUser = User.builder()
+                .firstName("")
+                .lastName("B")
+                .isActive(true)
                 .build();
-
-        when(dao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainee));
+        Trainee updatedData = Trainee.builder()
+                .user(updatedUser)
+                .build();
 
         assertThrows(IllegalArgumentException.class,
                 () -> service.updateProfile(USERNAME, updatedData));
@@ -474,14 +456,17 @@ public class TraineeServiceImplTest {
 
     @Test
     void updateProfile_shouldThrowException_whenLastNameBlank() {
-        Trainee updatedData = Trainee.builder()
-                .user(User.builder().firstName("A").lastName("").isActive(true).build())
+        User updatedUser = User.builder()
+                .firstName("A")
+                .lastName("")
+                .isActive(true)
                 .build();
 
-        when(dao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainee));
+        Trainee updatedData = Trainee.builder()
+                .user(updatedUser)
+                .build();
 
-        assertThrows(IllegalArgumentException.class,
-                () -> service.updateProfile(USERNAME, updatedData));
+        assertThrows(IllegalArgumentException.class, () -> service.updateProfile(USERNAME, updatedData));
     }
 
     @Test

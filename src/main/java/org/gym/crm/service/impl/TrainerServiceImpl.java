@@ -3,6 +3,7 @@ package org.gym.crm.service.impl;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.gym.crm.dao.TrainerDao;
@@ -30,10 +31,7 @@ public class TrainerServiceImpl implements TrainerService {
     private static final String PASSWORD_LABEL = "Password";
     private static final String OLD_PASSWORD_LABEL = "Old password";
     private static final String NEW_PASSWORD_LABEL = "New password";
-    private static final String UPDATED_DATA_LABEL = "Updated data";
     private static final String FILTER_LABEL = "Filter";
-    private static final String FIRST_NAME_LABEL = "First name";
-    private static final String LAST_NAME_LABEL = "Last name";
     private static final String TRAINER_NOT_FOUND = "Trainer not found: %s";
 
     private final TrainerDao trainerDao;
@@ -45,8 +43,11 @@ public class TrainerServiceImpl implements TrainerService {
     @PersistenceContext
     private EntityManager entityManager;
 
+    @Transactional
     @Override
     public Trainer create(Trainer trainer) {
+        validator.validateTrainer(trainer);
+
         log.info("Creating trainer: {} {}", trainer.getUser().getFirstName(), trainer.getUser().getLastName());
 
         String username = userProfileService.generateUsername(trainer.getUser().getFirstName(), trainer.getUser().getLastName());
@@ -64,18 +65,7 @@ public class TrainerServiceImpl implements TrainerService {
         return saved;
     }
 
-    @Override
-    public Optional<Trainer> findById(Long id) {
-        log.debug("Searching trainer by id={}", id);
-        return trainerDao.findById(id);
-    }
-
-    @Override
-    public List<Trainer> findAll() {
-        log.debug("Fetching all trainers");
-        return trainerDao.findAll();
-    }
-
+    @Transactional
     @Override
     public Trainer update(Trainer trainer) {
         log.info("Updating trainer with id={}", trainer.getId());
@@ -88,7 +78,7 @@ public class TrainerServiceImpl implements TrainerService {
         validator.validateNotBlank(password, PASSWORD_LABEL);
 
         return trainerDao.findByUsername(username)
-                .map(t -> t.getUser().getPassword().equals(password))
+                .map(t -> passwordEncoder.matches(password, t.getUser().getPassword()))
                 .orElse(false);
     }
 
@@ -109,19 +99,28 @@ public class TrainerServiceImpl implements TrainerService {
         Trainer trainer = trainerDao.findByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException(
                         String.format(TRAINER_NOT_FOUND, username)));
+        User currentUser = trainer.getUser();
 
-        if (!trainer.getUser().getPassword().equals(oldPassword)) {
+        if (!passwordEncoder.matches(oldPassword, currentUser.getPassword())) {
             throw new AuthenticationException("Current password is incorrect");
         }
 
-        trainer.getUser().setPassword(newPassword);
-        trainerDao.save(trainer);
+        String encodedPassword = passwordEncoder.encode(newPassword);
+
+        User updatedUser = currentUser.toBuilder()
+                .password(encodedPassword)
+                .build();
+        Trainer updatedTrainer = trainer.toBuilder()
+                .user(updatedUser)
+                .build();
+
+        trainerDao.save(updatedTrainer);
     }
 
     @Override
     public Trainer updateProfile(String username, Trainer updatedData) {
         validator.validateNotBlank(username, USERNAME_LABEL);
-        validator.validateNotNull(updatedData, UPDATED_DATA_LABEL);
+        validator.validateTrainer(updatedData);
 
         Trainer trainer = trainerDao.findByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException(
@@ -131,9 +130,6 @@ public class TrainerServiceImpl implements TrainerService {
         Trainer.TrainerBuilder<?, ?> builder = trainer.toBuilder();
 
         if (updatedUser != null) {
-            validator.validateNotBlank(updatedUser.getFirstName(), FIRST_NAME_LABEL);
-            validator.validateNotBlank(updatedUser.getLastName(), LAST_NAME_LABEL);
-
             String newUsername = userProfileService.generateUsername(
                     updatedUser.getFirstName(), updatedUser.getLastName());
 
@@ -160,15 +156,22 @@ public class TrainerServiceImpl implements TrainerService {
         Trainer trainer = trainerDao.findByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException(
                         String.format(TRAINER_NOT_FOUND, username)));
+        User currentUser = trainer.getUser();
 
-        if (trainer.getUser().getIsActive() == active) {
+        if (Boolean.TRUE.equals(currentUser.getIsActive()) == active) {
             throw new IllegalStateException(
                     String.format("Trainer '%s' is already %s. Not idempotent.",
                             username, active ? "active" : "inactive"));
         }
 
-        trainer.getUser().setIsActive(active);
-        trainerDao.save(trainer);
+        User updatedUser = currentUser.toBuilder()
+                .isActive(active)
+                .build();
+        Trainer updatedTrainer = trainer.toBuilder()
+                .user(updatedUser)
+                .build();
+
+        trainerDao.save(updatedTrainer);
     }
 
     @Override
