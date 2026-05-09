@@ -8,21 +8,28 @@
 
 ## Setup Instructions
 
+### Set up github repository
+
+1. Navigate to your GitHub repository Settings > General. In the Default branch section, click the switch icon (two arrows) and select develop from the dropdown menu. Click Update and confirm the change. As a result you should see: ![My image](docs/default_branch.png) ![My image](docs/develop_default.png)
+
 ### Set up github actions
-1. Add file with following path /github/workflows/ci.yml your project
+1. Add file with following path .github/workflows/ci.yml to your project
 
 
-2. Configure file with code https://github.com/borderForNoone/gym-crm/blob/feature/GIA-77/.github/workflows/ci.yml#L1-L30
+2. Configure file with code https://github.com/borderForNoone/gym-crm/blob/feature/GIA-77/.github/workflows/ci.yml#L1-L30 (without Build, test and analyze with SonarCloud step for now)
 
 
-3. Go to "Settings" in your github repository and choose "Branches"
+3. Create MR with this file
 
 
-4. Add rule : paste develop branch for "Branch name pattern" and toggle buttons as in screenshot
+4. Go to "Settings" in your github repository and choose "Branches"
+
+
+5. Add classic branch protection rule : paste develop branch for "Branch name pattern" and toggle buttons as in screenshot
    ![My image](docs/img.png)
 
 
-5. Add check with name "Build and run tests + SonarCloud"(will be appeared when file will be merged or in MR)
+6. Add check with name "Build and run tests + SonarCloud" (will be appeared when file will be merged or in MR)
 
 
 ### Set up Sonarcube
@@ -32,7 +39,7 @@
 2. Create your organization with your github
 
 
-3. Analyze your new project
+3. Analyze your new project (make sure that develop is default branch before doing that)
    ![My image](docs/img_1.png)
 
 
@@ -57,13 +64,13 @@
 10. Type SONAR_TOKEN for name and type hashed token from sonar in secret which we get from step 6
 
 
-11. Build plugins https://github.com/borderdornone/gym-crm/blob/develop/pom.xml#L98-L126
+11. Build plugins https://github.com/borderForNoone/gym-crm/blob/develop/pom.xml#L207-L235
 
 
-12. Add your properties https://github.com/borderdornone/gym-crm/blob/develop/pom.xml#L15-L17
+12. Add your properties https://github.com/borderForNoone/gym-crm/blob/develop/pom.xml#L15-L17
 
 
-13. Add config https://github.com/borderdornone/gym-crm/blob/develop/.github/workflows/ci.yml#L31-L39
+13. Add to ci.yml config "Build, test and analyze with SonarCloud" step https://github.com/borderForNoone/gym-crm/blob/develop/.github/workflows/ci.yml#L32-L41
 
 
 14. To obtain code coverage badge: Insert to README.md next three line (update links with your SonarQube project id)
@@ -89,3 +96,6 @@ SONAR_PROJECT_ID = borderForNoone_gym-crm
 
 
 15. Push changes to github and check if it works
+
+
+16. After merging the pull request into develop and after CI pipeline, navigate to your project in SonarQube. Select Branches from the left-hand menu and ensure that develop is designated with the MAIN BRANCH label ![My image](docs/sonarcube_branches.png)
