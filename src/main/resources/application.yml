@@ -24,3 +24,7 @@ spring:
       trainees: src/main/resources/data/trainees.csv
       trainers: src/main/resources/data/trainers.csv
       trainings: src/main/resources/data/trainings.csv
+
+server:
+  servlet:
+    context-path: /gym-crm
