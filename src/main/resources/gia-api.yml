@@ -1,11 +1,11 @@
 openapi: 3.0.3
 info:
-  title: GCA API
+  title: GIA API
   description: API for managing trainees, their profiles, trainers, and training schedules
   version: '1.0'
 
 servers:
-- url: http://localhost:8080/gym-crm-app/api/v1 //update project name with your Creates
+- url: http://localhost:8080/gym-crm/api/v1
   description: Local development server
 
 tags:
@@ -433,6 +433,51 @@ paths:
         default:
           description: Unexpected error
 
+  /trainers/{username}/activation:
+    patch:
+      tags:
+        - User Profile
+      summary: Change trainer activation status
+      description: Activates or deactivates a trainer profile
+      operationId: changeTrainerActivationStatus
+      parameters:
+        - $ref: '#/components/parameters/Username'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivationStatusRequest'
+      responses:
+        '200':
+          description: Activation status updated successfully
+        '400':
+          description: Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Trainer not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+
   /trainees/{username}/available-trainers:
     get:
       tags:
@@ -465,6 +510,42 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+
+  /trainers/{username}/trainings:
+    get:
+      tags:
+        - Training
+      summary: Get trainer's training
+      description: Retrieves trainer's training schedule with optional filtering
+      operationId: getTrainerTrainings
+      parameters:
+        - $ref: '#/components/parameters/Username'
+        - $ref: '#/components/parameters/FromDate'
+        - $ref: '#/components/parameters/ToDate'
+        - $ref: '#/components/parameters/TraineeName'
+      responses:
+        '200':
+          description: List of trainings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GetTrainingResponse'
+        '401':
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Trainee not found
           content:
             application/json:
               schema:
@@ -885,6 +966,9 @@ components:
     GetTraineeTrainingResponse:
       allOf:
       - $ref: '#/components/schemas/TrainingDefinition'
+    GetTrainingResponse:
+      allOf:
+        - $ref: '#/components/schemas/TrainingDefinition'
     TrainerCreateRequest:
       allOf:
       - $ref: '#/components/schemas/Trainer'
