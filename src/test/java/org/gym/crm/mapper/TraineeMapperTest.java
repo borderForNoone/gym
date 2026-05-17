@@ -1,8 +1,8 @@
 package org.gym.crm.mapper;
 
-import org.gym.crm.dto.TraineeRequestDTO;
-import org.gym.crm.dto.TraineeResponseDTO;
-import org.gym.crm.dto.TraineeUpdateDTO;
+import org.gym.crm.dto.trainee.TraineeRequestDTO;
+import org.gym.crm.dto.trainee.TraineeResponseDTO;
+import org.gym.crm.dto.trainee.TraineeUpdateDTO;
 import org.gym.crm.model.Trainee;
 import org.gym.crm.model.User;
 import org.junit.jupiter.api.BeforeEach;

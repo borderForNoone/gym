@@ -1,4 +1,4 @@
-package org.gym.crm.dto;
+package org.gym.crm.dto.trainer;
 
 import lombok.Builder;
 import lombok.EqualsAndHashCode;

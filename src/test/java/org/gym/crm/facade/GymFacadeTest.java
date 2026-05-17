@@ -1,13 +1,14 @@
 package org.gym.crm.facade;
 
-import org.gym.crm.dto.TraineeRequestDTO;
-import org.gym.crm.dto.TraineeResponseDTO;
-import org.gym.crm.dto.TraineeUpdateDTO;
-import org.gym.crm.dto.TrainerRequestDTO;
-import org.gym.crm.dto.TrainerResponseDTO;
-import org.gym.crm.dto.TrainerUpdateDTO;
-import org.gym.crm.dto.TrainingRequestDTO;
-import org.gym.crm.dto.TrainingResponseDTO;
+import org.gym.crm.dto.common.PasswordChangeRequest;
+import org.gym.crm.dto.trainee.TraineeRequestDTO;
+import org.gym.crm.dto.trainee.TraineeResponseDTO;
+import org.gym.crm.dto.trainee.TraineeUpdateDTO;
+import org.gym.crm.dto.trainer.TrainerRequestDTO;
+import org.gym.crm.dto.trainer.TrainerResponseDTO;
+import org.gym.crm.dto.trainer.TrainerUpdateDTO;
+import org.gym.crm.dto.training.TrainingRequestDTO;
+import org.gym.crm.dto.training.TrainingResponseDTO;
 import org.gym.crm.mapper.TraineeMapper;
 import org.gym.crm.mapper.TrainerMapper;
 import org.gym.crm.mapper.TrainingMapper;
@@ -16,14 +17,18 @@ import org.gym.crm.model.Trainer;
 import org.gym.crm.model.Training;
 import org.gym.crm.model.TrainingType;
 import org.gym.crm.model.User;
+import org.gym.crm.rest.LoginChangeRequest;
+import org.gym.crm.rest.LoginRequest;
 import org.gym.crm.search.filter.TraineeTrainingFilter;
 import org.gym.crm.search.filter.TrainerTrainingFilter;
 import org.gym.crm.service.TraineeService;
 import org.gym.crm.service.TrainerService;
 import org.gym.crm.service.TrainingService;
+import org.gym.crm.service.UserProfileService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -35,6 +40,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -59,6 +65,8 @@ public class GymFacadeTest {
     @Mock
     private TrainingService trainingService;
     @Mock
+    private UserProfileService userProfileService;
+    @Mock
     private TraineeMapper traineeMapper;
     @Mock
     private TrainerMapper trainerMapper;
@@ -80,7 +88,7 @@ public class GymFacadeTest {
 
     @BeforeEach
     void setUp() {
-        facade = new GymFacade(traineeService, trainerService, trainingService);
+        facade = new GymFacade(traineeService, trainerService, trainingService, userProfileService);
         facade.setTraineeMapper(traineeMapper);
         facade.setTrainerMapper(trainerMapper);
         facade.setTrainingMapper(trainingMapper);
@@ -468,6 +476,42 @@ public class GymFacadeTest {
         verify(trainerMapper).toEntity(trainerUpdateDTO);
         verify(trainerService).updateProfile(USERNAME, updatedTrainer);
         verify(trainerMapper).toDto(updatedTrainer);
+    }
+
+    @Test
+    void login_shouldDelegateToUserProfileService() {
+        LoginRequest request = new LoginRequest(USERNAME, PASSWORD);
+
+        facade.login(request);
+
+        verify(userProfileService).login(request);
+    }
+
+    @Test
+    void changePassword_shouldAuthenticateAndDelegateToUserProfileService() {
+        LoginChangeRequest request = new LoginChangeRequest(USERNAME, OLD_PASSWORD, NEW_PASSWORD);
+
+        facade.changePassword(request, USERNAME);
+
+        verify(userProfileService).authenticate(USERNAME, OLD_PASSWORD);
+        verify(userProfileService).changePassword(
+                PasswordChangeRequest.builder()
+                        .username(USERNAME)
+                        .oldPassword(OLD_PASSWORD)
+                        .newPassword(NEW_PASSWORD)
+                        .build()
+        );
+    }
+
+    @Test
+    void changePassword_shouldAuthenticateBeforeChangingPassword() {
+        LoginChangeRequest request = new LoginChangeRequest(USERNAME, OLD_PASSWORD, NEW_PASSWORD);
+        InOrder inOrder = inOrder(userProfileService);
+
+        facade.changePassword(request, USERNAME);
+
+        inOrder.verify(userProfileService).authenticate(USERNAME, OLD_PASSWORD);
+        inOrder.verify(userProfileService).changePassword(any(PasswordChangeRequest.class));
     }
 
     private Trainee buildTrainee() {

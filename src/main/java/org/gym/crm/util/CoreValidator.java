@@ -1,5 +1,7 @@
 package org.gym.crm.util;
 
+import jakarta.validation.Valid;
+import org.gym.crm.dto.common.PasswordChangeRequest;
 import org.gym.crm.exception.CoreValidationException;
 import org.gym.crm.model.FieldName;
 import org.gym.crm.model.Trainee;
@@ -70,5 +72,9 @@ public class CoreValidator {
         validateTextFieldSize(trainer.getUser().getLastName(), FieldName.LAST_NAME, MAX_LAST_NAME_LENGTH);
 
         validateNotNull(trainer.getSpecialization(), FieldName.SPECIALIZATION.toString());
+    }
+
+    public void validate(@Valid PasswordChangeRequest request, String passwordChangeRequest) {
+
     }
 }
