@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Component
@@ -24,19 +25,17 @@ public class CoreValidator {
     private static final String NULL_OBJECT_MESSAGE = "%s cannot be null";
     private static final int MAX_ADDRESS_LENGTH = 255;
 
-    private volatile Validator jakartaValidator;
+    private final AtomicReference<Validator> jakartaValidator = new AtomicReference<>();
 
     private Validator getJakartaValidator() {
-        if (jakartaValidator == null) {
-            synchronized (this) {
-                if (jakartaValidator == null) {
-                    try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
-                        jakartaValidator = factory.getValidator();
-                    }
-                }
+        return jakartaValidator.updateAndGet(existing -> {
+            if (existing != null) {
+                return existing;
             }
-        }
-        return jakartaValidator;
+            try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
+                return factory.getValidator();
+            }
+        });
     }
 
     public void validateNotNull(Object object, String objectName) {
