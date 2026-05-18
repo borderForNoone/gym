@@ -1,7 +1,9 @@
 package org.gym.crm.facade;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import org.gym.crm.dto.PasswordChangeRequest;
 import org.gym.crm.dto.TraineeRequestDTO;
 import org.gym.crm.dto.TraineeResponseDTO;
 import org.gym.crm.dto.TraineeUpdateDTO;
@@ -16,11 +18,14 @@ import org.gym.crm.mapper.TrainingMapper;
 import org.gym.crm.model.Trainee;
 import org.gym.crm.model.Trainer;
 import org.gym.crm.model.Training;
+import org.gym.crm.rest.LoginChangeRequest;
+import org.gym.crm.rest.LoginRequest;
 import org.gym.crm.search.filter.TraineeTrainingFilter;
 import org.gym.crm.search.filter.TrainerTrainingFilter;
 import org.gym.crm.service.TraineeService;
 import org.gym.crm.service.TrainerService;
 import org.gym.crm.service.TrainingService;
+import org.gym.crm.service.UserProfileService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -36,6 +41,7 @@ public class GymFacade {
     private final TraineeService traineeService;
     private final TrainerService trainerService;
     private final TrainingService trainingService;
+    private final UserProfileService userProfileService;
 
     @Setter(onMethod_ = {@Autowired})
     private TraineeMapper traineeMapper;
@@ -184,5 +190,21 @@ public class GymFacade {
         Trainer saved = trainerService.updateProfile(username, updatedData);
 
         return trainerMapper.toDto(saved);
+    }
+
+    public void changePassword(LoginChangeRequest request, @NotNull String username) {
+        userProfileService.authenticate(username, request.getOldPassword());
+
+        PasswordChangeRequest requestDTO = PasswordChangeRequest.builder()
+                .username(username)
+                .oldPassword(request.getOldPassword())
+                .newPassword(request.getNewPassword())
+                .build();
+
+        userProfileService.changePassword(requestDTO);
+    }
+
+    public void login(LoginRequest request) {
+        userProfileService.login(request);
     }
 }

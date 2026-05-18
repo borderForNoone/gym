@@ -24,6 +24,8 @@ import javax.naming.AuthenticationException;
 import java.util.List;
 import java.util.Optional;
 
+import static java.lang.String.format;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -109,8 +111,7 @@ public class TraineeServiceImpl implements TraineeService {
         validator.validateNotBlank(newPassword, NEW_PASSWORD_LABEL);
 
         Trainee trainee = dao.findByUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        String.format(TRAINEE_NOT_FOUND_BY_USERNAME, username)));
+                .orElseThrow(() -> new EntityNotFoundException(format(TRAINEE_NOT_FOUND_BY_USERNAME, username)));
         User currentUser = trainee.getUser();
 
         if (!passwordEncoder.matches(oldPassword, currentUser.getPassword())) {
@@ -134,15 +135,12 @@ public class TraineeServiceImpl implements TraineeService {
         validator.validateNotBlank(username, USERNAME_LABEL);
 
         Trainee trainee = findByUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        String.format(TRAINEE_NOT_FOUND_BY_USERNAME, username)));
+                .orElseThrow(() -> new EntityNotFoundException(format(TRAINEE_NOT_FOUND_BY_USERNAME, username)));
         User currentUser = trainee.getUser();
 
-        boolean currentState = Boolean.TRUE.equals(currentUser.getIsActive());
-
-        if (currentState == active) {
-            throw new IllegalStateException(
-                    String.format("Trainee '%s' is already %s. Not idempotent.",
+        boolean isActive = currentUser.getIsActive() != null && currentUser.getIsActive();
+        if (isActive == active) {
+            throw new IllegalStateException(format("Trainer '%s' is already %s. No action taken.",
                             username, active ? "active" : "inactive"));
         }
 
@@ -163,8 +161,7 @@ public class TraineeServiceImpl implements TraineeService {
         validator.validateNotBlank(username, USERNAME_LABEL);
 
         Trainee trainee = findByUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        String.format(TRAINEE_NOT_FOUND_BY_USERNAME, username)));
+                .orElseThrow(() -> new EntityNotFoundException(format(TRAINEE_NOT_FOUND_BY_USERNAME, username)));
 
         dao.delete(trainee);
     }
@@ -184,8 +181,7 @@ public class TraineeServiceImpl implements TraineeService {
         validator.validateNotBlank(traineeUsername, "Trainee username");
 
         if (!dao.existsByUsername(traineeUsername)) {
-            throw new EntityNotFoundException(
-                    String.format(TRAINEE_NOT_FOUND_BY_USERNAME, traineeUsername));
+            throw new EntityNotFoundException(format(TRAINEE_NOT_FOUND_BY_USERNAME, traineeUsername));
         }
 
         return dao.findUnassignedTrainers(traineeUsername);
@@ -198,8 +194,7 @@ public class TraineeServiceImpl implements TraineeService {
         validator.validateNotNull(trainerUsernames, "Trainer usernames");
 
         Trainee trainee = findByUsername(traineeUsername)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        String.format(TRAINEE_NOT_FOUND_BY_USERNAME, traineeUsername)));
+                .orElseThrow(() -> new EntityNotFoundException(format(TRAINEE_NOT_FOUND_BY_USERNAME, traineeUsername)));
 
         List<Trainer> trainers = dao.findAllByUsernames(trainerUsernames);
         trainee.getTrainers().clear();
@@ -217,8 +212,7 @@ public class TraineeServiceImpl implements TraineeService {
         validator.validateTrainee(updatedData);
 
         Trainee trainee = dao.findByUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        String.format(TRAINEE_NOT_FOUND_BY_USERNAME, username)));
+                .orElseThrow(() -> new EntityNotFoundException(format(TRAINEE_NOT_FOUND_BY_USERNAME, username)));
 
         User currentUser = trainee.getUser();
         User incomingUser = updatedData.getUser();
