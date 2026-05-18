@@ -279,12 +279,16 @@ class UserProfileServiceImplTest {
 
     @Test
     void login_shouldThrowException_whenUsernameIsBlank() {
-        assertThrows(IllegalArgumentException.class, () -> service.login(new LoginRequest("", PASSWORD)));
+        LoginRequest request = new LoginRequest("", PASSWORD);
+
+        assertThrows(IllegalArgumentException.class, () -> service.login(request));
     }
 
     @Test
     void login_shouldThrowException_whenPasswordIsBlank() {
-        assertThrows(IllegalArgumentException.class, () -> service.login(new LoginRequest(USERNAME, "")));
+        LoginRequest request = new LoginRequest(USERNAME, "");
+
+        assertThrows(IllegalArgumentException.class, () -> service.login(request));
     }
 
     @Test
@@ -322,13 +326,14 @@ class UserProfileServiceImplTest {
 
     @Test
     void changePassword_shouldThrowEntityNotFoundException_whenUserNotFound() {
+        PasswordChangeRequest request = buildPasswordChangeRequest();
+
         doNothing().when(validator).validate(any(PasswordChangeRequest.class), anyString());
         when(traineeDao.existsByUsername(USERNAME)).thenReturn(false);
         when(trainerDao.existsByUsername(USERNAME)).thenReturn(false);
         when(passwordEncoder.encode(NEW_PASSWORD)).thenReturn(ENCODED_NEW_PASSWORD);
 
-        assertThrows(EntityNotFoundException.class,
-                () -> service.changePassword(buildPasswordChangeRequest()));
+        assertThrows(EntityNotFoundException.class, () -> service.changePassword(request));
     }
 
     @Test

@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class CoreValidatorTest {
     private CoreValidator coreValidator;
@@ -36,6 +37,9 @@ class CoreValidatorTest {
         PasswordChangeRequest request = validRequest();
 
         assertDoesNotThrow(() -> coreValidator.validate(request, "request"));
+        assertEquals("Simone.Radcliffe", request.getUsername());
+        assertEquals("oldPassword", request.getOldPassword());
+        assertEquals("newPassword", request.getNewPassword());
     }
 
     @Test
