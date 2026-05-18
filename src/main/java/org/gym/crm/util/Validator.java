@@ -4,6 +4,8 @@ import org.gym.crm.exception.CoreValidationException;
 
 import java.util.Objects;
 
+import static java.lang.String.format;
+
 public class Validator {
     private static final int MAX_USERNAME_LENGTH = 110;
     private static final String INVALID_ID_EXCEPTION_MESSAGE = "ID must be positive and not null, got: %s";
@@ -12,19 +14,19 @@ public class Validator {
 
     public static void validateId(Long id) {
         if (id == null || id <= 0) {
-            throw new IllegalArgumentException(String.format(INVALID_ID_EXCEPTION_MESSAGE, id));
+            throw new IllegalArgumentException(format(INVALID_ID_EXCEPTION_MESSAGE, id));
         }
     }
 
     public static void validateNotNull(Object object, String objectName) {
         if (object == null) {
-            throw new IllegalArgumentException(String.format(NULL_OBJECT_EXCEPTION_MESSAGE, objectName));
+            throw new IllegalArgumentException(format(NULL_OBJECT_EXCEPTION_MESSAGE, objectName));
         }
     }
 
     public static void validateNotBlank(String value, String fieldName) {
         if (Objects.isNull(value) || value.isBlank()) {
-            throw new IllegalArgumentException(String.format(EMPTY_STRING_EXCEPTION_MESSAGE, fieldName));
+            throw new IllegalArgumentException(format(EMPTY_STRING_EXCEPTION_MESSAGE, fieldName));
         }
     }
 
@@ -32,7 +34,9 @@ public class Validator {
         validateNotBlank(username, "Username");
 
         if (username.length() > MAX_USERNAME_LENGTH) {
-            throw new CoreValidationException(username);
+            throw new CoreValidationException(format("Username cannot exceed %d characters, got: %d",
+                    MAX_USERNAME_LENGTH, username.length())
+            );
         }
     }
 }

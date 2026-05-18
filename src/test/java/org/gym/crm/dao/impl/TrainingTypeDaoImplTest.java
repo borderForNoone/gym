@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
 
+import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -33,7 +34,7 @@ class TrainingTypeDaoImplTest extends AbstractDaoTest<TrainingTypeDaoImpl> {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> dao.findByTrainingTypeName(" "));
 
-        assertThat(exception.getMessage()).isEqualTo(String.format(EMPTY_STRING_EXCEPTION_MESSAGE, "Training Type Name"));
+        assertThat(exception.getMessage()).isEqualTo(format(EMPTY_STRING_EXCEPTION_MESSAGE, "Training Type Name"));
     }
 
     @Override

@@ -23,6 +23,8 @@ import javax.naming.AuthenticationException;
 import java.util.List;
 import java.util.Optional;
 
+import static java.lang.String.format;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -97,8 +99,7 @@ public class TrainerServiceImpl implements TrainerService {
         validator.validateNotBlank(newPassword, NEW_PASSWORD_LABEL);
 
         Trainer trainer = trainerDao.findByUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        String.format(TRAINER_NOT_FOUND, username)));
+                .orElseThrow(() -> new EntityNotFoundException(format(TRAINER_NOT_FOUND, username)));
         User currentUser = trainer.getUser();
 
         if (!passwordEncoder.matches(oldPassword, currentUser.getPassword())) {
@@ -123,8 +124,7 @@ public class TrainerServiceImpl implements TrainerService {
         validator.validateTrainer(updatedData);
 
         Trainer trainer = trainerDao.findByUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        String.format(TRAINER_NOT_FOUND, username)));
+                .orElseThrow(() -> new EntityNotFoundException(format(TRAINER_NOT_FOUND, username)));
 
         User updatedUser = updatedData.getUser();
         Trainer.TrainerBuilder<?, ?> builder = trainer.toBuilder();
@@ -154,14 +154,13 @@ public class TrainerServiceImpl implements TrainerService {
         validator.validateNotBlank(username, USERNAME_LABEL);
 
         Trainer trainer = trainerDao.findByUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        String.format(TRAINER_NOT_FOUND, username)));
+                .orElseThrow(() -> new EntityNotFoundException(format(TRAINER_NOT_FOUND, username)));
         User currentUser = trainer.getUser();
 
-        if (Boolean.TRUE.equals(currentUser.getIsActive()) == active) {
-            throw new IllegalStateException(
-                    String.format("Trainer '%s' is already %s. Not idempotent.",
-                            username, active ? "active" : "inactive"));
+        boolean isActive = currentUser.getIsActive() != null && currentUser.getIsActive();
+        if (isActive == active) {
+            throw new IllegalStateException(format("Trainer '%s' is already %s. No action taken.",
+                    username, active ? "active" : "inactive"));
         }
 
         User updatedUser = currentUser.toBuilder()
