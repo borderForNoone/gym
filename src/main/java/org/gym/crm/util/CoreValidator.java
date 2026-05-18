@@ -1,6 +1,9 @@
 package org.gym.crm.util;
 
-import jakarta.validation.Valid;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
 import org.gym.crm.dto.common.PasswordChangeRequest;
 import org.gym.crm.exception.CoreValidationException;
 import org.gym.crm.model.FieldName;
@@ -10,6 +13,8 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 public class CoreValidator {
@@ -18,6 +23,21 @@ public class CoreValidator {
     private static final String BLANK_FIELD_MESSAGE = "%s cannot be null or empty";
     private static final String NULL_OBJECT_MESSAGE = "%s cannot be null";
     private static final int MAX_ADDRESS_LENGTH = 255;
+
+    private volatile Validator jakartaValidator;
+
+    private Validator getJakartaValidator() {
+        if (jakartaValidator == null) {
+            synchronized (this) {
+                if (jakartaValidator == null) {
+                    try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
+                        jakartaValidator = factory.getValidator();
+                    }
+                }
+            }
+        }
+        return jakartaValidator;
+    }
 
     public void validateNotNull(Object object, String objectName) {
         if (object == null) {
@@ -74,7 +94,15 @@ public class CoreValidator {
         validateNotNull(trainer.getSpecialization(), FieldName.SPECIALIZATION.toString());
     }
 
-    public void validate(@Valid PasswordChangeRequest request, String passwordChangeRequest) {
+    public void validate(PasswordChangeRequest request, String objectName) {
+        validateNotNull(request, objectName);
 
+        Set<ConstraintViolation<PasswordChangeRequest>> violations = getJakartaValidator().validate(request);
+        if (!violations.isEmpty()) {
+            String message = violations.stream()
+                    .map(v -> v.getPropertyPath() + " " + v.getMessage())
+                    .collect(Collectors.joining(", "));
+            throw new CoreValidationException(objectName + " is invalid: " + message);
+        }
     }
 }

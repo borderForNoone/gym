@@ -96,8 +96,8 @@ public class UserProfileServiceImpl implements UserProfileService {
 
     @Override
     public User login(LoginRequest request) {
-        validator.validateNotBlank(request.getUsername(), "Username");
-        validator.validateNotBlank(request.getPassword(), "Password");
+        validator.validateNotBlank(request.getUsername(), USERNAME_LABEL);
+        validator.validateNotBlank(request.getPassword(), PASSWORD_LABEL);
 
         String username = request.getUsername();
 
