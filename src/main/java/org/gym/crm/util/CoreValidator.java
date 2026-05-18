@@ -17,6 +17,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+import static java.lang.String.format;
+
 @Component
 public class CoreValidator {
     private static final int MAX_FIRST_NAME_LENGTH = 50;
@@ -40,20 +42,20 @@ public class CoreValidator {
 
     public void validateNotNull(Object object, String objectName) {
         if (object == null) {
-            throw new IllegalArgumentException(String.format(NULL_OBJECT_MESSAGE, objectName));
+            throw new IllegalArgumentException(format(NULL_OBJECT_MESSAGE, objectName));
         }
     }
 
     public void validateNotBlank(String value, String fieldName) {
         if (Objects.isNull(value) || value.isBlank()) {
-            throw new IllegalArgumentException(String.format(BLANK_FIELD_MESSAGE, fieldName));
+            throw new IllegalArgumentException(format(BLANK_FIELD_MESSAGE, fieldName));
         }
     }
 
     public void validateTextFieldSize(String fieldValue, FieldName fieldName, int maxLength) {
         validateNotBlank(fieldValue, fieldName.toString());
         if (fieldValue.length() > maxLength) {
-            throw new CoreValidationException(String.format("%s cannot exceed %d characters, got: %s",
+            throw new CoreValidationException(format("%s cannot exceed %d characters, got: %s",
                     fieldName, maxLength, fieldValue.length()));
         }
     }
@@ -61,8 +63,7 @@ public class CoreValidator {
     public void validateDateOfBirth(LocalDate dateOfBirth) {
         validateNotNull(dateOfBirth, FieldName.DATE_OF_BIRTH.toString());
         if (dateOfBirth.isAfter(LocalDate.now())) {
-            throw new CoreValidationException(
-                    String.format("%s cannot be in the future, got: %s",
+            throw new CoreValidationException(format("%s cannot be in the future, got: %s",
                             FieldName.DATE_OF_BIRTH, dateOfBirth));
         }
     }

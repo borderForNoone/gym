@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -74,7 +75,7 @@ class TraineeDaoImplTest extends AbstractDaoTest<TraineeDaoImpl> {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> dao.update(buildTrainee()));
 
-        assertThat(exception.getMessage()).isEqualTo(String.format(INVALID_ID_MESSAGE, "null"));
+        assertThat(exception.getMessage()).isEqualTo(format(INVALID_ID_MESSAGE, "null"));
     }
 
     @Test

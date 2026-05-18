@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Optional;
 
+import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -63,7 +64,7 @@ class TrainerDaoImplTest extends AbstractDaoTest<TrainerDaoImpl> {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> dao.update(buildTrainer()));
 
-        assertThat(exception.getMessage()).isEqualTo(String.format(INVALID_ID_MESSAGE, "null"));
+        assertThat(exception.getMessage()).isEqualTo(format(INVALID_ID_MESSAGE, "null"));
     }
 
     @Test

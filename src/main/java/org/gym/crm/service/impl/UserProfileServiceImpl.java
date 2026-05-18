@@ -22,6 +22,8 @@ import java.security.SecureRandom;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static java.lang.String.format;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -104,7 +106,7 @@ public class UserProfileServiceImpl implements UserProfileService {
         User user = traineeDao.findByUsername(username)
                 .<User>map(Trainee::getUser)
                 .or(() -> trainerDao.findByUsername(username).map(Trainer::getUser))
-                .orElseThrow(() -> new EntityNotFoundException(String.format(USER_NOT_FOUND_BY_USERNAME, username)));
+                .orElseThrow(() -> new EntityNotFoundException(format(USER_NOT_FOUND_BY_USERNAME, username)));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new BadCredentialsException("Invalid password for username: " + username);
@@ -120,20 +122,20 @@ public class UserProfileServiceImpl implements UserProfileService {
         } else if (isTrainer(username)) {
             updateTrainerPassword(username, encodedPassword);
         } else {
-            throw new EntityNotFoundException(String.format(USER_NOT_FOUND_BY_USERNAME, username));
+            throw new EntityNotFoundException(format(USER_NOT_FOUND_BY_USERNAME, username));
         }
     }
 
     private void updateTraineePassword(String username, String encodedPassword) {
         Trainee trainee = traineeDao.findByUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException(String.format(USER_NOT_FOUND_BY_USERNAME, username)));
+                .orElseThrow(() -> new EntityNotFoundException(format(USER_NOT_FOUND_BY_USERNAME, username)));
 
         traineeDao.update(withNewPassword(trainee, encodedPassword));
     }
 
     private void updateTrainerPassword(String username, String encodedPassword) {
         Trainer trainer = trainerDao.findByUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException(String.format(USER_NOT_FOUND_BY_USERNAME, username)));
+                .orElseThrow(() -> new EntityNotFoundException(format(USER_NOT_FOUND_BY_USERNAME, username)));
 
         trainerDao.update(withNewPassword(trainer, encodedPassword));
     }
