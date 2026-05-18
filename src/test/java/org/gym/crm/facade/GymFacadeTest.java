@@ -1,14 +1,14 @@
 package org.gym.crm.facade;
 
-import org.gym.crm.dto.common.PasswordChangeRequest;
-import org.gym.crm.dto.trainee.TraineeRequestDTO;
-import org.gym.crm.dto.trainee.TraineeResponseDTO;
-import org.gym.crm.dto.trainee.TraineeUpdateDTO;
-import org.gym.crm.dto.trainer.TrainerRequestDTO;
-import org.gym.crm.dto.trainer.TrainerResponseDTO;
-import org.gym.crm.dto.trainer.TrainerUpdateDTO;
-import org.gym.crm.dto.training.TrainingRequestDTO;
-import org.gym.crm.dto.training.TrainingResponseDTO;
+import org.gym.crm.dto.PasswordChangeRequest;
+import org.gym.crm.dto.TraineeRequestDTO;
+import org.gym.crm.dto.TraineeResponseDTO;
+import org.gym.crm.dto.TraineeUpdateDTO;
+import org.gym.crm.dto.TrainerRequestDTO;
+import org.gym.crm.dto.TrainerResponseDTO;
+import org.gym.crm.dto.TrainerUpdateDTO;
+import org.gym.crm.dto.TrainingRequestDTO;
+import org.gym.crm.dto.TrainingResponseDTO;
 import org.gym.crm.mapper.TraineeMapper;
 import org.gym.crm.mapper.TrainerMapper;
 import org.gym.crm.mapper.TrainingMapper;

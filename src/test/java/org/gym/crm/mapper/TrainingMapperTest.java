@@ -1,7 +1,7 @@
 package org.gym.crm.mapper;
 
-import org.gym.crm.dto.training.TrainingRequestDTO;
-import org.gym.crm.dto.training.TrainingResponseDTO;
+import org.gym.crm.dto.TrainingRequestDTO;
+import org.gym.crm.dto.TrainingResponseDTO;
 import org.gym.crm.model.Trainee;
 import org.gym.crm.model.Trainer;
 import org.gym.crm.model.Training;

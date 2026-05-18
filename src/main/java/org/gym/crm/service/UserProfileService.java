@@ -1,6 +1,6 @@
 package org.gym.crm.service;
 
-import org.gym.crm.dto.common.PasswordChangeRequest;
+import org.gym.crm.dto.PasswordChangeRequest;
 import org.gym.crm.model.User;
 import org.gym.crm.rest.LoginRequest;
 

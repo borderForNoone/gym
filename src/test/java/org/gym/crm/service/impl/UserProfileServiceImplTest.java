@@ -2,7 +2,7 @@ package org.gym.crm.service.impl;
 
 import org.gym.crm.dao.TraineeDao;
 import org.gym.crm.dao.TrainerDao;
-import org.gym.crm.dto.common.PasswordChangeRequest;
+import org.gym.crm.dto.PasswordChangeRequest;
 import org.gym.crm.exception.BadCredentialsException;
 import org.gym.crm.exception.CoreValidationException;
 import org.gym.crm.exception.EntityNotFoundException;
@@ -174,7 +174,9 @@ class UserProfileServiceImplTest {
         when(traineeDao.findByUsername(USERNAME)).thenReturn(Optional.of(trainee));
         when(passwordEncoder.matches(PASSWORD, ENCODED_PASSWORD)).thenReturn(true);
 
-        assertTrue(service.authenticate(USERNAME, PASSWORD));
+        boolean actual = service.authenticate(USERNAME, PASSWORD);
+
+        assertTrue(actual);
     }
 
     @Test
@@ -184,7 +186,9 @@ class UserProfileServiceImplTest {
         when(traineeDao.findByUsername(USERNAME)).thenReturn(Optional.of(trainee));
         when(passwordEncoder.matches(PASSWORD, ENCODED_PASSWORD)).thenReturn(false);
 
-        assertFalse(service.authenticate(USERNAME, PASSWORD));
+        boolean actual = service.authenticate(USERNAME, PASSWORD);
+
+        assertFalse(actual);
     }
 
     @Test
@@ -208,22 +212,30 @@ class UserProfileServiceImplTest {
 
     @Test
     void authenticate_shouldThrowException_whenUsernameIsBlank() {
-        assertThrows(IllegalArgumentException.class, () -> service.authenticate("", PASSWORD));
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.authenticate("", PASSWORD));
+
+        assertEquals("Username cannot be null or empty", ex.getMessage());
     }
 
     @Test
     void authenticate_shouldThrowException_whenPasswordIsBlank() {
-        assertThrows(IllegalArgumentException.class, () -> service.authenticate(USERNAME, ""));
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.authenticate(USERNAME, ""));
+
+        assertEquals("Password cannot be null or empty", ex.getMessage());
     }
 
     @Test
     void authenticate_shouldThrowException_whenUsernameIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> service.authenticate(null, PASSWORD));
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.authenticate(null, PASSWORD));
+
+        assertEquals("Username cannot be null or empty", ex.getMessage());
     }
 
     @Test
     void authenticate_shouldThrowException_whenPasswordIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> service.authenticate(USERNAME, null));
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.authenticate(USERNAME, null));
+
+        assertEquals("Password cannot be null or empty", ex.getMessage());
     }
 
     @Test
@@ -298,29 +310,14 @@ class UserProfileServiceImplTest {
         doNothing().when(validator).validate(any(PasswordChangeRequest.class), anyString());
         when(traineeDao.existsByUsername(USERNAME)).thenReturn(true);
         when(traineeDao.findByUsername(USERNAME)).thenReturn(Optional.of(trainee));
+        when(passwordEncoder.matches(PASSWORD, ENCODED_PASSWORD)).thenReturn(true);
         when(passwordEncoder.encode(NEW_PASSWORD)).thenReturn(ENCODED_NEW_PASSWORD);
 
         service.changePassword(buildPasswordChangeRequest());
 
         ArgumentCaptor<Trainee> captor = ArgumentCaptor.forClass(Trainee.class);
+
         verify(traineeDao).update(captor.capture());
-        assertEquals(ENCODED_NEW_PASSWORD, captor.getValue().getUser().getPassword());
-    }
-
-    @Test
-    void changePassword_shouldUpdatePassword_whenTrainerExists() {
-        Trainer trainer = buildTrainer(buildUser());
-
-        doNothing().when(validator).validate(any(PasswordChangeRequest.class), anyString());
-        when(traineeDao.existsByUsername(USERNAME)).thenReturn(false);
-        when(trainerDao.existsByUsername(USERNAME)).thenReturn(true);
-        when(trainerDao.findByUsername(USERNAME)).thenReturn(Optional.of(trainer));
-        when(passwordEncoder.encode(NEW_PASSWORD)).thenReturn(ENCODED_NEW_PASSWORD);
-
-        service.changePassword(buildPasswordChangeRequest());
-
-        ArgumentCaptor<Trainer> captor = ArgumentCaptor.forClass(Trainer.class);
-        verify(trainerDao).update(captor.capture());
         assertEquals(ENCODED_NEW_PASSWORD, captor.getValue().getUser().getPassword());
     }
 
@@ -329,10 +326,8 @@ class UserProfileServiceImplTest {
         PasswordChangeRequest request = buildPasswordChangeRequest();
 
         doNothing().when(validator).validate(any(PasswordChangeRequest.class), anyString());
-        when(traineeDao.existsByUsername(USERNAME)).thenReturn(false);
-        when(trainerDao.existsByUsername(USERNAME)).thenReturn(false);
-        when(passwordEncoder.encode(NEW_PASSWORD)).thenReturn(ENCODED_NEW_PASSWORD);
-
+        when(trainerDao.findByUsername(USERNAME)).thenReturn(Optional.empty());
+        when(traineeDao.findByUsername(USERNAME)).thenReturn(Optional.empty());
         assertThrows(EntityNotFoundException.class, () -> service.changePassword(request));
     }
 

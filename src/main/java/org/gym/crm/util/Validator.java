@@ -34,7 +34,9 @@ public class Validator {
         validateNotBlank(username, "Username");
 
         if (username.length() > MAX_USERNAME_LENGTH) {
-            throw new CoreValidationException(username);
+            throw new CoreValidationException(format("Username cannot exceed %d characters, got: %d",
+                    MAX_USERNAME_LENGTH, username.length())
+            );
         }
     }
 }

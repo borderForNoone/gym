@@ -4,7 +4,7 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
-import org.gym.crm.dto.common.PasswordChangeRequest;
+import org.gym.crm.dto.PasswordChangeRequest;
 import org.gym.crm.exception.CoreValidationException;
 import org.gym.crm.model.FieldName;
 import org.gym.crm.model.Trainee;
@@ -55,7 +55,7 @@ public class CoreValidator {
     public void validateTextFieldSize(String fieldValue, FieldName fieldName, int maxLength) {
         validateNotBlank(fieldValue, fieldName.toString());
         if (fieldValue.length() > maxLength) {
-            throw new CoreValidationException(format("%s cannot exceed %d characters, got: %s",
+            throw new CoreValidationException(format("%s cannot exceed %d characters, got: %d",
                     fieldName, maxLength, fieldValue.length()));
         }
     }
@@ -64,7 +64,7 @@ public class CoreValidator {
         validateNotNull(dateOfBirth, FieldName.DATE_OF_BIRTH.toString());
         if (dateOfBirth.isAfter(LocalDate.now())) {
             throw new CoreValidationException(format("%s cannot be in the future, got: %s",
-                            FieldName.DATE_OF_BIRTH, dateOfBirth));
+                    FieldName.DATE_OF_BIRTH, dateOfBirth));
         }
     }
 
@@ -100,7 +100,7 @@ public class CoreValidator {
         Set<ConstraintViolation<PasswordChangeRequest>> violations = getJakartaValidator().validate(request);
         if (!violations.isEmpty()) {
             String message = violations.stream()
-                    .map(v -> v.getPropertyPath() + " " + v.getMessage())
+                    .map(violation -> violation.getPropertyPath() + " " + violation.getMessage())
                     .collect(Collectors.joining(", "));
             throw new CoreValidationException(objectName + " is invalid: " + message);
         }

@@ -1,6 +1,6 @@
 package org.gym.crm.util;
 
-import org.gym.crm.dto.common.PasswordChangeRequest;
+import org.gym.crm.dto.PasswordChangeRequest;
 import org.gym.crm.exception.CoreValidationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

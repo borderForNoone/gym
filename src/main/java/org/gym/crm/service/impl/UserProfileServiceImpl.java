@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.gym.crm.dao.TraineeDao;
 import org.gym.crm.dao.TrainerDao;
-import org.gym.crm.dto.common.PasswordChangeRequest;
+import org.gym.crm.dto.PasswordChangeRequest;
 import org.gym.crm.exception.BadCredentialsException;
 import org.gym.crm.exception.EntityNotFoundException;
 import org.gym.crm.model.FieldName;
@@ -38,7 +38,7 @@ public class UserProfileServiceImpl implements UserProfileService {
     private final TraineeDao traineeDao;
     private final TrainerDao trainerDao;
     private final CoreValidator validator;
-    private PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public String generateUsername(String firstName, String lastName) {
@@ -88,9 +88,21 @@ public class UserProfileServiceImpl implements UserProfileService {
         validator.validate(request, "Password change request");
 
         String username = request.getUsername();
+
         log.info("Changing password for user: username={}", username);
 
+        User user = traineeDao.findByUsername(username)
+                .<User>map(Trainee::getUser)
+                .or(() -> trainerDao.findByUsername(username).map(Trainer::getUser))
+                .orElseThrow(() ->
+                        new EntityNotFoundException(format(USER_NOT_FOUND_BY_USERNAME, username)));
+
+        if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+            throw new BadCredentialsException("Old password is incorrect");
+        }
+
         String encodedPassword = passwordEncoder.encode(request.getNewPassword());
+
         updatePassword(username, encodedPassword);
 
         log.info("Changed password for user: username={}", username);
@@ -119,11 +131,9 @@ public class UserProfileServiceImpl implements UserProfileService {
     private void updatePassword(String username, String encodedPassword) {
         if (isTrainee(username)) {
             updateTraineePassword(username, encodedPassword);
-        } else if (isTrainer(username)) {
-            updateTrainerPassword(username, encodedPassword);
-        } else {
-            throw new EntityNotFoundException(format(USER_NOT_FOUND_BY_USERNAME, username));
+            return;
         }
+        updateTrainerPassword(username, encodedPassword);
     }
 
     private void updateTraineePassword(String username, String encodedPassword) {
