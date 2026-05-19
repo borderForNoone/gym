@@ -9,6 +9,7 @@ import org.gym.crm.util.Validator;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Repository
@@ -21,6 +22,7 @@ public class TraineeDaoImpl implements TraineeDao {
     private static final String FIND_TRAINEE_BY_USERNAME_QUERY = """
             SELECT t FROM Trainee t
             JOIN FETCH t.user u
+            LEFT JOIN FETCH t.trainers
             WHERE u.username = :username
             """;
     private static final String FIND_UNASSIGNED_TRAINERS_QUERY = """
@@ -142,25 +144,31 @@ public class TraineeDaoImpl implements TraineeDao {
     }
 
     @Override
-    public Trainee updateTrainers(String traineeUsername, List<Trainer> trainers) {
-        Validator.validateNotBlank(traineeUsername, TRAINEE_USERNAME_LABEL);
-        Validator.validateNotNull(trainers, "Trainers list");
+    public void updateTrainersList(String username, List<Trainer> trainers) {
+        Validator.validateNotBlank(username, USERNAME);
+        Validator.validateNotNull(trainers, "Trainers");
 
-        return transactionManager.performReturningWithinTx(manager -> {
-
-            Trainee trainee = manager
-                    .createQuery(FIND_TRAINEE_WITH_TRAINERS_QUERY, Trainee.class)
-                    .setParameter(USERNAME, traineeUsername)
-                    .getSingleResult();
+        transactionManager.performWithinTx(manager -> {
+            Trainee trainee = manager.createQuery(
+                            "FROM Trainee t " +
+                                    "JOIN FETCH t.user " +
+                                    "LEFT JOIN FETCH t.trainers " +
+                                    "WHERE t.user.username = :username",
+                            Trainee.class)
+                    .setParameter(USERNAME, username)
+                    .getResultStream()
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("Trainee not found: " + username));
 
             List<Trainer> managedTrainers = trainers.stream()
-                    .map(manager::merge)
+                    .map(trainer -> manager.find(Trainer.class, trainer.getId()))
+                    .filter(Objects::nonNull)
                     .toList();
 
             trainee.getTrainers().clear();
             trainee.getTrainers().addAll(managedTrainers);
 
-            return manager.merge(trainee);
+            manager.merge(trainee);
         });
     }
 

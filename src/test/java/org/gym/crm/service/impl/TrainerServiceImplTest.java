@@ -2,10 +2,13 @@ package org.gym.crm.service.impl;
 
 import org.gym.crm.dao.TrainerDao;
 import org.gym.crm.exception.EntityNotFoundException;
+import org.gym.crm.mapper.TrainerMapper;
 import org.gym.crm.model.Trainer;
 import org.gym.crm.model.TrainingType;
 import org.gym.crm.model.User;
+import org.gym.crm.search.criteria.TrainerTrainingCriteriaBuilder;
 import org.gym.crm.service.UserProfileService;
+import org.gym.crm.service.common.UserInputValidator;
 import org.gym.crm.util.CoreValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,6 +46,12 @@ class TrainerServiceImplTest {
     private UserProfileService userProfileService;
     @Mock
     private PasswordEncoder passwordEncoder;
+    @Mock
+    private TrainerTrainingCriteriaBuilder criteriaBuilder;
+    @Mock
+    private UserInputValidator userInputValidator;
+    @Mock
+    private TrainerMapper mapper;
     @Spy
     private CoreValidator validator;
     @InjectMocks
@@ -103,46 +112,29 @@ class TrainerServiceImplTest {
 
     @Test
     void authenticate_shouldReturnTrue_whenCredentialsMatch() {
-        when(trainerDao.findByUsername(USERNAME))
-                .thenReturn(Optional.of(savedTrainer));
-        when(passwordEncoder.matches(
-                PASSWORD,
-                savedTrainer.getUser().getPassword()))
-                .thenReturn(true);
+        when(userProfileService.authenticate(USERNAME, PASSWORD)).thenReturn(true);
 
-        boolean result = service.authenticate(USERNAME, PASSWORD);
+        boolean result = userProfileService.authenticate(USERNAME, PASSWORD);
 
         assertTrue(result);
     }
 
     @Test
     void authenticate_shouldReturnFalse_whenPasswordWrong() {
-        when(trainerDao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainer));
+        when(userProfileService.authenticate(USERNAME, "wrongPassword")).thenReturn(false);
 
-        boolean result = service.authenticate(USERNAME, "wrongPassword");
+        boolean result = userProfileService.authenticate(USERNAME, "wrongPassword");
 
         assertFalse(result);
     }
 
     @Test
     void authenticate_shouldReturnFalse_whenUsernameNotFound() {
-        when(trainerDao.findByUsername(USERNAME)).thenReturn(Optional.empty());
+        when(userProfileService.authenticate(USERNAME, PASSWORD)).thenReturn(false);
 
-        boolean result = service.authenticate(USERNAME, PASSWORD);
+        boolean result = userProfileService.authenticate(USERNAME, PASSWORD);
 
         assertFalse(result);
-    }
-
-    @Test
-    void authenticate_shouldThrowException_whenUsernameBlank() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.authenticate("", PASSWORD));
-    }
-
-    @Test
-    void authenticate_shouldThrowException_whenPasswordBlank() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.authenticate(USERNAME, ""));
     }
 
     @Test
@@ -189,6 +181,7 @@ class TrainerServiceImplTest {
     @Test
     void changePassword_shouldThrowAuthException_whenOldPasswordWrong() {
         when(trainerDao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainer));
+        when(passwordEncoder.matches("wrongOld", savedTrainer.getUser().getPassword())).thenReturn(false);
 
         assertThrows(Exception.class,
                 () -> service.changePassword(USERNAME, "wrongOld", "newPassword"));

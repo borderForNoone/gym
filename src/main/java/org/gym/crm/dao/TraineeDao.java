@@ -21,7 +21,7 @@ public interface TraineeDao {
 
     List<Trainer> findUnassignedTrainers(String traineeUsername);
 
-    Trainee updateTrainers(String traineeUsername, List<Trainer> trainers);
+    void updateTrainersList(String traineeUsername, List<Trainer> trainers);
 
     List<Trainer> findAllByUsernames(List<String> trainerUsernames);
 }
