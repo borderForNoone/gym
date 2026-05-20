@@ -159,7 +159,7 @@ public class TraineeServiceImplTest {
         TrainerAssignmentUpdateDTO dto = mock(TrainerAssignmentUpdateDTO.class);
         Trainer trainer1 = mock(Trainer.class);
         Trainer trainer2 = mock(Trainer.class);
-        Trainee trainee = mock(Trainee.class);
+        Trainee traineeMock = mock(Trainee.class);
 
         TrainerInfoDTO dto1 = TrainerInfoDTO.builder()
                 .firstName("John")
@@ -168,6 +168,7 @@ public class TraineeServiceImplTest {
                 .isActive(true)
                 .specialization("Yoga")
                 .build();
+
         TrainerInfoDTO dto2 = TrainerInfoDTO.builder()
                 .firstName("John2")
                 .lastName("Doe2")
@@ -178,11 +179,15 @@ public class TraineeServiceImplTest {
 
         when(dto.getTraineeUsername()).thenReturn("trainee1");
         when(dto.getTrainerUsernames()).thenReturn(List.of("trainer1", "trainer2"));
-        when(trainee.getTrainers()).thenReturn(Set.of(trainer1, trainer2));
+
+        when(traineeMock.getTrainers()).thenReturn(Set.of(trainer1, trainer2));
+
         when(trainerDao.findByUsername("trainer1")).thenReturn(Optional.of(trainer1));
         when(trainerDao.findByUsername("trainer2")).thenReturn(Optional.of(trainer2));
-        when(dao.findByUsername("trainee1")).thenReturn(Optional.of(trainee));
+        when(dao.findByUsername("trainee1")).thenReturn(Optional.of(traineeMock));
+
         doNothing().when(dao).updateTrainersList(anyString(), anyList());
+
         when(trainerMapper.toInfoDto(trainer1)).thenReturn(dto1);
         when(trainerMapper.toInfoDto(trainer2)).thenReturn(dto2);
 
@@ -191,6 +196,7 @@ public class TraineeServiceImplTest {
         assertEquals(2, result.size());
         assertTrue(result.contains(dto1));
         assertTrue(result.contains(dto2));
+
         verify(userInputValidator).validate(dto, "Trainer assignment");
         verify(trainerDao).findByUsername("trainer1");
         verify(trainerDao).findByUsername("trainer2");

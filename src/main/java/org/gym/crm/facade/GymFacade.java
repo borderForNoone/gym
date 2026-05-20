@@ -22,7 +22,6 @@ import org.gym.crm.mapper.TrainerMapper;
 import org.gym.crm.mapper.TrainerRestMapper;
 import org.gym.crm.mapper.TrainingMapper;
 import org.gym.crm.model.Trainee;
-import org.gym.crm.model.Trainer;
 import org.gym.crm.model.Training;
 import org.gym.crm.rest.ActivationStatusRequest;
 import org.gym.crm.rest.AssignedTrainerResponse;

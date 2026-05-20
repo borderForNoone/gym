@@ -49,7 +49,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -98,7 +97,6 @@ public class GymFacadeTest {
     private Training training;
     private TraineeRequestDTO traineeRequestDTO;
     private TraineeResponseDTO traineeResponseDTO;
-    private TrainerRequestDTO trainerRequestDTO;
     private TrainerResponseDTO trainerResponseDTO;
     private TrainingRequestDTO trainingRequestDTO;
     private TrainingResponseDTO trainingResponseDTO;
@@ -117,7 +115,6 @@ public class GymFacadeTest {
         traineeRequestDTO = buildTraineeRequestDTO();
         traineeResponseDTO = buildTraineeResponseDTO();
         trainer = buildTrainer();
-        trainerRequestDTO = buildTrainerRequestDTO();
         trainerResponseDTO = buildTrainerResponseDTO();
         training = buildTraining();
         trainingRequestDTO = buildTrainingRequestDTO();

@@ -10,7 +10,6 @@ import org.gym.crm.search.filter.TrainerTrainingFilter;
 
 import javax.naming.AuthenticationException;
 import java.util.List;
-import java.util.Optional;
 
 public interface TrainerService {
     TrainerResponseDTO createTrainer(TrainerRequestDTO request);
