@@ -126,8 +126,7 @@ public class TraineeServiceImplTest {
 
     @Test
     void createTrainee_shouldThrowException_whenTraineeIsNull() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> service.create(null));
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.create(null));
 
         assertEquals(TRAINEE_CANNOT_BE_NULL, exception.getMessage());
     }
@@ -247,8 +246,7 @@ public class TraineeServiceImplTest {
 
         when(dao.findByUsername(USERNAME)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class,
-                () -> service.updateProfile(USERNAME, updatedData));
+        assertThrows(EntityNotFoundException.class, () -> service.updateProfile(USERNAME, updatedData));
     }
 
     @Test
@@ -257,8 +255,7 @@ public class TraineeServiceImplTest {
                 .user(User.builder().firstName("").lastName("B").isActive(true).build())
                 .build();
 
-        assertThrows(IllegalArgumentException.class,
-                () -> service.updateProfile(USERNAME, updatedData));
+        assertThrows(IllegalArgumentException.class, () -> service.updateProfile(USERNAME, updatedData));
     }
 
     @Test
@@ -267,8 +264,7 @@ public class TraineeServiceImplTest {
                 .user(User.builder().firstName("A").lastName("").isActive(true).build())
                 .build();
 
-        assertThrows(IllegalArgumentException.class,
-                () -> service.updateProfile(USERNAME, updatedData));
+        assertThrows(IllegalArgumentException.class, () -> service.updateProfile(USERNAME, updatedData));
     }
 
     @Test
@@ -291,8 +287,7 @@ public class TraineeServiceImplTest {
     void deleteTrainee_shouldThrowException_whenTraineeNotFound() {
         when(dao.findByUsername(USERNAME)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class,
-                () -> service.deleteByUsername(USERNAME));
+        assertThrows(EntityNotFoundException.class, () -> service.deleteByUsername(USERNAME));
 
         verify(dao, never()).deleteByUsername(any());
     }
@@ -310,15 +305,13 @@ public class TraineeServiceImplTest {
     void deleteByUsername_shouldThrowEntityNotFound_whenTraineeNotFound() {
         when(dao.findByUsername(USERNAME)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class,
-                () -> service.deleteByUsername(USERNAME));
+        assertThrows(EntityNotFoundException.class, () -> service.deleteByUsername(USERNAME));
         verify(dao, never()).delete(any(Trainee.class));
     }
 
     @Test
     void deleteByUsername_shouldThrowException_whenUsernameBlank() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.deleteByUsername(""));
+        assertThrows(IllegalArgumentException.class, () -> service.deleteByUsername(""));
     }
 
     @Test
@@ -412,14 +405,12 @@ public class TraineeServiceImplTest {
     void setActive_shouldThrowEntityNotFound_whenTraineeNotFound() {
         when(dao.findByUsername(USERNAME)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class,
-                () -> service.setActive(USERNAME, false));
+        assertThrows(EntityNotFoundException.class, () -> service.setActive(USERNAME, false));
     }
 
     @Test
     void setActive_shouldThrowException_whenUsernameBlank() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.setActive("", false));
+        assertThrows(IllegalArgumentException.class, () -> service.setActive("", false));
     }
 
     @Test
@@ -438,15 +429,13 @@ public class TraineeServiceImplTest {
     void getUnassignedTrainers_shouldThrowEntityNotFound_whenTraineeNotFound() {
         when(dao.existsByUsername(USERNAME)).thenReturn(false);
 
-        assertThrows(EntityNotFoundException.class,
-                () -> service.getUnassignedTrainers(USERNAME));
+        assertThrows(EntityNotFoundException.class, () -> service.getUnassignedTrainers(USERNAME));
         verify(dao, never()).findUnassignedTrainers(any());
     }
 
     @Test
     void getUnassignedTrainers_shouldThrowException_whenUsernameBlank() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.getUnassignedTrainers("  "));
+        assertThrows(IllegalArgumentException.class, () -> service.getUnassignedTrainers("  "));
     }
 
     @Test

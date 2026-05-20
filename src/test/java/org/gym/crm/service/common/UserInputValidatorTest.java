@@ -14,15 +14,15 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class UserInputValidatorTest {
-    private Validator validator;
-    private UserInputValidator userInputValidator;
+    private Validator constraintValidator;
+    private UserInputValidator sut;
 
     @BeforeEach
     void setUp() {
         ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
-        validator = factory.getValidator();
+        constraintValidator = factory.getValidator();
 
-        userInputValidator = new UserInputValidator(validator);
+        sut = new UserInputValidator(constraintValidator);
     }
 
     static class TestObject {
@@ -36,9 +36,8 @@ class UserInputValidatorTest {
 
     @Test
     void validate_shouldThrow_whenObjectIsNull() {
-        ValidationFailedException ex = assertThrows(
-                ValidationFailedException.class,
-                () -> userInputValidator.validate(null, "TestObject")
+        ValidationFailedException ex = assertThrows(ValidationFailedException.class,
+                () -> sut.validate(null, "TestObject")
         );
 
         assertEquals("TestObject cannot be null", ex.getMessage());
@@ -48,18 +47,15 @@ class UserInputValidatorTest {
     void validate_shouldPass_whenNoViolations() {
         TestObject obj = new TestObject("value");
 
-        assertDoesNotThrow(() ->
-                userInputValidator.validate(obj, "TestObject")
-        );
+        assertDoesNotThrow(() -> sut.validate(obj, "TestObject"));
     }
 
     @Test
     void validate_shouldThrow_whenViolationsExist() {
         TestObject obj = new TestObject(null);
 
-        ValidationFailedException ex = assertThrows(
-                ValidationFailedException.class,
-                () -> userInputValidator.validate(obj, "TestObject")
+        ValidationFailedException ex = assertThrows(ValidationFailedException.class,
+                () -> sut.validate(obj, "TestObject")
         );
 
         assertTrue(ex.getMessage().startsWith("Validation failed:"));
@@ -69,9 +65,8 @@ class UserInputValidatorTest {
 
     @Test
     void validateUsername_shouldThrow_whenNull() {
-        ValidationFailedException ex = assertThrows(
-                ValidationFailedException.class,
-                () -> userInputValidator.validateUsername(null)
+        ValidationFailedException ex = assertThrows(ValidationFailedException.class,
+                () -> sut.validateUsername(null)
         );
 
         assertEquals("Username cannot be null or empty", ex.getMessage());
@@ -79,9 +74,8 @@ class UserInputValidatorTest {
 
     @Test
     void validateUsername_shouldThrow_whenBlank() {
-        ValidationFailedException ex = assertThrows(
-                ValidationFailedException.class,
-                () -> userInputValidator.validateUsername("   ")
+        ValidationFailedException ex = assertThrows(ValidationFailedException.class,
+                () -> sut.validateUsername("   ")
         );
 
         assertEquals("Username cannot be null or empty", ex.getMessage());
@@ -89,53 +83,39 @@ class UserInputValidatorTest {
 
     @Test
     void validateUsername_shouldPass_whenValid() {
-        assertDoesNotThrow(() ->
-                userInputValidator.validateUsername("john")
-        );
+        assertDoesNotThrow(() -> sut.validateUsername("john"));
     }
 
     @Test
     void validateId_shouldThrow_whenNull() {
-        ValidationFailedException ex = assertThrows(
-                ValidationFailedException.class,
-                () -> userInputValidator.validateId(null)
-        );
+        ValidationFailedException ex = assertThrows(ValidationFailedException.class, () -> sut.validateId(null));
 
         assertEquals("ID cannot be null", ex.getMessage());
     }
 
     @Test
     void validateId_shouldThrow_whenZero() {
-        ValidationFailedException ex = assertThrows(
-                ValidationFailedException.class,
-                () -> userInputValidator.validateId(0L)
-        );
+        ValidationFailedException ex = assertThrows(ValidationFailedException.class, () -> sut.validateId(0L));
 
         assertEquals("ID must be a positive number", ex.getMessage());
     }
 
     @Test
     void validateId_shouldThrow_whenNegative() {
-        ValidationFailedException ex = assertThrows(
-                ValidationFailedException.class,
-                () -> userInputValidator.validateId(-5L)
-        );
+        ValidationFailedException ex = assertThrows(ValidationFailedException.class, () -> sut.validateId(-5L));
 
         assertEquals("ID must be a positive number", ex.getMessage());
     }
 
     @Test
     void validateId_shouldPass_whenValid() {
-        assertDoesNotThrow(() ->
-                userInputValidator.validateId(10L)
-        );
+        assertDoesNotThrow(() -> sut.validateId(10L));
     }
 
     @Test
     void validateNotBlank_shouldThrow_whenNull() {
-        ValidationFailedException ex = assertThrows(
-                ValidationFailedException.class,
-                () -> userInputValidator.validateNotBlank(null, "Field")
+        ValidationFailedException ex = assertThrows(ValidationFailedException.class,
+                () -> sut.validateNotBlank(null, "Field")
         );
 
         assertEquals("Field cannot be null", ex.getMessage());
@@ -143,9 +123,8 @@ class UserInputValidatorTest {
 
     @Test
     void validateNotBlank_shouldThrow_whenEmpty() {
-        ValidationFailedException ex = assertThrows(
-                ValidationFailedException.class,
-                () -> userInputValidator.validateNotBlank("   ", "Field")
+        ValidationFailedException ex = assertThrows(ValidationFailedException.class,
+                () -> sut.validateNotBlank("   ", "Field")
         );
 
         assertEquals("Field cannot be empty", ex.getMessage());
@@ -153,8 +132,6 @@ class UserInputValidatorTest {
 
     @Test
     void validateNotBlank_shouldPass_whenValid() {
-        assertDoesNotThrow(() ->
-                userInputValidator.validateNotBlank("value", "Field")
-        );
+        assertDoesNotThrow(() -> sut.validateNotBlank("value", "Field"));
     }
 }

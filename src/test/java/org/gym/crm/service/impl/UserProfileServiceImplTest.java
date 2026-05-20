@@ -117,26 +117,22 @@ class UserProfileServiceImplTest {
 
     @Test
     void generateUsername_shouldThrowException_whenFirstNameBlank() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.generateUsername("", LAST_NAME));
+        assertThrows(IllegalArgumentException.class, () -> service.generateUsername("", LAST_NAME));
     }
 
     @Test
     void generateUsername_shouldThrowException_whenLastNameBlank() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.generateUsername(FIRST_NAME, ""));
+        assertThrows(IllegalArgumentException.class, () -> service.generateUsername(FIRST_NAME, ""));
     }
 
     @Test
     void generateUsername_shouldThrowException_whenFirstNameNull() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.generateUsername(null, LAST_NAME));
+        assertThrows(IllegalArgumentException.class, () -> service.generateUsername(null, LAST_NAME));
     }
 
     @Test
     void generateUsername_shouldThrowException_whenLastNameNull() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.generateUsername(FIRST_NAME, null));
+        assertThrows(IllegalArgumentException.class, () -> service.generateUsername(FIRST_NAME, null));
     }
 
     @Test
@@ -144,8 +140,7 @@ class UserProfileServiceImplTest {
         String longFirst = "A".repeat(60);
         String longLast = "B".repeat(60);
 
-        assertThrows(CoreValidationException.class,
-                () -> service.generateUsername(longFirst, longLast));
+        assertThrows(CoreValidationException.class, () -> service.generateUsername(longFirst, longLast));
     }
 
     @Test
