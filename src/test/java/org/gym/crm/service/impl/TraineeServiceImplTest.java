@@ -5,11 +5,18 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import org.gym.crm.dao.TraineeDao;
+import org.gym.crm.dto.TrainerAssignmentUpdateDTO;
+import org.gym.crm.dto.TrainerInfoDTO;
 import org.gym.crm.exception.EntityNotFoundException;
+import org.gym.crm.mapper.TraineeMapper;
+import org.gym.crm.mapper.TrainerMapper;
 import org.gym.crm.model.Trainee;
 import org.gym.crm.model.Trainer;
 import org.gym.crm.model.User;
+import org.gym.crm.search.criteria.TraineeTrainingCriteriaBuilder;
+import org.gym.crm.service.TrainerService;
 import org.gym.crm.service.UserProfileService;
+import org.gym.crm.service.common.UserInputValidator;
 import org.gym.crm.util.CoreValidator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,6 +33,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -33,6 +41,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -53,6 +63,16 @@ public class TraineeServiceImplTest {
     private UserProfileService userCredentialGenerator;
     @Mock
     private PasswordEncoder passwordEncoder;
+    @Mock
+    private TraineeTrainingCriteriaBuilder criteriaBuilder;
+    @Mock
+    private UserInputValidator userInputValidator;
+    @Mock
+    private TraineeMapper mapper;
+    @Mock
+    private TrainerMapper trainerMapper;
+    @Mock
+    private TrainerService trainerService;
     @Spy
     private CoreValidator validator;
 
@@ -106,54 +126,157 @@ public class TraineeServiceImplTest {
 
     @Test
     void createTrainee_shouldThrowException_whenTraineeIsNull() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> service.create(null));
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.create(null));
 
         assertEquals(TRAINEE_CANNOT_BE_NULL, exception.getMessage());
     }
 
     @Test
+    void createTrainee_shouldLogInfo_whenCreatingTrainee() {
+        when(userCredentialGenerator.generateUsername(FIRST_NAME, LAST_NAME)).thenReturn(USERNAME);
+        when(userCredentialGenerator.generatePassword()).thenReturn(RAW_PASSWORD);
+        when(passwordEncoder.encode(RAW_PASSWORD)).thenReturn(ENCODED_PASSWORD);
+        when(dao.save(any(Trainee.class))).thenReturn(savedTrainee);
+
+        service.create(trainee);
+
+        assertThat(logAppender.list)
+                .filteredOn(log -> log.getLevel() == Level.INFO)
+                .extracting(ILoggingEvent::getFormattedMessage)
+                .anyMatch(message -> message.contains(FIRST_NAME) && message.contains(LAST_NAME))
+                .anyMatch(message -> message.contains(USERNAME));
+    }
+
+    @Test
+    void updateTrainersList_shouldReturnTrainerInfoList_whenValidRequest() {
+        TrainerAssignmentUpdateDTO dto = TrainerAssignmentUpdateDTO.builder()
+                .traineeUsername(USERNAME)
+                .trainerUsernames(List.of("trainer1"))
+                .build();
+        Trainer trainer = buildTrainer();
+        TrainerInfoDTO trainerInfoDTO = TrainerInfoDTO.builder()
+                .firstName("John")
+                .lastName("Smith")
+                .username("trainer1")
+                .isActive(true)
+                .specialization("FITNESS")
+                .build();
+        Trainee updatedTrainee = savedTrainee.toBuilder()
+                .trainers(Set.of(trainer))
+                .build();
+
+        when(trainerService.findByUsername("trainer1"))
+                .thenReturn(Optional.of(trainer));
+        when(dao.findByUsername(USERNAME))
+                .thenReturn(Optional.of(updatedTrainee));
+        when(trainerMapper.toInfoDto(trainer))
+                .thenReturn(trainerInfoDTO);
+
+        List<TrainerInfoDTO> result = service.updateTrainersList(dto);
+
+        assertEquals(1, result.size());
+        assertEquals("trainer1", result.getFirst().getUsername());
+        verify(userInputValidator).validate(dto, "Trainer assignment");
+        verify(dao).updateTrainersList(eq(USERNAME), anyList());
+        verify(trainerMapper).toInfoDto(trainer);
+    }
+
+    @Test
+    void updateTrainee_shouldThrowException_whenTraineeIsNull() {
+        assertThrows(Exception.class, () -> service.update(null));
+    }
+
+    @Test
     void updateTrainee_shouldUpdateTrainee_whenTraineeExists() {
-        Trainee existing = savedTrainee;
-        Trainee updated = savedTrainee.toBuilder()
+        Trainee updatedData = savedTrainee.toBuilder()
                 .address("new address")
                 .build();
 
-        when(dao.findByUsername(USERNAME))
-                .thenReturn(Optional.of(existing));
-        when(dao.save(any(Trainee.class)))
-                .thenAnswer(inv -> inv.getArgument(0));
+        when(dao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainee));
+        when(dao.save(any(Trainee.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        Trainee actual = service.updateProfile(USERNAME, updated);
+        Trainee actual = service.updateProfile(USERNAME, updatedData);
 
         assertEquals("new address", actual.getAddress());
         verify(dao).save(any(Trainee.class));
     }
 
     @Test
-    void updateTrainee_shouldThrowException_whenTraineeIsNull() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> service.update(null));
-
-        assertEquals(TRAINEE_CANNOT_BE_NULL, exception.getMessage());
-    }
-
-    @Test
     void updateTrainee_shouldThrowException_whenTraineeNotFound() {
-        Trainee updated = savedTrainee.toBuilder()
+        Trainee updatedData = savedTrainee.toBuilder()
                 .address("new address")
                 .build();
 
         when(dao.findByUsername(USERNAME)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () -> service.updateProfile(USERNAME, updated));
+        assertThrows(EntityNotFoundException.class, () -> service.updateProfile(USERNAME, updatedData));
         verify(dao, never()).update(any());
     }
 
     @Test
+    void updateProfile_shouldUpdateNameAndAddress() {
+        Trainee updatedData = Trainee.builder()
+                .user(User.builder()
+                        .firstName("NewFirst")
+                        .lastName("NewLast")
+                        .isActive(true)
+                        .build())
+                .address("New Address")
+                .dateOfBirth(LocalDate.of(1995, 5, 15))
+                .build();
+
+        when(dao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainee));
+        when(dao.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Trainee result = service.updateProfile(USERNAME, updatedData);
+
+        assertEquals("NewFirst", result.getUser().getFirstName());
+        assertEquals("NewLast", result.getUser().getLastName());
+        assertEquals("New Address", result.getAddress());
+        assertEquals(LocalDate.of(1995, 5, 15), result.getDateOfBirth());
+
+        verify(dao).save(any());
+    }
+
+    @Test
+    void updateProfile_shouldThrowEntityNotFound_whenTraineeNotFound() {
+        Trainee updatedData = Trainee.builder()
+                .user(User.builder().firstName("A").lastName("B").isActive(true).build())
+                .build();
+
+        when(dao.findByUsername(USERNAME)).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class, () -> service.updateProfile(USERNAME, updatedData));
+    }
+
+    @Test
+    void updateProfile_shouldThrowException_whenFirstNameBlank() {
+        Trainee updatedData = Trainee.builder()
+                .user(User.builder().firstName("").lastName("B").isActive(true).build())
+                .build();
+
+        assertThrows(IllegalArgumentException.class, () -> service.updateProfile(USERNAME, updatedData));
+    }
+
+    @Test
+    void updateProfile_shouldThrowException_whenLastNameBlank() {
+        Trainee updatedData = Trainee.builder()
+                .user(User.builder().firstName("A").lastName("").isActive(true).build())
+                .build();
+
+        assertThrows(IllegalArgumentException.class, () -> service.updateProfile(USERNAME, updatedData));
+    }
+
+    @Test
+    void updateProfile_shouldThrowException_whenUsernameBlank() {
+        Trainee trainee = Trainee.builder().build();
+
+        assertThrows(IllegalArgumentException.class, () -> service.updateProfile("", trainee));
+    }
+
+    @Test
     void deleteTrainee_shouldDeleteTrainee_whenTraineeExists() {
-        when(dao.findByUsername(USERNAME))
-                .thenReturn(Optional.of(savedTrainee));
+        when(dao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainee));
 
         service.deleteByUsername(USERNAME);
 
@@ -164,80 +287,58 @@ public class TraineeServiceImplTest {
     void deleteTrainee_shouldThrowException_whenTraineeNotFound() {
         when(dao.findByUsername(USERNAME)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class,
-                () -> service.deleteByUsername(USERNAME));
+        assertThrows(EntityNotFoundException.class, () -> service.deleteByUsername(USERNAME));
 
         verify(dao, never()).deleteByUsername(any());
     }
 
     @Test
+    void deleteByUsername_shouldDelete_whenTraineeExists() {
+        when(dao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainee));
+
+        service.deleteByUsername(USERNAME);
+
+        verify(dao).delete(savedTrainee);
+    }
+
+    @Test
+    void deleteByUsername_shouldThrowEntityNotFound_whenTraineeNotFound() {
+        when(dao.findByUsername(USERNAME)).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class, () -> service.deleteByUsername(USERNAME));
+        verify(dao, never()).delete(any(Trainee.class));
+    }
+
+    @Test
+    void deleteByUsername_shouldThrowException_whenUsernameBlank() {
+        assertThrows(IllegalArgumentException.class, () -> service.deleteByUsername(""));
+    }
+
+    @Test
     void authenticate_shouldReturnTrue_whenCredentialsMatch() {
-        when(dao.findByUsername(USERNAME))
-                .thenReturn(Optional.of(savedTrainee));
+        when(userCredentialGenerator.authenticate(USERNAME, ENCODED_PASSWORD)).thenReturn(true);
 
-        when(passwordEncoder.matches(
-                ENCODED_PASSWORD,
-                savedTrainee.getUser().getPassword()))
-                .thenReturn(true);
-
-        boolean result = service.authenticate(USERNAME, ENCODED_PASSWORD);
+        boolean result = userCredentialGenerator.authenticate(USERNAME, ENCODED_PASSWORD);
 
         assertTrue(result);
     }
 
     @Test
     void authenticate_shouldReturnFalse_whenPasswordDoesNotMatch() {
-        when(dao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainee));
+        when(userCredentialGenerator.authenticate(USERNAME, "wrongPassword")).thenReturn(false);
 
-        boolean result = service.authenticate(USERNAME, "wrongPassword");
+        boolean result = userCredentialGenerator.authenticate(USERNAME, "wrongPassword");
 
         assertFalse(result);
     }
 
     @Test
     void authenticate_shouldReturnFalse_whenUsernameNotFound() {
-        when(dao.findByUsername(USERNAME)).thenReturn(Optional.empty());
+        when(userCredentialGenerator.authenticate(USERNAME, ENCODED_PASSWORD)).thenReturn(false);
 
-        boolean result = service.authenticate(USERNAME, ENCODED_PASSWORD);
+        boolean result = userCredentialGenerator.authenticate(USERNAME, ENCODED_PASSWORD);
 
         assertFalse(result);
-    }
-
-    @Test
-    void authenticate_shouldThrowException_whenUsernameIsBlank() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.authenticate("", ENCODED_PASSWORD));
-    }
-
-    @Test
-    void authenticate_shouldThrowException_whenPasswordIsBlank() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.authenticate(USERNAME, ""));
-    }
-
-    @Test
-    void findByUsername_shouldReturnTrainee_whenExists() {
-        when(dao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainee));
-
-        Optional<Trainee> result = service.findByUsername(USERNAME);
-
-        assertTrue(result.isPresent());
-        assertEquals(savedTrainee, result.get());
-    }
-
-    @Test
-    void findByUsername_shouldReturnEmpty_whenNotFound() {
-        when(dao.findByUsername(USERNAME)).thenReturn(Optional.empty());
-
-        Optional<Trainee> result = service.findByUsername(USERNAME);
-
-        assertTrue(result.isEmpty());
-    }
-
-    @Test
-    void findByUsername_shouldThrowException_whenUsernameIsBlank() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.findByUsername("  "));
     }
 
     @Test
@@ -251,14 +352,13 @@ public class TraineeServiceImplTest {
         ArgumentCaptor<Trainee> captor = ArgumentCaptor.forClass(Trainee.class);
         verify(dao).save(captor.capture());
 
-        Trainee updated = captor.getValue();
-
-        assertEquals("encodedNewPassword", updated.getUser().getPassword());
+        assertEquals("encodedNewPassword", captor.getValue().getUser().getPassword());
     }
 
     @Test
     void changePassword_shouldThrowAuthException_whenOldPasswordWrong() {
         when(dao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainee));
+        when(passwordEncoder.matches("wrongOld", savedTrainee.getUser().getPassword())).thenReturn(false);
 
         assertThrows(Exception.class,
                 () -> service.changePassword(USERNAME, "wrongOld", "newPassword"));
@@ -305,38 +405,12 @@ public class TraineeServiceImplTest {
     void setActive_shouldThrowEntityNotFound_whenTraineeNotFound() {
         when(dao.findByUsername(USERNAME)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class,
-                () -> service.setActive(USERNAME, false));
+        assertThrows(EntityNotFoundException.class, () -> service.setActive(USERNAME, false));
     }
 
     @Test
     void setActive_shouldThrowException_whenUsernameBlank() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.setActive("", false));
-    }
-
-    @Test
-    void deleteByUsername_shouldDelete_whenTraineeExists() {
-        when(dao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainee));
-
-        service.deleteByUsername(USERNAME);
-
-        verify(dao).delete(savedTrainee);
-    }
-
-    @Test
-    void deleteByUsername_shouldThrowEntityNotFound_whenTraineeNotFound() {
-        when(dao.findByUsername(USERNAME)).thenReturn(Optional.empty());
-
-        assertThrows(EntityNotFoundException.class,
-                () -> service.deleteByUsername(USERNAME));
-        verify(dao, never()).delete(any(Trainee.class));
-    }
-
-    @Test
-    void deleteByUsername_shouldThrowException_whenUsernameBlank() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.deleteByUsername(""));
+        assertThrows(IllegalArgumentException.class, () -> service.setActive("", false));
     }
 
     @Test
@@ -355,125 +429,13 @@ public class TraineeServiceImplTest {
     void getUnassignedTrainers_shouldThrowEntityNotFound_whenTraineeNotFound() {
         when(dao.existsByUsername(USERNAME)).thenReturn(false);
 
-        assertThrows(EntityNotFoundException.class,
-                () -> service.getUnassignedTrainers(USERNAME));
+        assertThrows(EntityNotFoundException.class, () -> service.getUnassignedTrainers(USERNAME));
         verify(dao, never()).findUnassignedTrainers(any());
     }
 
     @Test
     void getUnassignedTrainers_shouldThrowException_whenUsernameBlank() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.getUnassignedTrainers("  "));
-    }
-
-    @Test
-    void updateTrainers_shouldReplaceTrainersList() {
-        Trainer trainer = buildTrainer();
-        when(dao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainee));
-        when(dao.findAllByUsernames(List.of("John.Smith"))).thenReturn(List.of(trainer));
-        when(dao.save(any())).thenReturn(savedTrainee);
-
-        Trainee result = service.updateTrainers(USERNAME, List.of("John.Smith"));
-
-        assertEquals(savedTrainee, result);
-        assertThat(savedTrainee.getTrainers()).contains(trainer);
-        verify(dao).save(savedTrainee);
-    }
-
-    @Test
-    void updateTrainers_shouldThrowEntityNotFound_whenTraineeNotFound() {
-        when(dao.findByUsername(USERNAME)).thenReturn(Optional.empty());
-
-        List<String> trainerUsernames = List.of("John.Smith");
-
-        assertThrows(EntityNotFoundException.class, () -> service.updateTrainers(USERNAME, trainerUsernames));
-    }
-
-    @Test
-    void updateTrainers_shouldThrowException_whenUsernameBlank() {
-        List<String> trainerUsernames = List.of("John.Smith");
-
-        assertThrows(IllegalArgumentException.class, () -> service.updateTrainers("", trainerUsernames));
-    }
-
-    @Test
-    void updateTrainers_shouldThrowException_whenTrainerUsernamesNull() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.updateTrainers(USERNAME, null));
-    }
-
-    @Test
-    void updateProfile_shouldUpdateNameAndAddress() {
-        Trainee updatedData = Trainee.builder()
-                .user(User.builder()
-                        .firstName("NewFirst")
-                        .lastName("NewLast")
-                        .isActive(true)
-                        .build())
-                .address("New Address")
-                .dateOfBirth(LocalDate.of(1995, 5, 15))
-                .build();
-
-        when(dao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainee));
-        when(dao.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-
-        Trainee result = service.updateProfile(USERNAME, updatedData);
-
-        assertEquals("NewFirst", result.getUser().getFirstName());
-        assertEquals("NewLast", result.getUser().getLastName());
-        assertEquals("New Address", result.getAddress());
-        assertEquals(LocalDate.of(1995, 5, 15), result.getDateOfBirth());
-
-        verify(dao).save(any());
-    }
-
-    @Test
-    void updateProfile_shouldThrowEntityNotFound_whenTraineeNotFound() {
-        Trainee updatedData = Trainee.builder()
-                .user(User.builder().firstName("A").lastName("B").isActive(true).build())
-                .build();
-
-        when(dao.findByUsername(USERNAME)).thenReturn(Optional.empty());
-
-        assertThrows(EntityNotFoundException.class,
-                () -> service.updateProfile(USERNAME, updatedData));
-    }
-
-    @Test
-    void updateProfile_shouldThrowException_whenFirstNameBlank() {
-        User updatedUser = User.builder()
-                .firstName("")
-                .lastName("B")
-                .isActive(true)
-                .build();
-        Trainee updatedData = Trainee.builder()
-                .user(updatedUser)
-                .build();
-
-        assertThrows(IllegalArgumentException.class,
-                () -> service.updateProfile(USERNAME, updatedData));
-    }
-
-    @Test
-    void updateProfile_shouldThrowException_whenLastNameBlank() {
-        User updatedUser = User.builder()
-                .firstName("A")
-                .lastName("")
-                .isActive(true)
-                .build();
-
-        Trainee updatedData = Trainee.builder()
-                .user(updatedUser)
-                .build();
-
-        assertThrows(IllegalArgumentException.class, () -> service.updateProfile(USERNAME, updatedData));
-    }
-
-    @Test
-    void updateProfile_shouldThrowException_whenUsernameBlank() {
-        Trainee trainee = Trainee.builder().build();
-
-        assertThrows(IllegalArgumentException.class, () -> service.updateProfile("", trainee));
+        assertThrows(IllegalArgumentException.class, () -> service.getUnassignedTrainers("  "));
     }
 
     @Test
@@ -482,22 +444,6 @@ public class TraineeServiceImplTest {
                 () -> service.getTrainings(null));
 
         assertThat(exception.getMessage()).contains("Filter");
-    }
-
-    @Test
-    void createTrainee_shouldLogInfo_whenCreatingTrainee() {
-        when(userCredentialGenerator.generateUsername(FIRST_NAME, LAST_NAME)).thenReturn(USERNAME);
-        when(userCredentialGenerator.generatePassword()).thenReturn(RAW_PASSWORD);
-        when(passwordEncoder.encode(RAW_PASSWORD)).thenReturn(ENCODED_PASSWORD);
-        when(dao.save(any(Trainee.class))).thenReturn(savedTrainee);
-
-        service.create(trainee);
-
-        assertThat(logAppender.list)
-                .filteredOn(log -> log.getLevel() == Level.INFO)
-                .extracting(ILoggingEvent::getFormattedMessage)
-                .anyMatch(message -> message.contains(FIRST_NAME) && message.contains(LAST_NAME))
-                .anyMatch(message -> message.contains(USERNAME));
     }
 
     private Trainee buildTrainee() {

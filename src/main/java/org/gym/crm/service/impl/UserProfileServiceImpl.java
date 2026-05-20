@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.gym.crm.dao.TraineeDao;
 import org.gym.crm.dao.TrainerDao;
 import org.gym.crm.dto.PasswordChangeRequest;
+import org.gym.crm.dto.ToggleActiveRequestDTO;
 import org.gym.crm.exception.BadCredentialsException;
 import org.gym.crm.exception.EntityNotFoundException;
 import org.gym.crm.model.FieldName;
@@ -14,6 +15,7 @@ import org.gym.crm.model.Trainer;
 import org.gym.crm.model.User;
 import org.gym.crm.rest.LoginRequest;
 import org.gym.crm.service.UserProfileService;
+import org.gym.crm.service.common.UserInputValidator;
 import org.gym.crm.util.CoreValidator;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -38,6 +40,7 @@ public class UserProfileServiceImpl implements UserProfileService {
     private final TraineeDao traineeDao;
     private final TrainerDao trainerDao;
     private final CoreValidator validator;
+    private final UserInputValidator userInputValidator;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -126,6 +129,40 @@ public class UserProfileServiceImpl implements UserProfileService {
 
         log.info("User logged in: username={}", username);
         return user;
+    }
+
+    @Override
+    public void toggleActive(@Valid ToggleActiveRequestDTO request) {
+        userInputValidator.validate(request, "Toggle active request");
+        log.info("Changing active status for user: username={}", request.getUsername());
+
+        String username = request.getUsername();
+
+        if (isTrainee(username)) {
+            Trainee trainee = traineeDao.findByUsername(username)
+                    .orElseThrow(() -> new EntityNotFoundException(format(USER_NOT_FOUND_BY_USERNAME, username)));
+
+            boolean currentStatus = trainee.getUser().getIsActive();
+            traineeDao.update(trainee.toBuilder()
+                    .user(trainee.getUser().toBuilder().isActive(!currentStatus).build())
+                    .build());
+
+            log.info("Trainee {}: username={}", currentStatus ? "deactivated" : "activated", username);
+
+        } else if (isTrainer(username)) {
+            Trainer trainer = trainerDao.findByUsername(username)
+                    .orElseThrow(() -> new EntityNotFoundException(format(USER_NOT_FOUND_BY_USERNAME, username)));
+
+            boolean currentStatus = trainer.getUser().getIsActive();
+            trainerDao.update(trainer.toBuilder()
+                    .user(trainer.getUser().toBuilder().isActive(!currentStatus).build())
+                    .build());
+
+            log.info("Trainer {}: username={}", currentStatus ? "deactivated" : "activated", username);
+
+        } else {
+            throw new EntityNotFoundException(format(USER_NOT_FOUND_BY_USERNAME, username));
+        }
     }
 
     private void updatePassword(String username, String encodedPassword) {

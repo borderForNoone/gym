@@ -1,5 +1,10 @@
 package org.gym.crm.service;
 
+import org.gym.crm.dto.TraineeInfoDTO;
+import org.gym.crm.dto.TraineeResponseDTO;
+import org.gym.crm.dto.TraineeUpdateDTO;
+import org.gym.crm.dto.TrainerAssignmentUpdateDTO;
+import org.gym.crm.dto.TrainerInfoDTO;
 import org.gym.crm.model.Trainee;
 import org.gym.crm.model.Trainer;
 import org.gym.crm.model.Training;
@@ -7,16 +12,13 @@ import org.gym.crm.search.filter.TraineeTrainingFilter;
 
 import javax.naming.AuthenticationException;
 import java.util.List;
-import java.util.Optional;
 
 public interface TraineeService {
     Trainee create(Trainee trainee);
 
-    Trainee update(Trainee trainee);
+    TraineeResponseDTO update(TraineeUpdateDTO trainee);
 
-    boolean authenticate(String username, String password);
-
-    Optional<Trainee> findByUsername(String username);
+    TraineeInfoDTO getTraineeByUsername(String username);
 
     void changePassword(String username, String oldPassword, String newPassword) throws AuthenticationException;
 
@@ -28,7 +30,7 @@ public interface TraineeService {
 
     List<Trainer> getUnassignedTrainers(String traineeUsername);
 
-    Trainee updateTrainers(String traineeUsername, List<String> trainerUsernames);
+    List<TrainerInfoDTO> updateTrainersList(TrainerAssignmentUpdateDTO dto);
 
     Trainee updateProfile(String username, Trainee updatedData);
 }

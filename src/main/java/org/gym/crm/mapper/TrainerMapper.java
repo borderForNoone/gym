@@ -1,5 +1,6 @@
 package org.gym.crm.mapper;
 
+import org.gym.crm.dto.TrainerInfoDTO;
 import org.gym.crm.dto.TrainerRequestDTO;
 import org.gym.crm.dto.TrainerResponseDTO;
 import org.gym.crm.dto.TrainerUpdateDTO;
@@ -32,6 +33,13 @@ public interface TrainerMapper {
     @Mapping(source = "user.isActive", target = "isActive", qualifiedByName = "booleanDefault")
     @Mapping(source = "specialization", target = "specialization")
     TrainerResponseDTO toDto(Trainer trainer);
+
+    @Mapping(target = "username", source = "user.username")
+    @Mapping(target = "firstName", source = "user.firstName")
+    @Mapping(target = "lastName", source = "user.lastName")
+    @Mapping(target = "isActive", source = "user.isActive")
+    @Mapping(target = "specialization", source = "specialization")
+    TrainerInfoDTO toInfoDto(Trainer trainer);
 
     @Named("booleanDefault")
     default Boolean booleanDefault(Boolean value) {
