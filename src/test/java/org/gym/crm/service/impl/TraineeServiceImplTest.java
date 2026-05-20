@@ -4,14 +4,22 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import jakarta.persistence.TypedQuery;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.EntityManager;
 import org.gym.crm.dao.TraineeDao;
+import org.gym.crm.dto.TrainerAssignmentUpdateDTO;
+import org.gym.crm.dto.TrainerInfoDTO;
 import org.gym.crm.exception.EntityNotFoundException;
 import org.gym.crm.mapper.TraineeMapper;
 import org.gym.crm.mapper.TrainerMapper;
 import org.gym.crm.model.Trainee;
 import org.gym.crm.model.Trainer;
+import org.gym.crm.model.Training;
 import org.gym.crm.model.User;
 import org.gym.crm.search.criteria.TraineeTrainingCriteriaBuilder;
+import org.gym.crm.search.filter.TraineeTrainingFilter;
 import org.gym.crm.service.TrainerService;
 import org.gym.crm.service.UserProfileService;
 import org.gym.crm.service.common.UserInputValidator;
@@ -31,6 +39,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -38,6 +47,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -141,6 +153,40 @@ public class TraineeServiceImplTest {
                 .extracting(ILoggingEvent::getFormattedMessage)
                 .anyMatch(message -> message.contains(FIRST_NAME) && message.contains(LAST_NAME))
                 .anyMatch(message -> message.contains(USERNAME));
+    }
+
+    @Test
+    void updateTrainersList_shouldReturnTrainerInfoList_whenValidRequest() {
+        TrainerAssignmentUpdateDTO dto = TrainerAssignmentUpdateDTO.builder()
+                .traineeUsername(USERNAME)
+                .trainerUsernames(List.of("trainer1"))
+                .build();
+        Trainer trainer = buildTrainer();
+        TrainerInfoDTO trainerInfoDTO = TrainerInfoDTO.builder()
+                .firstName("John")
+                .lastName("Smith")
+                .username("trainer1")
+                .isActive(true)
+                .specialization("FITNESS")
+                .build();
+        Trainee updatedTrainee = savedTrainee.toBuilder()
+                .trainers(Set.of(trainer))
+                .build();
+
+        when(trainerService.findByUsername("trainer1"))
+                .thenReturn(Optional.of(trainer));
+        when(dao.findByUsername(USERNAME))
+                .thenReturn(Optional.of(updatedTrainee));
+        when(trainerMapper.toInfoDto(trainer))
+                .thenReturn(trainerInfoDTO);
+
+        List<TrainerInfoDTO> result = service.updateTrainersList(dto);
+
+        assertEquals(1, result.size());
+        assertEquals("trainer1", result.getFirst().getUsername());
+        verify(userInputValidator).validate(dto, "Trainer assignment");
+        verify(dao).updateTrainersList(eq(USERNAME), anyList());
+        verify(trainerMapper).toInfoDto(trainer);
     }
 
     @Test

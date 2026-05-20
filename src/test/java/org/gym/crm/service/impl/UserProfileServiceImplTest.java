@@ -3,6 +3,7 @@ package org.gym.crm.service.impl;
 import org.gym.crm.dao.TraineeDao;
 import org.gym.crm.dao.TrainerDao;
 import org.gym.crm.dto.PasswordChangeRequest;
+import org.gym.crm.dto.ToggleActiveRequestDTO;
 import org.gym.crm.exception.BadCredentialsException;
 import org.gym.crm.exception.CoreValidationException;
 import org.gym.crm.exception.EntityNotFoundException;
@@ -10,6 +11,7 @@ import org.gym.crm.model.Trainee;
 import org.gym.crm.model.Trainer;
 import org.gym.crm.model.User;
 import org.gym.crm.rest.LoginRequest;
+import org.gym.crm.service.common.UserInputValidator;
 import org.gym.crm.util.CoreValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +26,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.gym.crm.util.TestConstants.ALLOWED_CHARS;
 import static org.gym.crm.util.TestConstants.FIRST_NAME;
 import static org.gym.crm.util.TestConstants.LAST_NAME;
@@ -39,6 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -58,6 +62,8 @@ class UserProfileServiceImplTest {
     private PasswordEncoder passwordEncoder;
     @Spy
     private CoreValidator validator;
+    @Mock
+    private UserInputValidator userInputValidator;
     @InjectMocks
     private UserProfileServiceImpl service;
 
@@ -335,6 +341,94 @@ class UserProfileServiceImplTest {
     void changePassword_shouldThrowException_whenRequestIsNull() {
         assertThrows(IllegalArgumentException.class,
                 () -> service.changePassword(null));
+    }
+
+    @Test
+    void toggleActive_shouldDeactivateTrainee_whenCurrentlyActive() {
+        Trainee trainee = buildTrainee(buildUser());
+        ToggleActiveRequestDTO request = ToggleActiveRequestDTO.builder()
+                .username(USERNAME)
+                .build();
+
+        doNothing().when(userInputValidator).validate(any(), anyString());
+        when(traineeDao.existsByUsername(USERNAME)).thenReturn(true);
+        when(traineeDao.findByUsername(USERNAME)).thenReturn(Optional.of(trainee));
+
+        service.toggleActive(request);
+
+        ArgumentCaptor<Trainee> captor = ArgumentCaptor.forClass(Trainee.class);
+        verify(traineeDao).update(captor.capture());
+
+        assertFalse(captor.getValue().getUser().getIsActive());
+    }
+
+    @Test
+    void toggleActive_shouldActivateTrainee_whenCurrentlyInactive() {
+        User inactiveUser = User.builder()
+                .username(USERNAME)
+                .password(ENCODED_PASSWORD)
+                .isActive(false)
+                .build();
+
+        Trainee trainee = buildTrainee(inactiveUser);
+        ToggleActiveRequestDTO request = ToggleActiveRequestDTO.builder()
+                .username(USERNAME)
+                .build();
+
+        doNothing().when(userInputValidator).validate(any(), anyString());
+        when(traineeDao.existsByUsername(USERNAME)).thenReturn(true);
+        when(traineeDao.findByUsername(USERNAME)).thenReturn(Optional.of(trainee));
+
+        service.toggleActive(request);
+
+        ArgumentCaptor<Trainee> captor = ArgumentCaptor.forClass(Trainee.class);
+        verify(traineeDao).update(captor.capture());
+
+        assertTrue(captor.getValue().getUser().getIsActive());
+    }
+
+    @Test
+    void toggleActive_shouldToggleTrainerStatus_whenTrainerExists() {
+        User user = User.builder()
+                .username(USERNAME)
+                .password(ENCODED_PASSWORD)
+                .isActive(true)
+                .build();
+
+        Trainer trainer = buildTrainer(user);
+        ToggleActiveRequestDTO request = ToggleActiveRequestDTO.builder()
+                .username(USERNAME)
+                .isActive(true)
+                .build();
+
+        doNothing().when(userInputValidator).validate(any(), anyString());
+
+        when(traineeDao.existsByUsername(USERNAME)).thenReturn(false);
+        when(trainerDao.existsByUsername(USERNAME)).thenReturn(true);
+        when(trainerDao.findByUsername(USERNAME)).thenReturn(Optional.of(trainer));
+
+        service.toggleActive(request);
+
+        ArgumentCaptor<Trainer> captor = ArgumentCaptor.forClass(Trainer.class);
+        verify(trainerDao).update(captor.capture());
+
+        assertFalse(captor.getValue().getUser().getIsActive());
+    }
+
+    @Test
+    void toggleActive_shouldThrowException_whenUserDoesNotExist() {
+        ToggleActiveRequestDTO request = ToggleActiveRequestDTO.builder()
+                .username(USERNAME)
+                .isActive(true)
+                .build();
+
+        doNothing().when(userInputValidator).validate(any(), anyString());
+
+        when(traineeDao.existsByUsername(USERNAME)).thenReturn(false);
+        when(trainerDao.existsByUsername(USERNAME)).thenReturn(false);
+
+        assertThrows(EntityNotFoundException.class,
+                () -> service.toggleActive(request));
     }
 
     private User buildUser() {
