@@ -382,14 +382,12 @@ class TrainerServiceImplTest {
 
         when(trainerDao.findNotAssignedToTrainee(username))
                 .thenReturn(List.of(mockedTrainer));
-
         when(mapper.toInfoDto(mockedTrainer))
                 .thenReturn(dto);
 
         List<TrainerInfoDTO> result = service.getNotAssignedToTrainee(username);
 
         assertThat(result).containsExactly(dto);
-
         verify(userInputValidator).validateUsername(username);
         verify(trainerDao).findNotAssignedToTrainee(username);
         verify(mapper).toInfoDto(mockedTrainer);
