@@ -10,3 +10,7 @@ hibernate:
 liquibase:
   changelog:
     master: classpath:db/test-migration/master.xml
+
+app:
+  api:
+    base-path: /api/v1

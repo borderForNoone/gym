@@ -1,6 +1,9 @@
 package org.gym.crm.service;
 
 import org.gym.crm.dto.TrainerInfoDTO;
+import org.gym.crm.dto.TrainerRequestDTO;
+import org.gym.crm.dto.TrainerResponseDTO;
+import org.gym.crm.dto.TrainerUpdateDTO;
 import org.gym.crm.model.Trainer;
 import org.gym.crm.model.Training;
 import org.gym.crm.search.filter.TrainerTrainingFilter;
@@ -10,11 +13,11 @@ import java.util.List;
 import java.util.Optional;
 
 public interface TrainerService {
-    Trainer create(Trainer trainer);
+    TrainerResponseDTO createTrainer(TrainerRequestDTO request);
 
-    Trainer update(Trainer trainer);
+    TrainerResponseDTO updateTrainer(TrainerUpdateDTO request);
 
-    Optional<Trainer> findByUsername(String username);
+    TrainerInfoDTO getTrainerByUsername(String username);
 
     void changePassword(String username, String oldPassword, String newPassword) throws AuthenticationException;
 
