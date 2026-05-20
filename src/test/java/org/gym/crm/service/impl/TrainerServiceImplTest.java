@@ -372,7 +372,7 @@ class TrainerServiceImplTest {
     void getNotAssignedToTrainee_shouldReturnMappedTrainers() {
         String username = "john.doe";
 
-        Trainer trainer = mock(Trainer.class);
+        Trainer mockedTrainer = mock(Trainer.class);
         TrainerInfoDTO dto = TrainerInfoDTO.builder()
                 .firstName("John")
                 .lastName("Doe")
@@ -382,9 +382,9 @@ class TrainerServiceImplTest {
                 .build();
 
         when(trainerDao.findNotAssignedToTrainee(username))
-                .thenReturn(List.of(trainer));
+                .thenReturn(List.of(mockedTrainer));
 
-        when(mapper.toInfoDto(trainer))
+        when(mapper.toInfoDto(mockedTrainer))
                 .thenReturn(dto);
 
         List<TrainerInfoDTO> result = service.getNotAssignedToTrainee(username);
@@ -393,7 +393,7 @@ class TrainerServiceImplTest {
 
         verify(userInputValidator).validateUsername(username);
         verify(trainerDao).findNotAssignedToTrainee(username);
-        verify(mapper).toInfoDto(trainer);
+        verify(mapper).toInfoDto(mockedTrainer);
     }
 
     @Test

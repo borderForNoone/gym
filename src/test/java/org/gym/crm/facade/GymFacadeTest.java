@@ -425,10 +425,6 @@ public class GymFacadeTest {
         return TrainerRequestDTO.builder().firstName(FIRST_NAME).lastName(LAST_NAME).build();
     }
 
-    private TrainerUpdateDTO buildTrainerUpdateDTO() {
-        return TrainerUpdateDTO.builder().firstName(FIRST_NAME).lastName(LAST_NAME).build();
-    }
-
     private TrainerResponseDTO buildTrainerResponseDTO() {
         return TrainerResponseDTO.builder()
                 .userId(TRAINER_ID).firstName(FIRST_NAME).lastName(LAST_NAME)
