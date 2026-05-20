@@ -13,7 +13,6 @@ import org.gym.crm.model.Training;
 import org.gym.crm.model.TrainingType;
 import org.gym.crm.model.User;
 import org.gym.crm.search.criteria.TrainerTrainingCriteriaBuilder;
-import org.gym.crm.search.filter.TraineeTrainingFilter;
 import org.gym.crm.search.filter.TrainerTrainingFilter;
 import org.gym.crm.service.UserProfileService;
 import org.gym.crm.service.common.UserInputValidator;

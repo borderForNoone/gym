@@ -10,7 +10,6 @@ import org.gym.crm.dto.TrainerAssignmentUpdateDTO;
 import org.gym.crm.dto.TrainerInfoDTO;
 import org.gym.crm.dto.TrainerRequestDTO;
 import org.gym.crm.dto.TrainerResponseDTO;
-import org.gym.crm.dto.TrainerUpdateDTO;
 import org.gym.crm.dto.TrainingRequestDTO;
 import org.gym.crm.dto.TrainingResponseDTO;
 import org.gym.crm.mapper.TraineeMapper;
