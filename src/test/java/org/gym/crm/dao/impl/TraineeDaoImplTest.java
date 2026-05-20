@@ -4,7 +4,9 @@ import com.github.springtestdbunit.annotation.DatabaseSetup;
 import org.gym.crm.model.Trainee;
 import org.gym.crm.model.Trainer;
 import org.gym.crm.model.User;
+import org.hibernate.Hibernate;
 import org.junit.jupiter.api.Test;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -79,6 +81,24 @@ class TraineeDaoImplTest extends AbstractDaoTest<TraineeDaoImpl> {
     }
 
     @Test
+    void delete_shouldRemoveTrainee_whenExists() {
+        Trainee trainee = dao.findByUsername("Nora.Pemberton")
+                .orElseThrow(() -> new AssertionError("Trainee not found"));
+
+        dao.delete(trainee);
+
+        assertThat(dao.findByUsername("Nora.Pemberton")).isEmpty();
+    }
+
+    @Test
+    void delete_shouldThrowException_whenTraineeIsNull() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> dao.delete(null));
+
+        assertThat(exception.getMessage()).isEqualTo("Trainee cannot be null");
+    }
+
+    @Test
     void existsByUsername_shouldReturnTrue_whenUserExists() {
         boolean result = dao.existsByUsername("Nora.Pemberton");
 
@@ -97,10 +117,7 @@ class TraineeDaoImplTest extends AbstractDaoTest<TraineeDaoImpl> {
         Optional<Trainee> result = dao.findByUsername("Nora.Pemberton");
 
         assertThat(result).isPresent();
-
-        Trainee trainee = result.get();
-
-        assertThat(trainee.getUser().getUsername()).isEqualTo("Nora.Pemberton");
+        assertThat(result.get().getUser().getUsername()).isEqualTo("Nora.Pemberton");
     }
 
     @Test
@@ -111,17 +128,17 @@ class TraineeDaoImplTest extends AbstractDaoTest<TraineeDaoImpl> {
     }
 
     @Test
-    void existsByUsername_shouldReturnFalse_whenUserDoesNotExist() {
-        boolean result = dao.existsByUsername("ghost.user");
-
-        assertThat(result).isFalse();
-    }
-
-    @Test
     void deleteByUsername_shouldRemoveTrainee_whenExists() {
         dao.deleteByUsername("Nora.Pemberton");
 
         assertThat(dao.findByUsername("Nora.Pemberton")).isEmpty();
+    }
+
+    @Test
+    void deleteByUsername_shouldDoNothing_whenUserNotExists() {
+        dao.deleteByUsername("ghost.user");
+
+        assertThat(dao.findByUsername("ghost.user")).isEmpty();
     }
 
     @Test
@@ -132,15 +149,35 @@ class TraineeDaoImplTest extends AbstractDaoTest<TraineeDaoImpl> {
     }
 
     @Test
-    void updateTrainers_shouldReplaceTrainersList() {
-        List<Trainer> trainers = dao.findAllByUsernames(List.of("trainer1"));
+    @Transactional
+    void updateTrainersList_shouldReplaceTrainersList() {
+        List<Trainer> trainers = dao.findAllByUsernames(List.of("John.Trainer"));
 
-        Trainee result = dao.updateTrainers("Nora.Pemberton", trainers);
+        dao.updateTrainersList("Nora.Pemberton", trainers);
 
-        assertThat(result.getTrainers())
+        Trainee updated = dao.findByUsername("Nora.Pemberton")
+                .orElseThrow(() -> new AssertionError("Trainee not found"));
+
+        assertThat(updated.getTrainers())
                 .isNotNull()
-                .hasSameSizeAs(trainers)
-                .containsExactlyInAnyOrderElementsOf(trainers);
+                .hasSize(1)
+                .extracting(t -> t.getUser().getUsername())
+                .containsExactly("John.Trainer");
+    }
+
+    @Test
+    @Transactional
+    void updateTrainersList_shouldClearTrainers_whenEmptyListProvided() {
+        dao.updateTrainersList("Nora.Pemberton", List.of());
+
+        Trainee updated = dao.findByUsername("Nora.Pemberton")
+                .orElseThrow(() -> new AssertionError("Trainee not found"));
+
+        Hibernate.initialize(updated.getTrainers());
+
+        assertThat(updated.getTrainers())
+                .isNotNull()
+                .isEmpty();
     }
 
     @Test

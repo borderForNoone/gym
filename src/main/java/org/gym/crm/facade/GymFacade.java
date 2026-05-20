@@ -1,25 +1,38 @@
 package org.gym.crm.facade;
 
-import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import org.gym.crm.auth.Authenticated;
 import org.gym.crm.dto.PasswordChangeRequest;
+import org.gym.crm.dto.ToggleActiveRequestDTO;
+import org.gym.crm.dto.TraineeInfoDTO;
 import org.gym.crm.dto.TraineeRequestDTO;
 import org.gym.crm.dto.TraineeResponseDTO;
 import org.gym.crm.dto.TraineeUpdateDTO;
+import org.gym.crm.dto.TrainerAssignmentUpdateDTO;
+import org.gym.crm.dto.TrainerInfoDTO;
 import org.gym.crm.dto.TrainerRequestDTO;
 import org.gym.crm.dto.TrainerResponseDTO;
 import org.gym.crm.dto.TrainerUpdateDTO;
 import org.gym.crm.dto.TrainingRequestDTO;
 import org.gym.crm.dto.TrainingResponseDTO;
 import org.gym.crm.mapper.TraineeMapper;
+import org.gym.crm.mapper.TraineeRestMapper;
 import org.gym.crm.mapper.TrainerMapper;
+import org.gym.crm.mapper.TrainerRestMapper;
 import org.gym.crm.mapper.TrainingMapper;
 import org.gym.crm.model.Trainee;
 import org.gym.crm.model.Trainer;
 import org.gym.crm.model.Training;
+import org.gym.crm.rest.ActivationStatusRequest;
+import org.gym.crm.rest.AssignedTrainerResponse;
 import org.gym.crm.rest.LoginChangeRequest;
 import org.gym.crm.rest.LoginRequest;
+import org.gym.crm.rest.TraineeAssignedTrainersUpdateRequest;
+import org.gym.crm.rest.TraineeAssignedTrainersUpdateResponse;
+import org.gym.crm.rest.TraineeGetResponse;
+import org.gym.crm.rest.TraineeUpdateRequest;
+import org.gym.crm.rest.TraineeUpdateResponse;
 import org.gym.crm.search.filter.TraineeTrainingFilter;
 import org.gym.crm.search.filter.TrainerTrainingFilter;
 import org.gym.crm.service.TraineeService;
@@ -42,6 +55,8 @@ public class GymFacade {
     private final TrainerService trainerService;
     private final TrainingService trainingService;
     private final UserProfileService userProfileService;
+    private final TraineeRestMapper traineeRestMapper;
+    private final TrainerRestMapper trainerRestMapper;
 
     @Setter(onMethod_ = {@Autowired})
     private TraineeMapper traineeMapper;
@@ -57,82 +72,86 @@ public class GymFacade {
         return traineeMapper.toDto(saved);
     }
 
-    public TraineeResponseDTO updateTrainee(String username, String password, TraineeUpdateDTO traineeUpdateDTO) {
-        traineeService.authenticate(username, password);
+    @Authenticated
+    public TraineeUpdateResponse updateTrainee(TraineeUpdateRequest request, String username) {
+        TraineeUpdateDTO dto = traineeRestMapper.toDto(username, request);
+        TraineeResponseDTO traineeResponseDTO = traineeService.update(dto);
 
-        Trainee updatedData = traineeMapper.toEntity(traineeUpdateDTO);
-        Trainee saved = traineeService.updateProfile(username, updatedData);
-
-        return traineeMapper.toDto(saved);
+        return traineeRestMapper.toRestUpdateResponse(traineeResponseDTO);
     }
 
-    public void setTraineeActive(String username, String password, boolean active) {
-        traineeService.authenticate(username, password);
+    @Authenticated
+    public void toggleActiveStatus(ActivationStatusRequest request, String username) {
+        ToggleActiveRequestDTO dto = ToggleActiveRequestDTO.builder()
+                .username(username)
+                .isActive(request.getIsActive())
+                .build();
 
+        userProfileService.toggleActive(dto);
+    }
+
+    @Authenticated
+    public void setTraineeActive(String username, boolean active) {
         traineeService.setActive(username, active);
     }
 
-    public void setTrainerActive(String username, String password, boolean active) {
-        trainerService.authenticate(username, password);
-
+    @Authenticated
+    public void setTrainerActive(String username, boolean active) {
         trainerService.setActive(username, active);
     }
 
-    public void deleteTraineeByUsername(String username, String password) {
-        traineeService.authenticate(username, password);
-
+    @Authenticated
+    public void deleteTraineeByUsername(String username) {
         traineeService.deleteByUsername(username);
     }
 
-    public List<TrainingResponseDTO> getTraineeTrainings(String username, String password, TraineeTrainingFilter filter) {
-        traineeService.authenticate(username, password);
-
+    @Authenticated
+    public List<TrainingResponseDTO> getTraineeTrainings(TraineeTrainingFilter filter) {
         return traineeService.getTrainings(filter)
                 .stream()
                 .map(trainingMapper::toDto)
                 .toList();
     }
 
-    public List<TrainingResponseDTO> getTrainerTrainings(String username, String password, TrainerTrainingFilter filter) {
-        trainerService.authenticate(username, password);
-
+    @Authenticated
+    public List<TrainingResponseDTO> getTrainerTrainings(TrainerTrainingFilter filter) {
         return trainerService.getTrainings(filter)
                 .stream()
                 .map(trainingMapper::toDto)
                 .toList();
     }
 
-    public TrainingResponseDTO createTraining(String username, String password, TrainingRequestDTO trainingRequestDTO) {
-        traineeService.authenticate(username, password);
-
+    @Authenticated
+    public TrainingResponseDTO createTraining(TrainingRequestDTO trainingRequestDTO) {
         Training training = trainingMapper.toEntity(trainingRequestDTO);
         Training saved = trainingService.create(training);
 
         return trainingMapper.toDto(saved);
     }
 
-    public List<TrainerResponseDTO> getUnassignedTrainers(String username, String password) {
-        traineeService.authenticate(username, password);
-
+    @Authenticated
+    public List<TrainerResponseDTO> getUnassignedTrainers(String username) {
         return traineeService.getUnassignedTrainers(username)
                 .stream()
                 .map(trainerMapper::toDto)
                 .toList();
     }
 
-    public TraineeResponseDTO updateTraineeTrainers(String username, String password, List<String> trainerUsernames) {
-        traineeService.authenticate(username, password);
+    @Authenticated
+    public TraineeAssignedTrainersUpdateResponse updateTraineeTrainersList(TraineeAssignedTrainersUpdateRequest request, String username) {
+        TrainerAssignmentUpdateDTO dto = TrainerAssignmentUpdateDTO.builder()
+                .traineeUsername(username)
+                .trainerUsernames(request.getTrainerUsernames())
+                .build();
+        List<TrainerInfoDTO> list = traineeService.updateTrainersList(dto);
+        List<AssignedTrainerResponse> assignedTrainers = list.stream()
+                .map(trainerRestMapper::toRest)
+                .toList();
 
-        Trainee updated = traineeService.updateTrainers(username, trainerUsernames);
+        TraineeAssignedTrainersUpdateResponse response = new TraineeAssignedTrainersUpdateResponse();
+        response.setTrainers(assignedTrainers);
 
-        return traineeMapper.toDto(updated);
-    }
-
-    public TraineeResponseDTO updateTrainee(TraineeUpdateDTO traineeUpdateDTO) {
-        Trainee trainee = traineeMapper.toEntity(traineeUpdateDTO);
-        Trainee saved = traineeService.update(trainee);
-
-        return traineeMapper.toDto(saved);
+        return response;
     }
 
     public TrainerResponseDTO createTrainer(TrainerRequestDTO trainerRequestDTO) {
@@ -142,61 +161,52 @@ public class GymFacade {
         return trainerMapper.toDto(saved);
     }
 
+    @Authenticated
     public TrainerResponseDTO getTrainerByUsername(String username, String password) {
-        trainerService.authenticate(username, password);
-
         Trainer trainer = trainerService.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException(TRAINER_NOT_FOUND));
 
         return trainerMapper.toDto(trainer);
     }
 
-    public TraineeResponseDTO getTraineeByUsername(String username, String password) {
-        traineeService.authenticate(username, password);
+    @Authenticated
+    public TraineeGetResponse getTraineeByUsername(String username) {
+        TraineeInfoDTO traineeInfoDTO = traineeService.getTraineeByUsername(username);
 
-        Trainee trainee = traineeService.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException(TRAINEE_NOT_FOUND));
-
-        return traineeMapper.toDto(trainee);
+        return traineeRestMapper.toRest(traineeInfoDTO);
     }
 
     public void changeTraineePassword(String username, String oldPassword, String newPassword)
             throws AuthenticationException {
-        traineeService.authenticate(username, oldPassword);
-
         traineeService.changePassword(username, oldPassword, newPassword);
     }
 
+    @Authenticated
     public void changeTrainerPassword(String username, String oldPassword, String newPassword)
             throws AuthenticationException {
-        trainerService.authenticate(username, oldPassword);
-
         trainerService.changePassword(username, oldPassword, newPassword);
     }
 
+    @Authenticated
     public TrainerResponseDTO updateTrainer(TrainerUpdateDTO trainerUpdateDTO) {
-        trainerService.authenticate(trainerUpdateDTO.getUsername(), trainerUpdateDTO.getPassword());
-
         Trainer trainer = trainerMapper.toEntity(trainerUpdateDTO);
         Trainer saved = trainerService.update(trainer);
 
         return trainerMapper.toDto(saved);
     }
 
+    @Authenticated
     public TrainerResponseDTO updateTrainer(String username, String password, TrainerUpdateDTO trainerUpdateDTO) {
-        trainerService.authenticate(username, password);
-
         Trainer updatedData = trainerMapper.toEntity(trainerUpdateDTO);
         Trainer saved = trainerService.updateProfile(username, updatedData);
 
         return trainerMapper.toDto(saved);
     }
 
-    public void changePassword(LoginChangeRequest request, @NotNull String username) {
-        userProfileService.authenticate(username, request.getOldPassword());
-
+    @Authenticated
+    public void changePassword(LoginChangeRequest request, String username) {
         PasswordChangeRequest requestDTO = PasswordChangeRequest.builder()
-                .username(username)
+                .username(request.getUsername())
                 .oldPassword(request.getOldPassword())
                 .newPassword(request.getNewPassword())
                 .build();
@@ -206,5 +216,14 @@ public class GymFacade {
 
     public void login(LoginRequest request) {
         userProfileService.login(request);
+    }
+
+    @Authenticated
+    public List<AssignedTrainerResponse> getTrainersNotAssignedToTrainee(String username) {
+        List<TrainerInfoDTO> trainers = trainerService.getNotAssignedToTrainee(username);
+
+        return trainers.stream()
+                .map(trainerRestMapper::toRest)
+                .toList();
     }
 }

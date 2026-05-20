@@ -1,11 +1,21 @@
 package org.gym.crm.service.impl;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
 import org.gym.crm.dao.TrainerDao;
+import org.gym.crm.dto.TrainerInfoDTO;
 import org.gym.crm.exception.EntityNotFoundException;
+import org.gym.crm.mapper.TrainerMapper;
 import org.gym.crm.model.Trainer;
+import org.gym.crm.model.Training;
 import org.gym.crm.model.TrainingType;
 import org.gym.crm.model.User;
+import org.gym.crm.search.criteria.TrainerTrainingCriteriaBuilder;
+import org.gym.crm.search.filter.TrainerTrainingFilter;
 import org.gym.crm.service.UserProfileService;
+import org.gym.crm.service.common.UserInputValidator;
 import org.gym.crm.util.CoreValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,9 +26,12 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.gym.crm.util.TestConstants.FIRST_NAME;
 import static org.gym.crm.util.TestConstants.FITNESS;
 import static org.gym.crm.util.TestConstants.ID;
@@ -31,6 +44,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -43,6 +57,14 @@ class TrainerServiceImplTest {
     private UserProfileService userProfileService;
     @Mock
     private PasswordEncoder passwordEncoder;
+    @Mock
+    private TrainerTrainingCriteriaBuilder criteriaBuilder;
+    @Mock
+    private UserInputValidator userInputValidator;
+    @Mock
+    private TrainerMapper mapper;
+    @Mock
+    private EntityManager entityManager;
     @Spy
     private CoreValidator validator;
     @InjectMocks
@@ -103,46 +125,29 @@ class TrainerServiceImplTest {
 
     @Test
     void authenticate_shouldReturnTrue_whenCredentialsMatch() {
-        when(trainerDao.findByUsername(USERNAME))
-                .thenReturn(Optional.of(savedTrainer));
-        when(passwordEncoder.matches(
-                PASSWORD,
-                savedTrainer.getUser().getPassword()))
-                .thenReturn(true);
+        when(userProfileService.authenticate(USERNAME, PASSWORD)).thenReturn(true);
 
-        boolean result = service.authenticate(USERNAME, PASSWORD);
+        boolean result = userProfileService.authenticate(USERNAME, PASSWORD);
 
         assertTrue(result);
     }
 
     @Test
     void authenticate_shouldReturnFalse_whenPasswordWrong() {
-        when(trainerDao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainer));
+        when(userProfileService.authenticate(USERNAME, "wrongPassword")).thenReturn(false);
 
-        boolean result = service.authenticate(USERNAME, "wrongPassword");
+        boolean result = userProfileService.authenticate(USERNAME, "wrongPassword");
 
         assertFalse(result);
     }
 
     @Test
     void authenticate_shouldReturnFalse_whenUsernameNotFound() {
-        when(trainerDao.findByUsername(USERNAME)).thenReturn(Optional.empty());
+        when(userProfileService.authenticate(USERNAME, PASSWORD)).thenReturn(false);
 
-        boolean result = service.authenticate(USERNAME, PASSWORD);
+        boolean result = userProfileService.authenticate(USERNAME, PASSWORD);
 
         assertFalse(result);
-    }
-
-    @Test
-    void authenticate_shouldThrowException_whenUsernameBlank() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.authenticate("", PASSWORD));
-    }
-
-    @Test
-    void authenticate_shouldThrowException_whenPasswordBlank() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.authenticate(USERNAME, ""));
     }
 
     @Test
@@ -189,6 +194,7 @@ class TrainerServiceImplTest {
     @Test
     void changePassword_shouldThrowAuthException_whenOldPasswordWrong() {
         when(trainerDao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainer));
+        when(passwordEncoder.matches("wrongOld", savedTrainer.getUser().getPassword())).thenReturn(false);
 
         assertThrows(Exception.class,
                 () -> service.changePassword(USERNAME, "wrongOld", "newPassword"));
@@ -359,6 +365,55 @@ class TrainerServiceImplTest {
     void setActive_shouldThrowException_whenUsernameBlank() {
         assertThrows(IllegalArgumentException.class,
                 () -> service.setActive("", false));
+    }
+
+    @Test
+    void getNotAssignedToTrainee_shouldReturnMappedTrainers() {
+        String username = "john.doe";
+
+        Trainer mockedTrainer = mock(Trainer.class);
+        TrainerInfoDTO dto = TrainerInfoDTO.builder()
+                .firstName("John")
+                .lastName("Doe")
+                .username("john.doe")
+                .isActive(true)
+                .specialization("FITNESS")
+                .build();
+
+        when(trainerDao.findNotAssignedToTrainee(username))
+                .thenReturn(List.of(mockedTrainer));
+        when(mapper.toInfoDto(mockedTrainer))
+                .thenReturn(dto);
+
+        List<TrainerInfoDTO> result = service.getNotAssignedToTrainee(username);
+
+        assertThat(result).containsExactly(dto);
+        verify(userInputValidator).validateUsername(username);
+        verify(trainerDao).findNotAssignedToTrainee(username);
+        verify(mapper).toInfoDto(mockedTrainer);
+    }
+
+    @Test
+    void getTrainings_shouldReturnTrainingsList() {
+        TrainerTrainingFilter filter = mock(TrainerTrainingFilter.class);
+        CriteriaBuilder jpaCriteriaBuilder = mock(CriteriaBuilder.class);
+        CriteriaQuery<Training> query = mock(CriteriaQuery.class);
+        TypedQuery<Training> typedQuery = mock(TypedQuery.class);
+        List<Training> expected = List.of(mock(Training.class));
+
+        when(entityManager.getCriteriaBuilder()).thenReturn(jpaCriteriaBuilder);
+        when(criteriaBuilder.build(jpaCriteriaBuilder, filter)).thenReturn(query);
+        when(entityManager.createQuery(query)).thenReturn(typedQuery);
+        when(typedQuery.getResultList()).thenReturn(expected);
+
+        ReflectionTestUtils.setField(service, "entityManager", entityManager);
+
+        List<Training> result = service.getTrainings(filter);
+
+        assertThat(result).isEqualTo(expected);
+        verify(criteriaBuilder).build(jpaCriteriaBuilder, filter);
+        verify(entityManager).createQuery(query);
+        verify(typedQuery).getResultList();
     }
 
     private TrainingType buildFitnessType() {

@@ -3,6 +3,7 @@ package org.gym.crm.service.impl;
 import org.gym.crm.dao.TraineeDao;
 import org.gym.crm.dao.TrainerDao;
 import org.gym.crm.dto.PasswordChangeRequest;
+import org.gym.crm.dto.ToggleActiveRequestDTO;
 import org.gym.crm.exception.BadCredentialsException;
 import org.gym.crm.exception.CoreValidationException;
 import org.gym.crm.exception.EntityNotFoundException;
@@ -10,6 +11,7 @@ import org.gym.crm.model.Trainee;
 import org.gym.crm.model.Trainer;
 import org.gym.crm.model.User;
 import org.gym.crm.rest.LoginRequest;
+import org.gym.crm.service.common.UserInputValidator;
 import org.gym.crm.util.CoreValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -58,6 +60,8 @@ class UserProfileServiceImplTest {
     private PasswordEncoder passwordEncoder;
     @Spy
     private CoreValidator validator;
+    @Mock
+    private UserInputValidator userInputValidator;
     @InjectMocks
     private UserProfileServiceImpl service;
 
@@ -113,26 +117,22 @@ class UserProfileServiceImplTest {
 
     @Test
     void generateUsername_shouldThrowException_whenFirstNameBlank() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.generateUsername("", LAST_NAME));
+        assertThrows(IllegalArgumentException.class, () -> service.generateUsername("", LAST_NAME));
     }
 
     @Test
     void generateUsername_shouldThrowException_whenLastNameBlank() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.generateUsername(FIRST_NAME, ""));
+        assertThrows(IllegalArgumentException.class, () -> service.generateUsername(FIRST_NAME, ""));
     }
 
     @Test
     void generateUsername_shouldThrowException_whenFirstNameNull() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.generateUsername(null, LAST_NAME));
+        assertThrows(IllegalArgumentException.class, () -> service.generateUsername(null, LAST_NAME));
     }
 
     @Test
     void generateUsername_shouldThrowException_whenLastNameNull() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.generateUsername(FIRST_NAME, null));
+        assertThrows(IllegalArgumentException.class, () -> service.generateUsername(FIRST_NAME, null));
     }
 
     @Test
@@ -140,8 +140,7 @@ class UserProfileServiceImplTest {
         String longFirst = "A".repeat(60);
         String longLast = "B".repeat(60);
 
-        assertThrows(CoreValidationException.class,
-                () -> service.generateUsername(longFirst, longLast));
+        assertThrows(CoreValidationException.class, () -> service.generateUsername(longFirst, longLast));
     }
 
     @Test
@@ -335,6 +334,94 @@ class UserProfileServiceImplTest {
     void changePassword_shouldThrowException_whenRequestIsNull() {
         assertThrows(IllegalArgumentException.class,
                 () -> service.changePassword(null));
+    }
+
+    @Test
+    void toggleActive_shouldDeactivateTrainee_whenCurrentlyActive() {
+        Trainee trainee = buildTrainee(buildUser());
+        ToggleActiveRequestDTO request = ToggleActiveRequestDTO.builder()
+                .username(USERNAME)
+                .build();
+
+        doNothing().when(userInputValidator).validate(any(), anyString());
+        when(traineeDao.existsByUsername(USERNAME)).thenReturn(true);
+        when(traineeDao.findByUsername(USERNAME)).thenReturn(Optional.of(trainee));
+
+        service.toggleActive(request);
+
+        ArgumentCaptor<Trainee> captor = ArgumentCaptor.forClass(Trainee.class);
+        verify(traineeDao).update(captor.capture());
+
+        assertFalse(captor.getValue().getUser().getIsActive());
+    }
+
+    @Test
+    void toggleActive_shouldActivateTrainee_whenCurrentlyInactive() {
+        User inactiveUser = User.builder()
+                .username(USERNAME)
+                .password(ENCODED_PASSWORD)
+                .isActive(false)
+                .build();
+
+        Trainee trainee = buildTrainee(inactiveUser);
+        ToggleActiveRequestDTO request = ToggleActiveRequestDTO.builder()
+                .username(USERNAME)
+                .build();
+
+        doNothing().when(userInputValidator).validate(any(), anyString());
+        when(traineeDao.existsByUsername(USERNAME)).thenReturn(true);
+        when(traineeDao.findByUsername(USERNAME)).thenReturn(Optional.of(trainee));
+
+        service.toggleActive(request);
+
+        ArgumentCaptor<Trainee> captor = ArgumentCaptor.forClass(Trainee.class);
+        verify(traineeDao).update(captor.capture());
+
+        assertTrue(captor.getValue().getUser().getIsActive());
+    }
+
+    @Test
+    void toggleActive_shouldToggleTrainerStatus_whenTrainerExists() {
+        User user = User.builder()
+                .username(USERNAME)
+                .password(ENCODED_PASSWORD)
+                .isActive(true)
+                .build();
+
+        Trainer trainer = buildTrainer(user);
+        ToggleActiveRequestDTO request = ToggleActiveRequestDTO.builder()
+                .username(USERNAME)
+                .isActive(true)
+                .build();
+
+        doNothing().when(userInputValidator).validate(any(), anyString());
+
+        when(traineeDao.existsByUsername(USERNAME)).thenReturn(false);
+        when(trainerDao.existsByUsername(USERNAME)).thenReturn(true);
+        when(trainerDao.findByUsername(USERNAME)).thenReturn(Optional.of(trainer));
+
+        service.toggleActive(request);
+
+        ArgumentCaptor<Trainer> captor = ArgumentCaptor.forClass(Trainer.class);
+        verify(trainerDao).update(captor.capture());
+
+        assertFalse(captor.getValue().getUser().getIsActive());
+    }
+
+    @Test
+    void toggleActive_shouldThrowException_whenUserDoesNotExist() {
+        ToggleActiveRequestDTO request = ToggleActiveRequestDTO.builder()
+                .username(USERNAME)
+                .isActive(true)
+                .build();
+
+        doNothing().when(userInputValidator).validate(any(), anyString());
+
+        when(traineeDao.existsByUsername(USERNAME)).thenReturn(false);
+        when(trainerDao.existsByUsername(USERNAME)).thenReturn(false);
+
+        assertThrows(EntityNotFoundException.class,
+                () -> service.toggleActive(request));
     }
 
     private User buildUser() {

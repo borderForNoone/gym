@@ -7,7 +7,9 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.gym.crm.dao.TrainerDao;
+import org.gym.crm.dto.TrainerInfoDTO;
 import org.gym.crm.exception.EntityNotFoundException;
+import org.gym.crm.mapper.TrainerMapper;
 import org.gym.crm.model.Trainer;
 import org.gym.crm.model.Training;
 import org.gym.crm.model.User;
@@ -15,6 +17,7 @@ import org.gym.crm.search.criteria.TrainerTrainingCriteriaBuilder;
 import org.gym.crm.search.filter.TrainerTrainingFilter;
 import org.gym.crm.service.TrainerService;
 import org.gym.crm.service.UserProfileService;
+import org.gym.crm.service.common.UserInputValidator;
 import org.gym.crm.util.CoreValidator;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -40,7 +43,9 @@ public class TrainerServiceImpl implements TrainerService {
     private final UserProfileService userProfileService;
     private final TrainerTrainingCriteriaBuilder criteriaBuilder;
     private final CoreValidator validator;
+    private final UserInputValidator userInputValidator;
     private final PasswordEncoder passwordEncoder;
+    private final TrainerMapper mapper;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -72,16 +77,6 @@ public class TrainerServiceImpl implements TrainerService {
     public Trainer update(Trainer trainer) {
         log.info("Updating trainer with id={}", trainer.getId());
         return trainerDao.update(trainer);
-    }
-
-    @Override
-    public boolean authenticate(String username, String password) {
-        validator.validateNotBlank(username, USERNAME_LABEL);
-        validator.validateNotBlank(password, PASSWORD_LABEL);
-
-        return trainerDao.findByUsername(username)
-                .map(t -> passwordEncoder.matches(password, t.getUser().getPassword()))
-                .orElse(false);
     }
 
     @Override
@@ -181,5 +176,16 @@ public class TrainerServiceImpl implements TrainerService {
                 criteriaBuilder.build(entityManager.getCriteriaBuilder(), filter);
 
         return entityManager.createQuery(searchQuery).getResultList();
+    }
+
+    @Override
+    public List<TrainerInfoDTO> getNotAssignedToTrainee(String traineeUsername) {
+        userInputValidator.validateUsername(traineeUsername);
+
+        log.info("Getting all trainers not assigned to trainee: username={}", traineeUsername);
+
+        return trainerDao.findNotAssignedToTrainee(traineeUsername).stream()
+                .map(mapper::toInfoDto)
+                .toList();
     }
 }

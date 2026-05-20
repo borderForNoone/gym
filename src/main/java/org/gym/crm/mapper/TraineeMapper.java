@@ -1,5 +1,6 @@
 package org.gym.crm.mapper;
 
+import org.gym.crm.dto.TraineeInfoDTO;
 import org.gym.crm.dto.TraineeRequestDTO;
 import org.gym.crm.dto.TraineeResponseDTO;
 import org.gym.crm.dto.TraineeUpdateDTO;
@@ -28,4 +29,12 @@ public interface TraineeMapper {
     @Mapping(source = "user.lastName", target = "lastName")
     @Mapping(source = "user.isActive", target = "isActive")
     TraineeResponseDTO toDto(Trainee trainee);
+
+    @Mapping(target = "username", source = "user.username")
+    @Mapping(target = "firstName", source = "user.firstName")
+    @Mapping(target = "lastName", source = "user.lastName")
+    @Mapping(target = "isActive", source = "user.isActive")
+    @Mapping(target = "dateOfBirth", source = "dateOfBirth")
+    @Mapping(target = "address", source = "address")
+    TraineeInfoDTO toInfoDto(Trainee trainee);
 }
