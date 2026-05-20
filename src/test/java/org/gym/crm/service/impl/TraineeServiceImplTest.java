@@ -157,21 +157,9 @@ public class TraineeServiceImplTest {
     @Test
     void updateTrainersList_shouldReturnTrainerInfoDTOList() {
         TrainerAssignmentUpdateDTO dto = mock(TrainerAssignmentUpdateDTO.class);
-
-        when(dto.getTraineeUsername()).thenReturn("trainee1");
-        when(dto.getTrainerUsernames()).thenReturn(List.of("trainer1", "trainer2"));
-
         Trainer trainer1 = mock(Trainer.class);
         Trainer trainer2 = mock(Trainer.class);
-
         Trainee trainee = mock(Trainee.class);
-        when(dto.getTrainerUsernames()).thenReturn(List.of("trainer1", "trainer2"));
-        when(trainerDao.findByUsername("trainer1")).thenReturn(Optional.of(trainer1));
-        when(trainerDao.findByUsername("trainer2")).thenReturn(Optional.of(trainer2));
-
-        doNothing().when(dao).updateTrainersList(anyString(), anyList());
-
-        when(dao.findByUsername("trainee1")).thenReturn(Optional.of(trainee));
 
         TrainerInfoDTO dto1 = TrainerInfoDTO.builder()
                 .firstName("John")
@@ -188,6 +176,13 @@ public class TraineeServiceImplTest {
                 .specialization("Yoga")
                 .build();
 
+        when(dto.getTraineeUsername()).thenReturn("trainee1");
+        when(dto.getTrainerUsernames()).thenReturn(List.of("trainer1", "trainer2"));
+        when(trainee.getTrainers()).thenReturn(Set.of(trainer1, trainer2));
+        when(trainerDao.findByUsername("trainer1")).thenReturn(Optional.of(trainer1));
+        when(trainerDao.findByUsername("trainer2")).thenReturn(Optional.of(trainer2));
+        when(dao.findByUsername("trainee1")).thenReturn(Optional.of(trainee));
+        doNothing().when(dao).updateTrainersList(anyString(), anyList());
         when(trainerMapper.toInfoDto(trainer1)).thenReturn(dto1);
         when(trainerMapper.toInfoDto(trainer2)).thenReturn(dto2);
 
