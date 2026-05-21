@@ -177,17 +177,14 @@ public class TraineeServiceImplTest {
                 .specialization("Yoga")
                 .build();
 
+        doNothing().when(dao).updateTrainersList(anyString(), anyList());
+
         when(dto.getTraineeUsername()).thenReturn("trainee1");
         when(dto.getTrainerUsernames()).thenReturn(List.of("trainer1", "trainer2"));
-
         when(traineeMock.getTrainers()).thenReturn(Set.of(trainer1, trainer2));
-
         when(trainerDao.findByUsername("trainer1")).thenReturn(Optional.of(trainer1));
         when(trainerDao.findByUsername("trainer2")).thenReturn(Optional.of(trainer2));
         when(dao.findByUsername("trainee1")).thenReturn(Optional.of(traineeMock));
-
-        doNothing().when(dao).updateTrainersList(anyString(), anyList());
-
         when(trainerMapper.toInfoDto(trainer1)).thenReturn(dto1);
         when(trainerMapper.toInfoDto(trainer2)).thenReturn(dto2);
 
