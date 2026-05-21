@@ -5,6 +5,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import org.gym.crm.dao.TraineeDao;
+import org.gym.crm.dao.TrainerDao;
 import org.gym.crm.dto.TrainerAssignmentUpdateDTO;
 import org.gym.crm.dto.TrainerInfoDTO;
 import org.gym.crm.exception.EntityNotFoundException;
@@ -42,8 +43,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -59,6 +64,8 @@ public class TraineeServiceImplTest {
 
     @Mock
     private TraineeDao dao;
+    @Mock
+    private TrainerDao trainerDao;
     @Mock
     private UserProfileService userCredentialGenerator;
     @Mock
@@ -148,37 +155,50 @@ public class TraineeServiceImplTest {
     }
 
     @Test
-    void updateTrainersList_shouldReturnTrainerInfoList_whenValidRequest() {
-        TrainerAssignmentUpdateDTO dto = TrainerAssignmentUpdateDTO.builder()
-                .traineeUsername(USERNAME)
-                .trainerUsernames(List.of("trainer1"))
-                .build();
-        Trainer trainer = buildTrainer();
-        TrainerInfoDTO trainerInfoDTO = TrainerInfoDTO.builder()
+    void updateTrainersList_shouldReturnTrainerInfoDTOList() {
+        TrainerAssignmentUpdateDTO dto = mock(TrainerAssignmentUpdateDTO.class);
+        Trainer trainer1 = mock(Trainer.class);
+        Trainer trainer2 = mock(Trainer.class);
+        Trainee traineeMock = mock(Trainee.class);
+
+        TrainerInfoDTO dto1 = TrainerInfoDTO.builder()
                 .firstName("John")
-                .lastName("Smith")
+                .lastName("Doe")
                 .username("trainer1")
                 .isActive(true)
-                .specialization("FITNESS")
-                .build();
-        Trainee updatedTrainee = savedTrainee.toBuilder()
-                .trainers(Set.of(trainer))
+                .specialization("Yoga")
                 .build();
 
-        when(trainerService.findByUsername("trainer1"))
-                .thenReturn(Optional.of(trainer));
-        when(dao.findByUsername(USERNAME))
-                .thenReturn(Optional.of(updatedTrainee));
-        when(trainerMapper.toInfoDto(trainer))
-                .thenReturn(trainerInfoDTO);
+        TrainerInfoDTO dto2 = TrainerInfoDTO.builder()
+                .firstName("John2")
+                .lastName("Doe2")
+                .username("trainer2")
+                .isActive(true)
+                .specialization("Yoga")
+                .build();
+
+        doNothing().when(dao).updateTrainersList(anyString(), anyList());
+
+        when(dto.getTraineeUsername()).thenReturn("trainee1");
+        when(dto.getTrainerUsernames()).thenReturn(List.of("trainer1", "trainer2"));
+        when(traineeMock.getTrainers()).thenReturn(Set.of(trainer1, trainer2));
+        when(trainerDao.findByUsername("trainer1")).thenReturn(Optional.of(trainer1));
+        when(trainerDao.findByUsername("trainer2")).thenReturn(Optional.of(trainer2));
+        when(dao.findByUsername("trainee1")).thenReturn(Optional.of(traineeMock));
+        when(trainerMapper.toInfoDto(trainer1)).thenReturn(dto1);
+        when(trainerMapper.toInfoDto(trainer2)).thenReturn(dto2);
 
         List<TrainerInfoDTO> result = service.updateTrainersList(dto);
 
-        assertEquals(1, result.size());
-        assertEquals("trainer1", result.getFirst().getUsername());
+        assertEquals(2, result.size());
+        assertTrue(result.contains(dto1));
+        assertTrue(result.contains(dto2));
+
         verify(userInputValidator).validate(dto, "Trainer assignment");
-        verify(dao).updateTrainersList(eq(USERNAME), anyList());
-        verify(trainerMapper).toInfoDto(trainer);
+        verify(trainerDao).findByUsername("trainer1");
+        verify(trainerDao).findByUsername("trainer2");
+        verify(dao).updateTrainersList(eq("trainee1"), anyList());
+        verify(trainerMapper, times(2)).toInfoDto(any());
     }
 
     @Test

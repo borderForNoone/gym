@@ -28,3 +28,7 @@ spring:
 server:
   servlet:
     context-path: /gym-crm
+
+app:
+  api:
+    base-path: /api/v1
