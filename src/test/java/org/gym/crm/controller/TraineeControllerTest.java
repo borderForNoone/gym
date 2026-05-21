@@ -27,12 +27,10 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class TraineeControllerTest {
-
     private static final String USERNAME = "john.doe";
 
     @Mock
     private GymFacade facade;
-
     @InjectMocks
     private TraineeController controller;
 
@@ -53,7 +51,6 @@ class TraineeControllerTest {
                 .dateOfBirth(LocalDate.of(1990, 1, 1))
                 .address("Kyiv")
                 .build();
-
         traineeResponseDTO = TraineeResponseDTO.builder()
                 .userId(1L)
                 .firstName("John")
@@ -64,14 +61,10 @@ class TraineeControllerTest {
                 .address("Kyiv")
                 .isActive(true)
                 .build();
-
         traineeGetResponse = new TraineeGetResponse();
-
         traineeUpdateRequest = new TraineeUpdateRequest();
         traineeUpdateResponse = new TraineeUpdateResponse();
-
         activationStatusRequest = new ActivationStatusRequest();
-
         trainersUpdateRequest = new TraineeAssignedTrainersUpdateRequest();
         trainersUpdateResponse = new TraineeAssignedTrainersUpdateResponse();
     }
@@ -109,8 +102,7 @@ class TraineeControllerTest {
         when(facade.updateTrainee(traineeUpdateRequest, USERNAME))
                 .thenReturn(traineeUpdateResponse);
 
-        ResponseEntity<TraineeUpdateResponse> response =
-                controller.updateTraineeProfile(USERNAME, traineeUpdateRequest);
+        ResponseEntity<TraineeUpdateResponse> response = controller.updateTraineeProfile(USERNAME, traineeUpdateRequest);
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(response.getBody()).isEqualTo(traineeUpdateResponse);
@@ -120,8 +112,7 @@ class TraineeControllerTest {
 
     @Test
     void deleteTrainee_shouldReturnOkResponse() {
-        ResponseEntity<Void> response =
-                controller.deleteTrainee(USERNAME);
+        ResponseEntity<Void> response = controller.deleteTrainee(USERNAME);
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(response.getBody()).isNull();
@@ -131,8 +122,7 @@ class TraineeControllerTest {
 
     @Test
     void toggleActive_shouldReturnOkResponse() {
-        ResponseEntity<Void> response =
-                controller.toggleActive(USERNAME, activationStatusRequest);
+        ResponseEntity<Void> response = controller.toggleActive(USERNAME, activationStatusRequest);
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(response.getBody()).isNull();
@@ -142,11 +132,9 @@ class TraineeControllerTest {
 
     @Test
     void updateTraineeTrainers_shouldReturnOkResponse() {
-        when(facade.updateTraineeTrainersList(trainersUpdateRequest, USERNAME))
-                .thenReturn(trainersUpdateResponse);
+        when(facade.updateTraineeTrainersList(trainersUpdateRequest, USERNAME)).thenReturn(trainersUpdateResponse);
 
-        ResponseEntity<TraineeAssignedTrainersUpdateResponse> response =
-                controller.updateTraineeTrainers(USERNAME, trainersUpdateRequest);
+        ResponseEntity<TraineeAssignedTrainersUpdateResponse> response = controller.updateTraineeTrainers(USERNAME, trainersUpdateRequest);
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(response.getBody()).isEqualTo(trainersUpdateResponse);
@@ -156,9 +144,7 @@ class TraineeControllerTest {
 
     @Test
     void getAvailableTrainers_shouldReturnOkResponse() {
-        List<AssignedTrainerResponse> trainers = List.of(
-                new AssignedTrainerResponse()
-        );
+        List<AssignedTrainerResponse> trainers = List.of(new AssignedTrainerResponse());
 
         when(facade.getTrainersNotAssignedToTrainee(USERNAME))
                 .thenReturn(trainers);

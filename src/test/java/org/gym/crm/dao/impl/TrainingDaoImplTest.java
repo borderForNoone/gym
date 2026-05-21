@@ -146,11 +146,13 @@ class TrainingDaoImplTest extends AbstractDaoTest<TrainingDao> {
                                 .build(),
                         1,
                         List.of(1L)),
+
                 Arguments.of(TraineeTrainingFilter.builder()
                                 .username("Ellis.Hargrove")
                                 .build(),
                         1,
                         List.of(2L)),
+
                 Arguments.of(TraineeTrainingFilter.builder()
                                 .username("Nora.Pemberton")
                                 .fromDate(LocalDate.of(2026, 4, 1))
@@ -158,28 +160,17 @@ class TrainingDaoImplTest extends AbstractDaoTest<TrainingDao> {
                                 .build(),
                         1,
                         List.of(1L)),
+
                 Arguments.of(TraineeTrainingFilter.builder()
                                 .username("Nora.Pemberton")
                                 .trainingTypeName("Yoga")
                                 .build(),
                         1,
                         List.of(1L)),
+
                 Arguments.of(TraineeTrainingFilter.builder()
                                 .username("Nora.Pemberton")
-                                .firstName("Callum")
-                                .lastName("Whitfield")
-                                .build(),
-                        1,
-                        List.of(1L)),
-                Arguments.of(TraineeTrainingFilter.builder()
-                                .username("Nora.Pemberton")
-                                .firstName("Callum")
-                                .build(),
-                        1,
-                        List.of(1L)),
-                Arguments.of(TraineeTrainingFilter.builder()
-                                .username("Nora.Pemberton")
-                                .lastName("Whitfield")
+                                .joinFullName("Callum Whitfield")
                                 .build(),
                         1,
                         List.of(1L))
@@ -193,18 +184,20 @@ class TrainingDaoImplTest extends AbstractDaoTest<TrainingDao> {
                         .fromDate(LocalDate.of(2020, 1, 1))
                         .toDate(LocalDate.of(2020, 12, 31))
                         .build()),
+
                 Arguments.of(TraineeTrainingFilter.builder()
                         .username("Nora.Pemberton")
                         .trainingTypeName("Cardio")
                         .build()),
+
                 Arguments.of(TraineeTrainingFilter.builder()
                         .username("Nora.Pemberton")
-                        .trainingTypeName("Cardio")
+                        .joinFullName("Non Existing")
                         .build()),
+
                 Arguments.of(TraineeTrainingFilter.builder()
                         .username("Nora.Pemberton")
-                        .firstName("Callum")
-                        .lastName("Whitfield")
+                        .joinFullName("Callum Whitfield")
                         .fromDate(LocalDate.of(2026, 4, 16))
                         .toDate(LocalDate.of(2026, 4, 30))
                         .trainingTypeName("Yoga")
@@ -219,38 +212,35 @@ class TrainingDaoImplTest extends AbstractDaoTest<TrainingDao> {
                                 .build(),
                         2,
                         List.of(1L, 2L)),
+
                 Arguments.of(TrainerTrainingFilter.builder()
                                 .username("Callum.Whitfield")
-                                .firstName("Nora")
-                                .lastName("Pemberton")
+                                .joinFullName("Nora Pemberton")
                                 .build(),
                         1,
                         List.of(1L)),
+
                 Arguments.of(TrainerTrainingFilter.builder()
                                 .username("Callum.Whitfield")
-                                .lastName("Hargrove")
+                                .joinFullName("Ellis Hargrove")
                                 .build(),
                         1,
                         List.of(2L)),
-                Arguments.of(TrainerTrainingFilter.builder()
-                                .username("Callum.Whitfield")
-                                .firstName("Ellis")
-                                .lastName("Hargrove")
-                                .build(),
-                        1,
-                        List.of(2L)),
+
                 Arguments.of(TrainerTrainingFilter.builder()
                                 .username("Callum.Whitfield")
                                 .fromDate(LocalDate.of(2026, 4, 16))
                                 .build(),
                         1,
                         List.of(2L)),
+
                 Arguments.of(TrainerTrainingFilter.builder()
                                 .username("Callum.Whitfield")
                                 .toDate(LocalDate.of(2026, 4, 18))
                                 .build(),
                         1,
                         List.of(1L)),
+
                 Arguments.of(TrainerTrainingFilter.builder()
                                 .username("Callum.Whitfield")
                                 .fromDate(LocalDate.of(2026, 4, 14))
@@ -258,10 +248,10 @@ class TrainingDaoImplTest extends AbstractDaoTest<TrainingDao> {
                                 .build(),
                         1,
                         List.of(1L)),
+
                 Arguments.of(TrainerTrainingFilter.builder()
                                 .username("Callum.Whitfield")
-                                .firstName("Ellis")
-                                .lastName("Hargrove")
+                                .joinFullName("Ellis Hargrove")
                                 .fromDate(LocalDate.of(2026, 4, 19))
                                 .build(),
                         1,
@@ -273,16 +263,17 @@ class TrainingDaoImplTest extends AbstractDaoTest<TrainingDao> {
         return Stream.of(
                 Arguments.of(TrainerTrainingFilter.builder()
                         .username("Callum.Whitfield")
-                        .firstName("NonExistent")
+                        .joinFullName("Non Existent")
                         .build()),
+
                 Arguments.of(TrainerTrainingFilter.builder()
                         .username("Callum.Whitfield")
                         .fromDate(LocalDate.of(2026, 4, 21))
                         .build()),
+
                 Arguments.of(TrainerTrainingFilter.builder()
                         .username("Callum.Whitfield")
-                        .firstName("Nora")
-                        .lastName("Pemberton")
+                        .joinFullName("Nora Pemberton")
                         .fromDate(LocalDate.of(2026, 4, 16))
                         .build())
         );

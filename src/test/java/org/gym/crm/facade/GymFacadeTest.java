@@ -17,6 +17,7 @@ import org.gym.crm.mapper.TraineeRestMapper;
 import org.gym.crm.mapper.TrainerMapper;
 import org.gym.crm.mapper.TrainerRestMapper;
 import org.gym.crm.mapper.TrainingMapper;
+import org.gym.crm.mapper.TrainingRestMapper;
 import org.gym.crm.model.Trainee;
 import org.gym.crm.model.Trainer;
 import org.gym.crm.model.Training;
@@ -90,6 +91,8 @@ public class GymFacadeTest {
     private TrainerMapper trainerMapper;
     @Mock
     private TrainingMapper trainingMapper;
+    @Mock
+    private TrainingRestMapper trainingRestMapper;
 
     private GymFacade facade;
     private Trainee trainee;
@@ -104,8 +107,13 @@ public class GymFacadeTest {
     @BeforeEach
     void setUp() {
         facade = new GymFacade(
-                traineeService, trainerService, trainingService,
-                userProfileService, traineeRestMapper, trainerRestMapper
+                traineeService,
+                trainerService,
+                trainingService,
+                userProfileService,
+                traineeRestMapper,
+                trainerRestMapper,
+                trainingRestMapper
         );
         facade.setTraineeMapper(traineeMapper);
         facade.setTrainerMapper(trainerMapper);
@@ -231,7 +239,7 @@ public class GymFacadeTest {
         List<TrainingResponseDTO> actual = facade.getTraineeTrainings(filter);
 
         assertTrue(actual.isEmpty());
-        verify(trainingMapper, never()).toDto(any());
+        verify(trainingMapper, never()).toDto((Training) any());
     }
 
     @Test
@@ -256,7 +264,7 @@ public class GymFacadeTest {
         List<TrainingResponseDTO> actual = facade.getTrainerTrainings(filter);
 
         assertTrue(actual.isEmpty());
-        verify(trainingMapper, never()).toDto(any());
+        verify(trainingMapper, never()).toDto((Training) any());
     }
 
     @Test

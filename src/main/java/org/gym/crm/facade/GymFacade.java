@@ -21,10 +21,13 @@ import org.gym.crm.mapper.TraineeRestMapper;
 import org.gym.crm.mapper.TrainerMapper;
 import org.gym.crm.mapper.TrainerRestMapper;
 import org.gym.crm.mapper.TrainingMapper;
+import org.gym.crm.mapper.TrainingRestMapper;
 import org.gym.crm.model.Trainee;
 import org.gym.crm.model.Training;
 import org.gym.crm.rest.ActivationStatusRequest;
 import org.gym.crm.rest.AssignedTrainerResponse;
+import org.gym.crm.rest.GetTraineeTrainingResponse;
+import org.gym.crm.rest.GetTrainerTrainingResponse;
 import org.gym.crm.rest.LoginChangeRequest;
 import org.gym.crm.rest.LoginRequest;
 import org.gym.crm.rest.TraineeAssignedTrainersUpdateRequest;
@@ -37,6 +40,7 @@ import org.gym.crm.rest.TrainerCreateResponse;
 import org.gym.crm.rest.TrainerGetResponse;
 import org.gym.crm.rest.TrainerUpdateRequest;
 import org.gym.crm.rest.TrainerUpdateResponse;
+import org.gym.crm.rest.TrainingTypeResponse;
 import org.gym.crm.search.filter.TraineeTrainingFilter;
 import org.gym.crm.search.filter.TrainerTrainingFilter;
 import org.gym.crm.service.TraineeService;
@@ -61,6 +65,7 @@ public class GymFacade {
     private final UserProfileService userProfileService;
     private final TraineeRestMapper traineeRestMapper;
     private final TrainerRestMapper trainerRestMapper;
+    private final TrainingRestMapper trainingRestMapper;
 
     @Setter(onMethod_ = {@Autowired})
     private TraineeMapper traineeMapper;
@@ -114,6 +119,18 @@ public class GymFacade {
         return traineeService.getTrainings(filter)
                 .stream()
                 .map(trainingMapper::toDto)
+                .toList();
+    }
+
+    public List<GetTraineeTrainingResponse> getTraineeTrainingsByFilter(TraineeTrainingFilter filter, String username) {
+        return trainingService.getTraineeTrainings(filter).stream()
+                .map(trainingRestMapper::toRestTraineeResponse)
+                .toList();
+    }
+
+    public List<GetTrainerTrainingResponse> getTrainerTrainingsByFilter(TrainerTrainingFilter filter, String username) {
+        return trainingService.getTrainerTrainings(filter).stream()
+                .map(trainingRestMapper::toRestTrainerResponse)
                 .toList();
     }
 
@@ -219,6 +236,13 @@ public class GymFacade {
 
         return trainers.stream()
                 .map(trainerRestMapper::toRest)
+                .toList();
+    }
+
+    @Authenticated
+    public List<TrainingTypeResponse> getTrainingTypes() {
+        return trainingService.getAllTrainingTypes().stream()
+                .map(trainingRestMapper::toRest)
                 .toList();
     }
 }
