@@ -12,7 +12,7 @@ public class TestConstants {
     public static final String USERNAME_WITH_SUFFIX_2 = "Kaden.Voss2";
     public static final String PASSWORD = "testpass1";
     public static final int PASSWORD_LENGTH = 10;
-    public static final String ADDRESS = "123 Main St";
+    public static final String ADDRESS = "10 Sheep St";
     public static final LocalDate DATE_OF_BIRTH = LocalDate.of(1990, 1, 1);
     public static final String TRAINEE_NOT_FOUND_MESSAGE = "Trainee not found with id: ";
 

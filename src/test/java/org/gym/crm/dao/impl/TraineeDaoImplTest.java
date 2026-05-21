@@ -34,7 +34,7 @@ class TraineeDaoImplTest extends AbstractDaoTest<TraineeDaoImpl> {
         Trainee trainee = Trainee.builder()
                 .user(user)
                 .dateOfBirth(LocalDate.of(2000, 3, 10))
-                .address("123 Main St")
+                .address("10 Sheep St")
                 .build();
 
         Trainee actual = dao.save(trainee);
@@ -46,7 +46,7 @@ class TraineeDaoImplTest extends AbstractDaoTest<TraineeDaoImpl> {
         assertThat(actual.getUser().getLastName()).isEqualTo("Radcliffe");
         assertThat(actual.getUser().getIsActive()).isTrue();
         assertThat(actual.getDateOfBirth()).isEqualTo(LocalDate.of(2000, 3, 10));
-        assertThat(actual.getAddress()).isEqualTo("123 Main St");
+        assertThat(actual.getAddress()).isEqualTo("10 Sheep St");
     }
 
     @Test
@@ -82,12 +82,12 @@ class TraineeDaoImplTest extends AbstractDaoTest<TraineeDaoImpl> {
 
     @Test
     void delete_shouldRemoveTrainee_whenExists() {
-        Trainee trainee = dao.findByUsername("Nora.Pemberton")
+        Trainee trainee = dao.findByUsername("Julia.Tomas")
                 .orElseThrow(() -> new AssertionError("Trainee not found"));
 
         dao.delete(trainee);
 
-        assertThat(dao.findByUsername("Nora.Pemberton")).isEmpty();
+        assertThat(dao.findByUsername("Julia.Tomas")).isEmpty();
     }
 
     @Test
@@ -100,7 +100,7 @@ class TraineeDaoImplTest extends AbstractDaoTest<TraineeDaoImpl> {
 
     @Test
     void existsByUsername_shouldReturnTrue_whenUserExists() {
-        boolean result = dao.existsByUsername("Nora.Pemberton");
+        boolean result = dao.existsByUsername("Julia.Tomas");
 
         assertThat(result).isTrue();
     }
@@ -114,10 +114,10 @@ class TraineeDaoImplTest extends AbstractDaoTest<TraineeDaoImpl> {
 
     @Test
     void findByUsername_shouldReturnTrainee_whenExists() {
-        Optional<Trainee> result = dao.findByUsername("Nora.Pemberton");
+        Optional<Trainee> result = dao.findByUsername("Julia.Tomas");
 
         assertThat(result).isPresent();
-        assertThat(result.get().getUser().getUsername()).isEqualTo("Nora.Pemberton");
+        assertThat(result.get().getUser().getUsername()).isEqualTo("Julia.Tomas");
     }
 
     @Test
@@ -151,26 +151,26 @@ class TraineeDaoImplTest extends AbstractDaoTest<TraineeDaoImpl> {
     @Test
     @Transactional
     void updateTrainersList_shouldReplaceTrainersList() {
-        List<Trainer> trainers = dao.findAllByUsernames(List.of("John.Trainer"));
+        List<Trainer> trainers = dao.findAllByUsernames(List.of("Tom.Trainer"));
 
-        dao.updateTrainersList("Nora.Pemberton", trainers);
+        dao.updateTrainersList("Julia.Tomas", trainers);
 
-        Trainee updated = dao.findByUsername("Nora.Pemberton")
+        Trainee updated = dao.findByUsername("Julia.Tomas")
                 .orElseThrow(() -> new AssertionError("Trainee not found"));
 
         assertThat(updated.getTrainers())
                 .isNotNull()
                 .hasSize(1)
                 .extracting(t -> t.getUser().getUsername())
-                .containsExactly("John.Trainer");
+                .containsExactly("Tom.Trainer");
     }
 
     @Test
     @Transactional
     void updateTrainersList_shouldClearTrainers_whenEmptyListProvided() {
-        dao.updateTrainersList("Nora.Pemberton", List.of());
+        dao.updateTrainersList("Julia.Tomas", List.of());
 
-        Trainee updated = dao.findByUsername("Nora.Pemberton")
+        Trainee updated = dao.findByUsername("Julia.Tomas")
                 .orElseThrow(() -> new AssertionError("Trainee not found"));
 
         Hibernate.initialize(updated.getTrainers());
@@ -188,20 +188,20 @@ class TraineeDaoImplTest extends AbstractDaoTest<TraineeDaoImpl> {
     }
 
     @Test
-    void findAllByUsernames_shouldReturnTrainers_whenJohnTrainerRequested() {
-        List<Trainer> result = dao.findAllByUsernames(List.of("John.Trainer"));
+    void findAllByUsernames_shouldReturnTrainers_whenTomTrainerRequested() {
+        List<Trainer> result = dao.findAllByUsernames(List.of("Tom.Trainer"));
 
         assertThat(result)
                 .hasSize(1)
                 .extracting("user.username")
-                .containsExactly("John.Trainer");
+                .containsExactly("Tom.Trainer");
     }
 
     private Trainee buildTrainee() {
         return Trainee.builder()
                 .user(buildUser())
                 .dateOfBirth(LocalDate.of(2000, 3, 10))
-                .address("123 Main St")
+                .address("10 Sheep St")
                 .build();
     }
 

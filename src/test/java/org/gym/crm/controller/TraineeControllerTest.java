@@ -5,11 +5,13 @@ import org.gym.crm.dto.TraineeResponseDTO;
 import org.gym.crm.facade.GymFacade;
 import org.gym.crm.rest.ActivationStatusRequest;
 import org.gym.crm.rest.AssignedTrainerResponse;
+import org.gym.crm.rest.GetTraineeTrainingResponse;
 import org.gym.crm.rest.TraineeAssignedTrainersUpdateRequest;
 import org.gym.crm.rest.TraineeAssignedTrainersUpdateResponse;
 import org.gym.crm.rest.TraineeGetResponse;
 import org.gym.crm.rest.TraineeUpdateRequest;
 import org.gym.crm.rest.TraineeUpdateResponse;
+import org.gym.crm.search.filter.TraineeTrainingFilter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,12 +29,10 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class TraineeControllerTest {
-
-    private static final String USERNAME = "john.doe";
+    private static final String USERNAME = "tom.tomas";
 
     @Mock
     private GymFacade facade;
-
     @InjectMocks
     private TraineeController controller;
 
@@ -48,30 +48,25 @@ class TraineeControllerTest {
     @BeforeEach
     void setUp() {
         traineeRequestDTO = TraineeRequestDTO.builder()
-                .firstName("John")
-                .lastName("Doe")
+                .firstName("Tom")
+                .lastName("Tomas")
                 .dateOfBirth(LocalDate.of(1990, 1, 1))
                 .address("Kyiv")
                 .build();
-
         traineeResponseDTO = TraineeResponseDTO.builder()
                 .userId(1L)
-                .firstName("John")
-                .lastName("Doe")
+                .firstName("Tom")
+                .lastName("Tomas")
                 .username(USERNAME)
                 .password("password")
                 .dateOfBirth(LocalDate.of(1990, 1, 1))
                 .address("Kyiv")
                 .isActive(true)
                 .build();
-
         traineeGetResponse = new TraineeGetResponse();
-
         traineeUpdateRequest = new TraineeUpdateRequest();
         traineeUpdateResponse = new TraineeUpdateResponse();
-
         activationStatusRequest = new ActivationStatusRequest();
-
         trainersUpdateRequest = new TraineeAssignedTrainersUpdateRequest();
         trainersUpdateResponse = new TraineeAssignedTrainersUpdateResponse();
     }
@@ -109,8 +104,7 @@ class TraineeControllerTest {
         when(facade.updateTrainee(traineeUpdateRequest, USERNAME))
                 .thenReturn(traineeUpdateResponse);
 
-        ResponseEntity<TraineeUpdateResponse> response =
-                controller.updateTraineeProfile(USERNAME, traineeUpdateRequest);
+        ResponseEntity<TraineeUpdateResponse> response = controller.updateTraineeProfile(USERNAME, traineeUpdateRequest);
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(response.getBody()).isEqualTo(traineeUpdateResponse);
@@ -120,8 +114,7 @@ class TraineeControllerTest {
 
     @Test
     void deleteTrainee_shouldReturnOkResponse() {
-        ResponseEntity<Void> response =
-                controller.deleteTrainee(USERNAME);
+        ResponseEntity<Void> response = controller.deleteTrainee(USERNAME);
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(response.getBody()).isNull();
@@ -131,8 +124,7 @@ class TraineeControllerTest {
 
     @Test
     void toggleActive_shouldReturnOkResponse() {
-        ResponseEntity<Void> response =
-                controller.toggleActive(USERNAME, activationStatusRequest);
+        ResponseEntity<Void> response = controller.toggleActive(USERNAME, activationStatusRequest);
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(response.getBody()).isNull();
@@ -142,11 +134,9 @@ class TraineeControllerTest {
 
     @Test
     void updateTraineeTrainers_shouldReturnOkResponse() {
-        when(facade.updateTraineeTrainersList(trainersUpdateRequest, USERNAME))
-                .thenReturn(trainersUpdateResponse);
+        when(facade.updateTraineeTrainersList(trainersUpdateRequest, USERNAME)).thenReturn(trainersUpdateResponse);
 
-        ResponseEntity<TraineeAssignedTrainersUpdateResponse> response =
-                controller.updateTraineeTrainers(USERNAME, trainersUpdateRequest);
+        ResponseEntity<TraineeAssignedTrainersUpdateResponse> response = controller.updateTraineeTrainers(USERNAME, trainersUpdateRequest);
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(response.getBody()).isEqualTo(trainersUpdateResponse);
@@ -156,9 +146,7 @@ class TraineeControllerTest {
 
     @Test
     void getAvailableTrainers_shouldReturnOkResponse() {
-        List<AssignedTrainerResponse> trainers = List.of(
-                new AssignedTrainerResponse()
-        );
+        List<AssignedTrainerResponse> trainers = List.of(new AssignedTrainerResponse());
 
         when(facade.getTrainersNotAssignedToTrainee(USERNAME))
                 .thenReturn(trainers);
@@ -170,5 +158,70 @@ class TraineeControllerTest {
         assertThat(response.getBody()).isEqualTo(trainers);
 
         verify(facade).getTrainersNotAssignedToTrainee(USERNAME);
+    }
+
+    @Test
+    void getTraineeTrainings_shouldReturnOkWithAllParams() {
+        LocalDate from = LocalDate.of(2024, 1, 1);
+        LocalDate to = LocalDate.of(2024, 12, 31);
+        List<GetTraineeTrainingResponse> trainings = List.of(new GetTraineeTrainingResponse());
+
+        TraineeTrainingFilter filter = TraineeTrainingFilter.builder()
+                .username(USERNAME)
+                .fromDate(from)
+                .toDate(to)
+                .joinFullName("Julia Tomas")
+                .trainingTypeName("Yoga")
+                .build();
+
+        when(facade.getTraineeTrainingsByFilter(filter)).thenReturn(trainings);
+
+        ResponseEntity<List<GetTraineeTrainingResponse>> response =
+                controller.getTraineeTrainings(USERNAME, from, to, "Julia Tomas", "Yoga");
+
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        assertThat(response.getBody()).isEqualTo(trainings);
+        verify(facade).getTraineeTrainingsByFilter(filter);
+    }
+
+    @Test
+    void getTraineeTrainings_shouldReturnOkWithNullOptionalParams() {
+        List<GetTraineeTrainingResponse> trainings = List.of(new GetTraineeTrainingResponse());
+
+        TraineeTrainingFilter filter = TraineeTrainingFilter.builder()
+                .username(USERNAME)
+                .fromDate(null)
+                .toDate(null)
+                .joinFullName(null)
+                .trainingTypeName(null)
+                .build();
+
+        when(facade.getTraineeTrainingsByFilter(filter)).thenReturn(trainings);
+
+        ResponseEntity<List<GetTraineeTrainingResponse>> response =
+                controller.getTraineeTrainings(USERNAME, null, null, null, null);
+
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        assertThat(response.getBody()).isEqualTo(trainings);
+        verify(facade).getTraineeTrainingsByFilter(filter);
+    }
+
+    @Test
+    void getTraineeTrainings_shouldReturnEmptyList() {
+        TraineeTrainingFilter filter = TraineeTrainingFilter.builder()
+                .username(USERNAME)
+                .fromDate(null)
+                .toDate(null)
+                .joinFullName(null)
+                .trainingTypeName(null)
+                .build();
+
+        when(facade.getTraineeTrainingsByFilter(filter)).thenReturn(List.of());
+
+        ResponseEntity<List<GetTraineeTrainingResponse>> response =
+                controller.getTraineeTrainings(USERNAME, null, null, null, null);
+
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        assertThat(response.getBody()).isEmpty();
     }
 }

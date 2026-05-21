@@ -7,6 +7,7 @@ import org.gym.crm.model.TrainingType;
 import org.gym.crm.util.Validator;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -23,6 +24,14 @@ public class TrainingTypeDaoImpl implements TrainingTypeDao {
                 .setParameter("name", name)
                 .getResultStream()
                 .findFirst()
+        );
+    }
+
+    @Override
+    public List<TrainingType> findAll() {
+        return transactionManager.performReturningWithinTx(manager -> manager
+                .createQuery("from TrainingType", TrainingType.class)
+                .getResultList()
         );
     }
 }

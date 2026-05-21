@@ -68,18 +68,18 @@ class TrainingMapperTest {
     private Training buildTraining() {
         User traineeUser = User.builder()
                 .id(TRAINEE_ID)
-                .firstName("John")
-                .lastName("Doe")
-                .username("john.doe")
+                .firstName("Tom")
+                .lastName("Tomas")
+                .username("tom.tomas")
                 .password("password")
                 .isActive(true)
                 .build();
 
         User trainerUser = User.builder()
                 .id(TRAINER_ID)
-                .firstName("Jane")
-                .lastName("Smith")
-                .username("jane.smith")
+                .firstName("Julia")
+                .lastName("Tomas")
+                .username("julia.tomas")
                 .password("password")
                 .isActive(true)
                 .build();
@@ -88,7 +88,7 @@ class TrainingMapperTest {
                 .id(TRAINEE_ID)
                 .user(traineeUser)
                 .dateOfBirth(LocalDate.of(2000, 1, 1))
-                .address("123 Main St")
+                .address("10 Sheep St")
                 .build();
 
         Trainer trainer = Trainer.builder()

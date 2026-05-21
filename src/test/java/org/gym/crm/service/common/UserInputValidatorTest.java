@@ -83,7 +83,7 @@ class UserInputValidatorTest {
 
     @Test
     void validateUsername_shouldPass_whenValid() {
-        assertDoesNotThrow(() -> sut.validateUsername("john"));
+        assertDoesNotThrow(() -> sut.validateUsername("tom"));
     }
 
     @Test
