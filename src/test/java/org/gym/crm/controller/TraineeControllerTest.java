@@ -5,11 +5,13 @@ import org.gym.crm.dto.TraineeResponseDTO;
 import org.gym.crm.facade.GymFacade;
 import org.gym.crm.rest.ActivationStatusRequest;
 import org.gym.crm.rest.AssignedTrainerResponse;
+import org.gym.crm.rest.GetTraineeTrainingResponse;
 import org.gym.crm.rest.TraineeAssignedTrainersUpdateRequest;
 import org.gym.crm.rest.TraineeAssignedTrainersUpdateResponse;
 import org.gym.crm.rest.TraineeGetResponse;
 import org.gym.crm.rest.TraineeUpdateRequest;
 import org.gym.crm.rest.TraineeUpdateResponse;
+import org.gym.crm.search.filter.TraineeTrainingFilter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -156,5 +158,70 @@ class TraineeControllerTest {
         assertThat(response.getBody()).isEqualTo(trainers);
 
         verify(facade).getTrainersNotAssignedToTrainee(USERNAME);
+    }
+
+    @Test
+    void getTraineeTrainings_shouldReturnOkWithAllParams() {
+        LocalDate from = LocalDate.of(2024, 1, 1);
+        LocalDate to = LocalDate.of(2024, 12, 31);
+        List<GetTraineeTrainingResponse> trainings = List.of(new GetTraineeTrainingResponse());
+
+        TraineeTrainingFilter filter = TraineeTrainingFilter.builder()
+                .username(USERNAME)
+                .fromDate(from)
+                .toDate(to)
+                .joinFullName("Jane Doe")
+                .trainingTypeName("Yoga")
+                .build();
+
+        when(facade.getTraineeTrainingsByFilter(filter, USERNAME)).thenReturn(trainings);
+
+        ResponseEntity<List<GetTraineeTrainingResponse>> response =
+                controller.getTraineeTrainings(USERNAME, from, to, "Jane Doe", "Yoga");
+
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        assertThat(response.getBody()).isEqualTo(trainings);
+        verify(facade).getTraineeTrainingsByFilter(filter, USERNAME);
+    }
+
+    @Test
+    void getTraineeTrainings_shouldReturnOkWithNullOptionalParams() {
+        List<GetTraineeTrainingResponse> trainings = List.of(new GetTraineeTrainingResponse());
+
+        TraineeTrainingFilter filter = TraineeTrainingFilter.builder()
+                .username(USERNAME)
+                .fromDate(null)
+                .toDate(null)
+                .joinFullName(null)
+                .trainingTypeName(null)
+                .build();
+
+        when(facade.getTraineeTrainingsByFilter(filter, USERNAME)).thenReturn(trainings);
+
+        ResponseEntity<List<GetTraineeTrainingResponse>> response =
+                controller.getTraineeTrainings(USERNAME, null, null, null, null);
+
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        assertThat(response.getBody()).isEqualTo(trainings);
+        verify(facade).getTraineeTrainingsByFilter(filter, USERNAME);
+    }
+
+    @Test
+    void getTraineeTrainings_shouldReturnEmptyList() {
+        TraineeTrainingFilter filter = TraineeTrainingFilter.builder()
+                .username(USERNAME)
+                .fromDate(null)
+                .toDate(null)
+                .joinFullName(null)
+                .trainingTypeName(null)
+                .build();
+
+        when(facade.getTraineeTrainingsByFilter(filter, USERNAME)).thenReturn(List.of());
+
+        ResponseEntity<List<GetTraineeTrainingResponse>> response =
+                controller.getTraineeTrainings(USERNAME, null, null, null, null);
+
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        assertThat(response.getBody()).isEmpty();
     }
 }
