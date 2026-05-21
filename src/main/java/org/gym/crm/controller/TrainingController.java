@@ -5,7 +5,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.gym.crm.dto.TrainingRequestDTO;
 import org.gym.crm.facade.GymFacade;
-import org.gym.crm.rest.TrainingCreateRequest;
 import org.gym.crm.rest.TrainingTypeResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

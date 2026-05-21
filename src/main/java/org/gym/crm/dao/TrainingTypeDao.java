@@ -3,7 +3,6 @@ package org.gym.crm.dao;
 
 import org.gym.crm.model.TrainingType;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
