@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/trainees")
+@RequestMapping("${app.api.base-path}/trainees")
 @RequiredArgsConstructor
 public class TraineeController {
     private final GymFacade facade;

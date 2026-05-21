@@ -31,6 +31,9 @@ import org.gym.crm.rest.TraineeAssignedTrainersUpdateResponse;
 import org.gym.crm.rest.TraineeGetResponse;
 import org.gym.crm.rest.TraineeUpdateRequest;
 import org.gym.crm.rest.TraineeUpdateResponse;
+import org.gym.crm.rest.TrainerCreateRequest;
+import org.gym.crm.rest.TrainerCreateResponse;
+import org.gym.crm.rest.TrainerGetResponse;
 import org.gym.crm.search.filter.TraineeTrainingFilter;
 import org.gym.crm.search.filter.TrainerTrainingFilter;
 import org.gym.crm.service.TraineeService;
@@ -46,12 +49,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -94,7 +97,6 @@ public class GymFacadeTest {
     private Training training;
     private TraineeRequestDTO traineeRequestDTO;
     private TraineeResponseDTO traineeResponseDTO;
-    private TrainerRequestDTO trainerRequestDTO;
     private TrainerResponseDTO trainerResponseDTO;
     private TrainingRequestDTO trainingRequestDTO;
     private TrainingResponseDTO trainingResponseDTO;
@@ -113,7 +115,6 @@ public class GymFacadeTest {
         traineeRequestDTO = buildTraineeRequestDTO();
         traineeResponseDTO = buildTraineeResponseDTO();
         trainer = buildTrainer();
-        trainerRequestDTO = buildTrainerRequestDTO();
         trainerResponseDTO = buildTrainerResponseDTO();
         training = buildTraining();
         trainingRequestDTO = buildTrainingRequestDTO();
@@ -318,28 +319,32 @@ public class GymFacadeTest {
 
     @Test
     void createTrainer_shouldSaveAndReturnResponseDTO() {
-        Trainer saved = trainer.toBuilder()
-                .user(trainer.getUser().toBuilder()
-                        .id(TRAINER_ID).username(USERNAME).password(PASSWORD).isActive(true).build())
-                .build();
+        TrainerCreateRequest request = mock(TrainerCreateRequest.class);
 
-        when(trainerMapper.toEntity(trainerRequestDTO)).thenReturn(trainer);
-        when(trainerService.create(trainer)).thenReturn(saved);
-        when(trainerMapper.toDto(saved)).thenReturn(trainerResponseDTO);
+        TrainerRequestDTO dto = mock(TrainerRequestDTO.class);
+        TrainerResponseDTO responseDTO = mock(TrainerResponseDTO.class);
+        TrainerCreateResponse expectedResponse = mock(TrainerCreateResponse.class);
 
-        TrainerResponseDTO actual = facade.createTrainer(trainerRequestDTO);
+        when(trainerRestMapper.toDto(request)).thenReturn(dto);
+        when(trainerService.createTrainer(dto)).thenReturn(responseDTO);
+        when(trainerRestMapper.toRest(responseDTO)).thenReturn(expectedResponse);
 
-        assertEquals(trainerResponseDTO, actual);
+        TrainerCreateResponse actual = facade.createTrainer(request);
+
+        assertEquals(expectedResponse, actual);
     }
 
     @Test
     void getTrainerByUsername_shouldReturnMappedResponse() {
-        when(trainerService.findByUsername(USERNAME)).thenReturn(Optional.of(trainer));
-        when(trainerMapper.toDto(trainer)).thenReturn(trainerResponseDTO);
+        TrainerInfoDTO trainerInfoDTO = mock(TrainerInfoDTO.class);
+        TrainerGetResponse expectedResponse = mock(TrainerGetResponse.class);
 
-        TrainerResponseDTO actual = facade.getTrainerByUsername(USERNAME, PASSWORD);
+        when(trainerService.getTrainerByUsername(USERNAME)).thenReturn(trainerInfoDTO);
+        when(trainerRestMapper.toRestGetResponse(trainerInfoDTO)).thenReturn(expectedResponse);
 
-        assertEquals(trainerResponseDTO, actual);
+        TrainerGetResponse actual = facade.getTrainerByUsername(USERNAME);
+
+        assertEquals(expectedResponse, actual);
     }
 
     @Test
@@ -418,10 +423,6 @@ public class GymFacadeTest {
                         .username(USERNAME).password(PASSWORD).isActive(true)
                         .build())
                 .build();
-    }
-
-    private TrainerRequestDTO buildTrainerRequestDTO() {
-        return TrainerRequestDTO.builder().firstName(FIRST_NAME).lastName(LAST_NAME).build();
     }
 
     private TrainerResponseDTO buildTrainerResponseDTO() {

@@ -22,7 +22,6 @@ import org.gym.crm.mapper.TrainerMapper;
 import org.gym.crm.mapper.TrainerRestMapper;
 import org.gym.crm.mapper.TrainingMapper;
 import org.gym.crm.model.Trainee;
-import org.gym.crm.model.Trainer;
 import org.gym.crm.model.Training;
 import org.gym.crm.rest.ActivationStatusRequest;
 import org.gym.crm.rest.AssignedTrainerResponse;
@@ -33,6 +32,11 @@ import org.gym.crm.rest.TraineeAssignedTrainersUpdateResponse;
 import org.gym.crm.rest.TraineeGetResponse;
 import org.gym.crm.rest.TraineeUpdateRequest;
 import org.gym.crm.rest.TraineeUpdateResponse;
+import org.gym.crm.rest.TrainerCreateRequest;
+import org.gym.crm.rest.TrainerCreateResponse;
+import org.gym.crm.rest.TrainerGetResponse;
+import org.gym.crm.rest.TrainerUpdateRequest;
+import org.gym.crm.rest.TrainerUpdateResponse;
 import org.gym.crm.search.filter.TraineeTrainingFilter;
 import org.gym.crm.search.filter.TrainerTrainingFilter;
 import org.gym.crm.service.TraineeService;
@@ -154,19 +158,18 @@ public class GymFacade {
         return response;
     }
 
-    public TrainerResponseDTO createTrainer(TrainerRequestDTO trainerRequestDTO) {
-        Trainer trainer = trainerMapper.toEntity(trainerRequestDTO);
-        Trainer saved = trainerService.create(trainer);
+    public TrainerCreateResponse createTrainer(TrainerCreateRequest request) {
+        TrainerRequestDTO dto = trainerRestMapper.toDto(request);
+        TrainerResponseDTO trainerResponseDTO = trainerService.createTrainer(dto);
 
-        return trainerMapper.toDto(saved);
+        return trainerRestMapper.toRest(trainerResponseDTO);
     }
 
     @Authenticated
-    public TrainerResponseDTO getTrainerByUsername(String username, String password) {
-        Trainer trainer = trainerService.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException(TRAINER_NOT_FOUND));
+    public TrainerGetResponse getTrainerByUsername(String username) {
+        TrainerInfoDTO trainerInfoDTO = trainerService.getTrainerByUsername(username);
 
-        return trainerMapper.toDto(trainer);
+        return trainerRestMapper.toRestGetResponse(trainerInfoDTO);
     }
 
     @Authenticated
@@ -188,19 +191,11 @@ public class GymFacade {
     }
 
     @Authenticated
-    public TrainerResponseDTO updateTrainer(TrainerUpdateDTO trainerUpdateDTO) {
-        Trainer trainer = trainerMapper.toEntity(trainerUpdateDTO);
-        Trainer saved = trainerService.update(trainer);
+    public TrainerUpdateResponse updateTrainer(TrainerUpdateRequest request, String username) {
+        TrainerUpdateDTO dto = trainerRestMapper.toDto(username, request);
+        TrainerResponseDTO trainerResponseDTO = trainerService.updateTrainer(dto);
 
-        return trainerMapper.toDto(saved);
-    }
-
-    @Authenticated
-    public TrainerResponseDTO updateTrainer(String username, String password, TrainerUpdateDTO trainerUpdateDTO) {
-        Trainer updatedData = trainerMapper.toEntity(trainerUpdateDTO);
-        Trainer saved = trainerService.updateProfile(username, updatedData);
-
-        return trainerMapper.toDto(saved);
+        return trainerRestMapper.toRestUpdateResponse(trainerResponseDTO);
     }
 
     @Authenticated

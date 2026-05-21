@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.gym.crm.dao.TraineeDao;
+import org.gym.crm.dao.TrainerDao;
 import org.gym.crm.dto.TraineeInfoDTO;
 import org.gym.crm.dto.TraineeResponseDTO;
 import org.gym.crm.dto.TraineeUpdateDTO;
@@ -50,6 +51,7 @@ public class TraineeServiceImpl implements TraineeService {
     private static final String TRAINER_NOT_FOUND_BY_USERNAME = "Trainer not found by username: %s";
 
     private final TraineeDao dao;
+    private final TrainerDao trainerDao;
     private final UserProfileService userCredentialGenerator;
     private final PasswordEncoder passwordEncoder;
     private final TraineeTrainingCriteriaBuilder criteriaBuilder;
@@ -57,8 +59,6 @@ public class TraineeServiceImpl implements TraineeService {
     private final UserInputValidator userInputValidator;
     private final TraineeMapper mapper;
     private final TrainerMapper trainerMapper;
-    @Lazy
-    private final TrainerService trainerService;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -210,9 +210,8 @@ public class TraineeServiceImpl implements TraineeService {
 
         log.info("Updating trainers list for trainee: username={}, trainers' usernames={}", dto.getTraineeUsername(), dto.getTrainerUsernames());
         List<Trainer> trainers = dto.getTrainerUsernames().stream()
-                .map(username -> trainerService.findByUsername(username)
-                        .orElseThrow(() -> new EntityNotFoundException(
-                                String.format(TRAINER_NOT_FOUND_BY_USERNAME, username))))
+                .map(username -> trainerDao.findByUsername(username)
+                        .orElseThrow(() -> new EntityNotFoundException(String.format(TRAINER_NOT_FOUND_BY_USERNAME, username))))
                 .toList();
 
         dao.updateTrainersList(dto.getTraineeUsername(), trainers);
