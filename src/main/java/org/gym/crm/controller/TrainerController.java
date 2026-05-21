@@ -75,7 +75,7 @@ public class TrainerController {
                 .toDate(toDate)
                 .joinFullName(traineeName)
                 .build();
-        List<GetTrainerTrainingResponse> response = facade.getTrainerTrainingsByFilter(filter, username);
+        List<GetTrainerTrainingResponse> response = facade.getTrainerTrainingsByFilter(filter);
 
         return ResponseEntity.ok(response);
     }

@@ -103,7 +103,7 @@ public class TraineeController {
                 .joinFullName(trainerName)
                 .trainingTypeName(trainingType)
                 .build();
-        List<GetTraineeTrainingResponse> response = facade.getTraineeTrainingsByFilter(filter, username);
+        List<GetTraineeTrainingResponse> response = facade.getTraineeTrainingsByFilter(filter);
 
         return ResponseEntity.ok(response);
     }

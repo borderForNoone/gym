@@ -29,7 +29,7 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class TraineeControllerTest {
-    private static final String USERNAME = "john.doe";
+    private static final String USERNAME = "tom.tomas";
 
     @Mock
     private GymFacade facade;
@@ -48,15 +48,15 @@ class TraineeControllerTest {
     @BeforeEach
     void setUp() {
         traineeRequestDTO = TraineeRequestDTO.builder()
-                .firstName("John")
-                .lastName("Doe")
+                .firstName("Tom")
+                .lastName("Tomas")
                 .dateOfBirth(LocalDate.of(1990, 1, 1))
                 .address("Kyiv")
                 .build();
         traineeResponseDTO = TraineeResponseDTO.builder()
                 .userId(1L)
-                .firstName("John")
-                .lastName("Doe")
+                .firstName("Tom")
+                .lastName("Tomas")
                 .username(USERNAME)
                 .password("password")
                 .dateOfBirth(LocalDate.of(1990, 1, 1))
@@ -170,18 +170,18 @@ class TraineeControllerTest {
                 .username(USERNAME)
                 .fromDate(from)
                 .toDate(to)
-                .joinFullName("Jane Doe")
+                .joinFullName("Julia Tomas")
                 .trainingTypeName("Yoga")
                 .build();
 
-        when(facade.getTraineeTrainingsByFilter(filter, USERNAME)).thenReturn(trainings);
+        when(facade.getTraineeTrainingsByFilter(filter)).thenReturn(trainings);
 
         ResponseEntity<List<GetTraineeTrainingResponse>> response =
-                controller.getTraineeTrainings(USERNAME, from, to, "Jane Doe", "Yoga");
+                controller.getTraineeTrainings(USERNAME, from, to, "Julia Tomas", "Yoga");
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(response.getBody()).isEqualTo(trainings);
-        verify(facade).getTraineeTrainingsByFilter(filter, USERNAME);
+        verify(facade).getTraineeTrainingsByFilter(filter);
     }
 
     @Test
@@ -196,14 +196,14 @@ class TraineeControllerTest {
                 .trainingTypeName(null)
                 .build();
 
-        when(facade.getTraineeTrainingsByFilter(filter, USERNAME)).thenReturn(trainings);
+        when(facade.getTraineeTrainingsByFilter(filter)).thenReturn(trainings);
 
         ResponseEntity<List<GetTraineeTrainingResponse>> response =
                 controller.getTraineeTrainings(USERNAME, null, null, null, null);
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(response.getBody()).isEqualTo(trainings);
-        verify(facade).getTraineeTrainingsByFilter(filter, USERNAME);
+        verify(facade).getTraineeTrainingsByFilter(filter);
     }
 
     @Test
@@ -216,7 +216,7 @@ class TraineeControllerTest {
                 .trainingTypeName(null)
                 .build();
 
-        when(facade.getTraineeTrainingsByFilter(filter, USERNAME)).thenReturn(List.of());
+        when(facade.getTraineeTrainingsByFilter(filter)).thenReturn(List.of());
 
         ResponseEntity<List<GetTraineeTrainingResponse>> response =
                 controller.getTraineeTrainings(USERNAME, null, null, null, null);

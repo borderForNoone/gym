@@ -426,7 +426,7 @@ public class GymFacadeTest {
         when(trainingRestMapper.toRestTraineeResponse(dto2)).thenReturn(response2);
 
         List<GetTraineeTrainingResponse> result =
-                facade.getTraineeTrainingsByFilter(filter, "john.doe");
+                facade.getTraineeTrainingsByFilter(filter);
 
         assertThat(result).containsExactly(response1, response2);
         verify(trainingRestMapper).toRestTraineeResponse(dto1);
@@ -439,7 +439,7 @@ public class GymFacadeTest {
         when(trainingService.getTraineeTrainings(filter)).thenReturn(List.of());
 
         List<GetTraineeTrainingResponse> result =
-                facade.getTraineeTrainingsByFilter(filter, "john.doe");
+                facade.getTraineeTrainingsByFilter(filter);
 
         assertThat(result).isEmpty();
         verifyNoInteractions(trainingRestMapper);
@@ -457,8 +457,7 @@ public class GymFacadeTest {
         when(trainingRestMapper.toRestTrainerResponse(dto1)).thenReturn(response1);
         when(trainingRestMapper.toRestTrainerResponse(dto2)).thenReturn(response2);
 
-        List<GetTrainerTrainingResponse> result =
-                facade.getTrainerTrainingsByFilter(filter, "jane.doe");
+        List<GetTrainerTrainingResponse> result = facade.getTrainerTrainingsByFilter(filter);
 
         assertThat(result).containsExactly(response1, response2);
         verify(trainingService).getTrainerTrainings(filter);
@@ -471,8 +470,7 @@ public class GymFacadeTest {
         TrainerTrainingFilter filter = TrainerTrainingFilter.builder().build();
         when(trainingService.getTrainerTrainings(filter)).thenReturn(List.of());
 
-        List<GetTrainerTrainingResponse> result =
-                facade.getTrainerTrainingsByFilter(filter, "jane.doe");
+        List<GetTrainerTrainingResponse> result = facade.getTrainerTrainingsByFilter(filter);
 
         assertThat(result).isEmpty();
         verifyNoInteractions(trainingRestMapper);
@@ -480,34 +478,34 @@ public class GymFacadeTest {
 
     @Test
     void changeTraineePassword_shouldDelegateToTraineeService() throws AuthenticationException {
-        facade.changeTraineePassword("john.doe", "old123", "new456");
+        facade.changeTraineePassword("tom.tomas", "old123", "new456");
 
-        verify(traineeService).changePassword("john.doe", "old123", "new456");
+        verify(traineeService).changePassword("tom.tomas", "old123", "new456");
     }
 
     @Test
     void changeTraineePassword_shouldPropagateAuthenticationException() throws AuthenticationException {
         doThrow(new AuthenticationException("Invalid credentials"))
-                .when(traineeService).changePassword("john.doe", "wrong", "new456");
+                .when(traineeService).changePassword("tom.tomas", "wrong", "new456");
 
-        assertThatThrownBy(() -> facade.changeTraineePassword("john.doe", "wrong", "new456"))
+        assertThatThrownBy(() -> facade.changeTraineePassword("tom.tomas", "wrong", "new456"))
                 .isInstanceOf(AuthenticationException.class)
                 .hasMessage("Invalid credentials");
     }
 
     @Test
     void changeTrainerPassword_shouldDelegateToTrainerService() throws AuthenticationException {
-        facade.changeTrainerPassword("jane.doe", "old123", "new456");
+        facade.changeTrainerPassword("julia.tomas", "old123", "new456");
 
-        verify(trainerService).changePassword("jane.doe", "old123", "new456");
+        verify(trainerService).changePassword("julia.tomas", "old123", "new456");
     }
 
     @Test
     void changeTrainerPassword_shouldPropagateAuthenticationException() throws AuthenticationException {
         doThrow(new AuthenticationException("Invalid credentials"))
-                .when(trainerService).changePassword("jane.doe", "wrong", "new456");
+                .when(trainerService).changePassword("julia.tomas", "wrong", "new456");
 
-        assertThatThrownBy(() -> facade.changeTrainerPassword("jane.doe", "wrong", "new456"))
+        assertThatThrownBy(() -> facade.changeTrainerPassword("julia.tomas", "wrong", "new456"))
                 .isInstanceOf(AuthenticationException.class)
                 .hasMessage("Invalid credentials");
     }
@@ -519,15 +517,15 @@ public class GymFacadeTest {
         TrainerResponseDTO responseDTO = TrainerResponseDTO.builder().build();
         TrainerUpdateResponse updateResponse = new TrainerUpdateResponse();
 
-        when(trainerRestMapper.toDto("jane.doe", request)).thenReturn(dto);
+        when(trainerRestMapper.toDto("julia.tomas", request)).thenReturn(dto);
         when(trainerService.updateTrainer(dto)).thenReturn(responseDTO);
         when(trainerRestMapper.toRestUpdateResponse(responseDTO)).thenReturn(updateResponse);
 
-        TrainerUpdateResponse result = facade.updateTrainer(request, "jane.doe");
+        TrainerUpdateResponse result = facade.updateTrainer(request, "julia.tomas");
 
         assertThat(result).isEqualTo(updateResponse);
         var inOrder = inOrder(trainerRestMapper, trainerService);
-        inOrder.verify(trainerRestMapper).toDto("jane.doe", request);
+        inOrder.verify(trainerRestMapper).toDto("julia.tomas", request);
         inOrder.verify(trainerService).updateTrainer(dto);
         inOrder.verify(trainerRestMapper).toRestUpdateResponse(responseDTO);
     }

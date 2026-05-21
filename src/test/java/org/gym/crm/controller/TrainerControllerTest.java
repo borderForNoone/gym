@@ -66,14 +66,14 @@ class TrainerControllerTest {
     void register_validRequest_returns200() throws Exception {
         String requestJson = """
                 {
-                  "firstName": "John",
-                  "lastName": "Doe",
+                  "firstName": "Tom",
+                  "lastName": "Tomas",
                   "specialization": "Yoga"
                 }
                 """;
 
         TrainerCreateResponse response = new TrainerCreateResponse()
-                .username("john.doe")
+                .username("tom.tomas")
                 .password("secret");
 
         when(facade.createTrainer(any(TrainerCreateRequest.class))).thenReturn(response);
@@ -82,7 +82,7 @@ class TrainerControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestJson))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username").value("john.doe"))
+                .andExpect(jsonPath("$.username").value("tom.tomas"))
                 .andExpect(jsonPath("$.password").value("secret"));
 
         verify(facade).createTrainer(any(TrainerCreateRequest.class));
@@ -101,17 +101,17 @@ class TrainerControllerTest {
     @DisplayName("GET /{username} – returns 200 with trainer profile")
     void getTrainerProfile_existingUsername_returns200() throws Exception {
         TrainerGetResponse response = new TrainerGetResponse()
-                .firstName("John")
-                .lastName("Doe")
+                .firstName("Tom")
+                .lastName("Tomas")
                 .specialization("Yoga")
                 .isActive(true);
 
-        when(facade.getTrainerByUsername("john.doe")).thenReturn(response);
+        when(facade.getTrainerByUsername("tom.tomas")).thenReturn(response);
 
-        mockMvc.perform(get(BASE_PATH + "/john.doe"))
+        mockMvc.perform(get(BASE_PATH + "/tom.tomas"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.firstName").value("John"))
-                .andExpect(jsonPath("$.lastName").value("Doe"))
+                .andExpect(jsonPath("$.firstName").value("Tom"))
+                .andExpect(jsonPath("$.lastName").value("Tomas"))
                 .andExpect(jsonPath("$.specialization").value("Yoga"))
                 .andExpect(jsonPath("$.isActive").value(true));
     }
@@ -121,34 +121,34 @@ class TrainerControllerTest {
     void updateTrainerProfile_validRequest_returns200() throws Exception {
         String requestJson = """
                 {
-                  "firstName": "Jane",
-                  "lastName": "Doe",
+                  "firstName": "Tom",
+                  "lastName": "Tomas",
                   "isActive": true
                 }
                 """;
 
         TrainerUpdateResponse response = new TrainerUpdateResponse()
-                .firstName("Jane")
-                .lastName("Doe")
+                .firstName("Julia")
+                .lastName("Tomas")
                 .isActive(true);
 
-        when(facade.updateTrainer(any(TrainerUpdateRequest.class), eq("john.doe"))).thenReturn(response);
+        when(facade.updateTrainer(any(TrainerUpdateRequest.class), eq("tom.tomas"))).thenReturn(response);
 
-        mockMvc.perform(put(BASE_PATH + "/john.doe")
+        mockMvc.perform(put(BASE_PATH + "/tom.tomas")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestJson))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.firstName").value("Jane"))
-                .andExpect(jsonPath("$.lastName").value("Doe"))
+                .andExpect(jsonPath("$.firstName").value("Julia"))
+                .andExpect(jsonPath("$.lastName").value("Tomas"))
                 .andExpect(jsonPath("$.isActive").value(true));
 
-        verify(facade).updateTrainer(any(TrainerUpdateRequest.class), eq("john.doe"));
+        verify(facade).updateTrainer(any(TrainerUpdateRequest.class), eq("tom.tomas"));
     }
 
     @Test
     @DisplayName("PUT /{username} – returns 400 when body fails validation")
     void updateTrainerProfile_invalidRequest_returns400() throws Exception {
-        mockMvc.perform(put(BASE_PATH + "/john.doe")
+        mockMvc.perform(put(BASE_PATH + "/tom.tomas")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isBadRequest());
@@ -163,18 +163,18 @@ class TrainerControllerTest {
                 }
                 """;
 
-        mockMvc.perform(patch(BASE_PATH + "/john.doe/activation")
+        mockMvc.perform(patch(BASE_PATH + "/tom.tomas/activation")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestJson))
                 .andExpect(status().isOk());
 
-        verify(facade).toggleActiveStatus(any(ActivationStatusRequest.class), eq("john.doe"));
+        verify(facade).toggleActiveStatus(any(ActivationStatusRequest.class), eq("tom.tomas"));
     }
 
     @Test
     @DisplayName("PATCH /{username}/activation – returns 400 when body is empty")
     void toggleActive_invalidRequest_returns400() throws Exception {
-        mockMvc.perform(patch(BASE_PATH + "/john.doe/activation")
+        mockMvc.perform(patch(BASE_PATH + "/tom.tomas/activation")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isBadRequest());
@@ -186,10 +186,10 @@ class TrainerControllerTest {
         GetTrainerTrainingResponse t1 = new GetTrainerTrainingResponse()
                 .trainingName("Morning Yoga");
 
-        when(facade.getTrainerTrainingsByFilter(any(TrainerTrainingFilter.class), eq("john.doe")))
+        when(facade.getTrainerTrainingsByFilter(any(TrainerTrainingFilter.class)))
                 .thenReturn(List.of(t1));
 
-        mockMvc.perform(get(BASE_PATH + "/john.doe/trainings"))
+        mockMvc.perform(get(BASE_PATH + "/tom.tomas/trainings"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].trainingName").value("Morning Yoga"));
     }
@@ -197,20 +197,20 @@ class TrainerControllerTest {
     @Test
     @DisplayName("GET /{username}/trainings – passes date and name filters to filter object")
     void getTrainerTrainings_withFilters_buildsFilterCorrectly() throws Exception {
-        when(facade.getTrainerTrainingsByFilter(any(TrainerTrainingFilter.class), eq("john.doe")))
+        when(facade.getTrainerTrainingsByFilter(any(TrainerTrainingFilter.class)))
                 .thenReturn(List.of());
 
-        mockMvc.perform(get(BASE_PATH + "/john.doe/trainings")
+        mockMvc.perform(get(BASE_PATH + "/tom.tomas/trainings")
                         .param("fromDate", "2024-01-01")
                         .param("toDate", "2024-06-30")
                         .param("traineeName", "Alice"))
                 .andExpect(status().isOk());
 
         ArgumentCaptor<TrainerTrainingFilter> captor = ArgumentCaptor.forClass(TrainerTrainingFilter.class);
-        verify(facade).getTrainerTrainingsByFilter(captor.capture(), eq("john.doe"));
+        verify(facade).getTrainerTrainingsByFilter(captor.capture());
 
         TrainerTrainingFilter captured = captor.getValue();
-        assertThat(captured.getUsername()).isEqualTo("john.doe");
+        assertThat(captured.getUsername()).isEqualTo("tom.tomas");
         assertThat(captured.getFromDate()).isEqualTo(LocalDate.of(2024, 1, 1));
         assertThat(captured.getToDate()).isEqualTo(LocalDate.of(2024, 6, 30));
         assertThat(captured.getJoinFullName()).isEqualTo("Alice");
@@ -219,10 +219,10 @@ class TrainerControllerTest {
     @Test
     @DisplayName("GET /{username}/trainings – returns empty array when facade returns empty list")
     void getTrainerTrainings_emptyResult_returnsEmptyArray() throws Exception {
-        when(facade.getTrainerTrainingsByFilter(any(TrainerTrainingFilter.class), eq("john.doe")))
+        when(facade.getTrainerTrainingsByFilter(any(TrainerTrainingFilter.class)))
                 .thenReturn(List.of());
 
-        mockMvc.perform(get(BASE_PATH + "/john.doe/trainings"))
+        mockMvc.perform(get(BASE_PATH + "/tom.tomas/trainings"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(0));
     }

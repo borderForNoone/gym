@@ -122,13 +122,15 @@ public class GymFacade {
                 .toList();
     }
 
-    public List<GetTraineeTrainingResponse> getTraineeTrainingsByFilter(TraineeTrainingFilter filter, String username) {
+    @Authenticated
+    public List<GetTraineeTrainingResponse> getTraineeTrainingsByFilter(TraineeTrainingFilter filter) {
         return trainingService.getTraineeTrainings(filter).stream()
                 .map(trainingRestMapper::toRestTraineeResponse)
                 .toList();
     }
 
-    public List<GetTrainerTrainingResponse> getTrainerTrainingsByFilter(TrainerTrainingFilter filter, String username) {
+    @Authenticated
+    public List<GetTrainerTrainingResponse> getTrainerTrainingsByFilter(TrainerTrainingFilter filter) {
         return trainingService.getTrainerTrainings(filter).stream()
                 .map(trainingRestMapper::toRestTrainerResponse)
                 .toList();
