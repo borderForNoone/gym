@@ -64,9 +64,6 @@ class TraineeControllerTest {
     private TraineeGetResponse traineeGetResponse;
     private TraineeUpdateRequest traineeUpdateRequest;
     private TraineeUpdateResponse traineeUpdateResponse;
-    private ActivationStatusRequest activationStatusRequest;
-    private TraineeAssignedTrainersUpdateRequest trainersUpdateRequest;
-    private TraineeAssignedTrainersUpdateResponse trainersUpdateResponse;
 
     @BeforeEach
     void setUp() {
@@ -95,9 +92,6 @@ class TraineeControllerTest {
         traineeGetResponse = new TraineeGetResponse();
         traineeUpdateRequest = new TraineeUpdateRequest();
         traineeUpdateResponse = new TraineeUpdateResponse();
-        activationStatusRequest = new ActivationStatusRequest();
-        trainersUpdateRequest = new TraineeAssignedTrainersUpdateRequest();
-        trainersUpdateResponse = new TraineeAssignedTrainersUpdateResponse();
     }
 
     @Test

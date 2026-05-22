@@ -56,8 +56,6 @@ class AuthControllerTest {
 
     @Test
     void login_shouldReturnOk() throws Exception {
-        LoginRequest loginRequest = buildLoginRequest();
-
         mockMvc.perform(post(BASE_URL + "/login").contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk());
         verify(facade).login(any(LoginRequest.class));
@@ -65,8 +63,6 @@ class AuthControllerTest {
 
     @Test
     void changePassword_shouldReturnOk() throws Exception {
-        LoginChangeRequest loginRequest = buildLoginChangeRequest();
-
         mockMvc.perform(put(BASE_URL + "/password").contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk());
         verify(facade).changePassword(any(LoginChangeRequest.class), any(String.class));
