@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.gym.crm.exception.UserAuthenticationException;
+import org.gym.crm.exception.UserAuthorizationException;
 import org.gym.crm.model.User;
 import org.springframework.stereotype.Component;
 
@@ -26,7 +27,7 @@ public class AuthenticationAspect {
                 .orElseThrow(() -> new UserAuthenticationException("User is not authenticated: no request to check authentication"));
 
         if (!user.getUsername().equals(username)) {
-            throw new UserAuthenticationException(String.format("Authenticated user with username: %s does not match with requested user with username: %s", user.getUsername(), username));
+            throw new UserAuthorizationException(String.format("Authenticated user with username: %s does not match with requested user with username: %s", user.getUsername(), username));
         }
     }
 }

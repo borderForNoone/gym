@@ -1,6 +1,7 @@
 package org.gym.crm.auth;
 
 import org.gym.crm.exception.UserAuthenticationException;
+import org.gym.crm.exception.UserAuthorizationException;
 import org.gym.crm.model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,8 +43,7 @@ class AuthenticationAspectTest {
     void checkAuthentication_shouldThrow_whenNoUserInSession() {
         when(sessionContext.getAuthenticatedUser()).thenReturn(null);
 
-        UserAuthenticationException ex = assertThrows(UserAuthenticationException.class,
-                () -> aspect.checkAuthentication("Tom.Tomas"));
+        UserAuthenticationException ex = assertThrows(UserAuthenticationException.class, () -> aspect.checkAuthentication("Tom.Tomas"));
 
         assertTrue(ex.getMessage().contains("No user authenticated"));
     }
@@ -52,8 +52,7 @@ class AuthenticationAspectTest {
     void checkAuthentication_shouldThrow_whenUsernameArgumentIsNull() {
         when(sessionContext.getAuthenticatedUser()).thenReturn(authenticatedUser);
 
-        UserAuthenticationException ex = assertThrows(UserAuthenticationException.class,
-                () -> aspect.checkAuthentication(null));
+        UserAuthenticationException ex = assertThrows(UserAuthenticationException.class, () -> aspect.checkAuthentication(null));
 
         assertTrue(ex.getMessage().contains("no request to check authentication"));
     }
@@ -62,8 +61,7 @@ class AuthenticationAspectTest {
     void checkAuthentication_shouldThrow_whenUsernameDoesNotMatchSession() {
         when(sessionContext.getAuthenticatedUser()).thenReturn(authenticatedUser);
 
-        UserAuthenticationException ex = assertThrows(UserAuthenticationException.class,
-                () -> aspect.checkAuthentication("Julia.Tomas"));
+        UserAuthorizationException ex = assertThrows(UserAuthorizationException.class, () -> aspect.checkAuthentication("Julia.Tomas"));
 
         assertTrue(ex.getMessage().contains("Tom.Tomas"));
         assertTrue(ex.getMessage().contains("Julia.Tomas"));

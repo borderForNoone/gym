@@ -11,7 +11,6 @@ import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")
 public interface TrainingRestMapper {
-
     TrainingRequestDTO toDto(TrainingCreateRequest request);
 
     TrainingTypeResponse toRest(TrainingTypeDTO dto);
