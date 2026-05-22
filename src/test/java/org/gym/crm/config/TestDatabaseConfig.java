@@ -23,8 +23,10 @@ public class TestDatabaseConfig {
     @Bean
     public DataSource dataSource() {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
+
         dataSource.setDriverClassName(driverClassName);
         dataSource.setUrl(url);
+
         return dataSource;
     }
 
