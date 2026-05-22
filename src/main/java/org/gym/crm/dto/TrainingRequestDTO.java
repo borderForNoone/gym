@@ -1,21 +1,33 @@
 package org.gym.crm.dto;
 
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 
 import java.time.LocalDate;
 
 @Getter
-@Builder
-@ToString
-@EqualsAndHashCode
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class TrainingRequestDTO {
-    private final Long traineeId;
-    private final Long trainerId;
-    private final String trainingName;
-    private final String trainingTypeName;
-    private final LocalDate trainingDate;
-    private final int trainingDuration;
+    @NotNull
+    private Long traineeId;
+    @NotNull
+    private Long trainerId;
+    @NotBlank
+    private String trainingName;
+    @NotBlank
+    private String trainingTypeName;
+    @NotNull
+    private LocalDate trainingDate;
+    @Min(1)
+    private int trainingDuration;
 }
