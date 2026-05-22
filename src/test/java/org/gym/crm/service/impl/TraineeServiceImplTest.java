@@ -162,16 +162,16 @@ public class TraineeServiceImplTest {
         Trainee traineeMock = mock(Trainee.class);
 
         TrainerInfoDTO dto1 = TrainerInfoDTO.builder()
-                .firstName("John")
-                .lastName("Doe")
+                .firstName("Tom")
+                .lastName("Tomas")
                 .username("trainer1")
                 .isActive(true)
                 .specialization("Yoga")
                 .build();
 
         TrainerInfoDTO dto2 = TrainerInfoDTO.builder()
-                .firstName("John2")
-                .lastName("Doe2")
+                .firstName("Tom2")
+                .lastName("Tomas2")
                 .username("trainer2")
                 .isActive(true)
                 .specialization("Yoga")
@@ -475,7 +475,7 @@ public class TraineeServiceImplTest {
                         .isActive(true)
                         .build())
                 .dateOfBirth(LocalDate.of(2000, 1, 1))
-                .address("123 Main St")
+                .address("10 Sheep St")
                 .build();
     }
 
@@ -484,9 +484,9 @@ public class TraineeServiceImplTest {
                 .id(2L)
                 .user(User.builder()
                         .id(2L)
-                        .firstName("John")
-                        .lastName("Smith")
-                        .username("John.Smith")
+                        .firstName("Tom")
+                        .lastName("Tomas")
+                        .username("Tom.Tomas")
                         .password("pass")
                         .isActive(true)
                         .build())

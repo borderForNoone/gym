@@ -9,7 +9,7 @@
 
     <trainers id="1" specialization_id="1" user_id="1"/>
 
-    <trainees id="1" date_of_birth="2000-03-10" address="123 Main St" user_id="2"/>
+    <trainees id="1" date_of_birth="2000-03-10" address="10 Sheep St" user_id="2"/>
     <trainees id="2" date_of_birth="2002-07-15" address="567 Oak St" user_id="3"/>
 
     <trainings id="1" training_name="Hot Yoga" training_date="2026-04-15" training_duration="60" trainee_id="1" trainer_id="1" training_type_id="1"/>

@@ -36,7 +36,7 @@ class TrainingDaoImplTest extends AbstractDaoTest<TrainingDao> {
         assertThat(actual.getTrainee().getUser().getUsername()).isEqualTo("Nora.Pemberton");
         assertThat(actual.getTrainee().getUser().getIsActive()).isTrue();
         assertThat(actual.getTrainee().getDateOfBirth()).isEqualTo(LocalDate.of(2000, 3, 10));
-        assertThat(actual.getTrainee().getAddress()).isEqualTo("123 Main St");
+        assertThat(actual.getTrainee().getAddress()).isEqualTo("10 Sheep St");
         assertThat(actual.getTrainer().getUser().getUsername()).isEqualTo("Callum.Whitfield");
         assertThat(actual.getId()).isNotNull();
     }
@@ -141,150 +141,52 @@ class TrainingDaoImplTest extends AbstractDaoTest<TrainingDao> {
 
     private static Stream<Arguments> traineeFilterProviderExisting() {
         return Stream.of(
-                Arguments.of(TraineeTrainingFilter.builder()
-                                .username("Nora.Pemberton")
-                                .build(),
-                        1,
-                        List.of(1L)),
-                Arguments.of(TraineeTrainingFilter.builder()
-                                .username("Ellis.Hargrove")
-                                .build(),
-                        1,
-                        List.of(2L)),
-                Arguments.of(TraineeTrainingFilter.builder()
-                                .username("Nora.Pemberton")
-                                .fromDate(LocalDate.of(2026, 4, 1))
+                Arguments.of(TraineeTrainingFilter.builder().username("Nora.Pemberton").build(), 1, List.of(1L)),
+                Arguments.of(TraineeTrainingFilter.builder().username("Ellis.Hargrove").build(), 1, List.of(2L)),
+                Arguments.of(TraineeTrainingFilter.builder().username("Nora.Pemberton").fromDate(LocalDate.of(2026, 4, 1))
                                 .toDate(LocalDate.of(2026, 4, 30))
-                                .build(),
-                        1,
-                        List.of(1L)),
-                Arguments.of(TraineeTrainingFilter.builder()
-                                .username("Nora.Pemberton")
-                                .trainingTypeName("Yoga")
-                                .build(),
-                        1,
-                        List.of(1L)),
-                Arguments.of(TraineeTrainingFilter.builder()
-                                .username("Nora.Pemberton")
-                                .firstName("Callum")
-                                .lastName("Whitfield")
-                                .build(),
-                        1,
-                        List.of(1L)),
-                Arguments.of(TraineeTrainingFilter.builder()
-                                .username("Nora.Pemberton")
-                                .firstName("Callum")
-                                .build(),
-                        1,
-                        List.of(1L)),
-                Arguments.of(TraineeTrainingFilter.builder()
-                                .username("Nora.Pemberton")
-                                .lastName("Whitfield")
-                                .build(),
-                        1,
-                        List.of(1L))
+                                .build(), 1, List.of(1L)),
+                Arguments.of(TraineeTrainingFilter.builder().username("Nora.Pemberton").trainingTypeName("Yoga").build(), 1, List.of(1L)),
+                Arguments.of(TraineeTrainingFilter.builder().username("Nora.Pemberton").joinFullName("Callum Whitfield").build(), 1, List.of(1L))
         );
     }
 
     private static Stream<Arguments> traineeFilterProviderNonExisting() {
         return Stream.of(
                 Arguments.of(TraineeTrainingFilter.builder()
-                        .username("Nora.Pemberton")
-                        .fromDate(LocalDate.of(2020, 1, 1))
-                        .toDate(LocalDate.of(2020, 12, 31))
-                        .build()),
-                Arguments.of(TraineeTrainingFilter.builder()
-                        .username("Nora.Pemberton")
-                        .trainingTypeName("Cardio")
-                        .build()),
-                Arguments.of(TraineeTrainingFilter.builder()
-                        .username("Nora.Pemberton")
-                        .trainingTypeName("Cardio")
-                        .build()),
-                Arguments.of(TraineeTrainingFilter.builder()
-                        .username("Nora.Pemberton")
-                        .firstName("Callum")
-                        .lastName("Whitfield")
-                        .fromDate(LocalDate.of(2026, 4, 16))
-                        .toDate(LocalDate.of(2026, 4, 30))
-                        .trainingTypeName("Yoga")
-                        .build())
+                        .username("Nora.Pemberton").fromDate(LocalDate.of(2020, 1, 1))
+                        .toDate(LocalDate.of(2020, 12, 31)).build()),
+                Arguments.of(TraineeTrainingFilter.builder().username("Nora.Pemberton").trainingTypeName("Cardio").build()),
+                Arguments.of(TraineeTrainingFilter.builder().username("Nora.Pemberton").joinFullName("Non Existing").build()),
+                Arguments.of(TraineeTrainingFilter.builder().username("Nora.Pemberton").joinFullName("Callum Whitfield")
+                        .fromDate(LocalDate.of(2026, 4, 16)).toDate(LocalDate.of(2026, 4, 30)).trainingTypeName("Yoga").build())
         );
     }
 
     private static Stream<Arguments> trainerFilterProviderExisting() {
         return Stream.of(
-                Arguments.of(TrainerTrainingFilter.builder()
-                                .username("Callum.Whitfield")
-                                .build(),
-                        2,
-                        List.of(1L, 2L)),
-                Arguments.of(TrainerTrainingFilter.builder()
-                                .username("Callum.Whitfield")
-                                .firstName("Nora")
-                                .lastName("Pemberton")
-                                .build(),
-                        1,
-                        List.of(1L)),
-                Arguments.of(TrainerTrainingFilter.builder()
-                                .username("Callum.Whitfield")
-                                .lastName("Hargrove")
-                                .build(),
-                        1,
-                        List.of(2L)),
-                Arguments.of(TrainerTrainingFilter.builder()
-                                .username("Callum.Whitfield")
-                                .firstName("Ellis")
-                                .lastName("Hargrove")
-                                .build(),
-                        1,
-                        List.of(2L)),
-                Arguments.of(TrainerTrainingFilter.builder()
-                                .username("Callum.Whitfield")
-                                .fromDate(LocalDate.of(2026, 4, 16))
-                                .build(),
-                        1,
-                        List.of(2L)),
-                Arguments.of(TrainerTrainingFilter.builder()
-                                .username("Callum.Whitfield")
-                                .toDate(LocalDate.of(2026, 4, 18))
-                                .build(),
-                        1,
-                        List.of(1L)),
-                Arguments.of(TrainerTrainingFilter.builder()
-                                .username("Callum.Whitfield")
-                                .fromDate(LocalDate.of(2026, 4, 14))
+                Arguments.of(TrainerTrainingFilter.builder().username("Callum.Whitfield").build(), 2, List.of(1L, 2L)),
+                Arguments.of(TrainerTrainingFilter.builder().username("Callum.Whitfield").joinFullName("Nora Pemberton").build(), 1, List.of(1L)),
+                Arguments.of(TrainerTrainingFilter.builder().username("Callum.Whitfield").joinFullName("Ellis Hargrove").build(), 1, List.of(2L)),
+                Arguments.of(TrainerTrainingFilter.builder().username("Callum.Whitfield").fromDate(LocalDate.of(2026, 4, 16)).build(),
+                        1, List.of(2L)),
+                Arguments.of(TrainerTrainingFilter.builder().username("Callum.Whitfield").toDate(LocalDate.of(2026, 4, 18)).build(),
+                        1, List.of(1L)),
+                Arguments.of(TrainerTrainingFilter.builder().username("Callum.Whitfield").fromDate(LocalDate.of(2026, 4, 14))
                                 .toDate(LocalDate.of(2026, 4, 16))
-                                .build(),
-                        1,
-                        List.of(1L)),
-                Arguments.of(TrainerTrainingFilter.builder()
-                                .username("Callum.Whitfield")
-                                .firstName("Ellis")
-                                .lastName("Hargrove")
+                                .build(), 1, List.of(1L)),
+                Arguments.of(TrainerTrainingFilter.builder().username("Callum.Whitfield").joinFullName("Ellis Hargrove")
                                 .fromDate(LocalDate.of(2026, 4, 19))
-                                .build(),
-                        1,
-                        List.of(2L))
+                                .build(), 1, List.of(2L))
         );
     }
 
     private static Stream<Arguments> trainerFilterProviderNonExisting() {
         return Stream.of(
-                Arguments.of(TrainerTrainingFilter.builder()
-                        .username("Callum.Whitfield")
-                        .firstName("NonExistent")
-                        .build()),
-                Arguments.of(TrainerTrainingFilter.builder()
-                        .username("Callum.Whitfield")
-                        .fromDate(LocalDate.of(2026, 4, 21))
-                        .build()),
-                Arguments.of(TrainerTrainingFilter.builder()
-                        .username("Callum.Whitfield")
-                        .firstName("Nora")
-                        .lastName("Pemberton")
-                        .fromDate(LocalDate.of(2026, 4, 16))
-                        .build())
+                Arguments.of(TrainerTrainingFilter.builder().username("Callum.Whitfield").joinFullName("Non Existent").build()),
+                Arguments.of(TrainerTrainingFilter.builder().username("Callum.Whitfield").fromDate(LocalDate.of(2026, 4, 21)).build()),
+                Arguments.of(TrainerTrainingFilter.builder().username("Callum.Whitfield").joinFullName("Nora Pemberton")
+                        .fromDate(LocalDate.of(2026, 4, 16)).build())
         );
     }
 
@@ -319,7 +221,7 @@ class TrainingDaoImplTest extends AbstractDaoTest<TrainingDao> {
                 .id(1L)
                 .user(user)
                 .dateOfBirth(LocalDate.of(2000, 3, 10))
-                .address("123 Main St")
+                .address("10 Sheep St")
                 .build();
     }
 

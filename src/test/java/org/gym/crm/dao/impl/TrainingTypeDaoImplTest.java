@@ -4,6 +4,7 @@ import com.github.springtestdbunit.annotation.DatabaseSetup;
 import org.gym.crm.model.TrainingType;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Optional;
 
 import static java.lang.String.format;
@@ -40,5 +41,15 @@ class TrainingTypeDaoImplTest extends AbstractDaoTest<TrainingTypeDaoImpl> {
     @Override
     protected Class<TrainingTypeDaoImpl> getDaoClass() {
         return TrainingTypeDaoImpl.class;
+    }
+
+    @Test
+    void findAll_shouldReturnAllTrainingTypes() {
+        List<TrainingType> result = dao.findAll();
+
+        assertThat(result).hasSize(3);
+        assertThat(result)
+                .extracting(TrainingType::getTrainingTypeName)
+                .containsExactlyInAnyOrder("Yoga", "Pilates", "Cardio");
     }
 }

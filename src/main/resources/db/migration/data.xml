@@ -60,7 +60,7 @@
         <insert tableName="trainees">
             <column name="id" valueNumeric="1"/>
             <column name="date_of_birth" valueDate="2000-03-10"/>
-            <column name="address" value="123 Main St"/>
+            <column name="address" value="10 Sheep St"/>
             <column name="user_id" valueNumeric="2"/>
         </insert>
         <insert tableName="trainees">

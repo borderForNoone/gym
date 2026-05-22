@@ -61,15 +61,17 @@ public abstract class TrainingCriteriaBuilder {
     }
 
     private void addFullNamePredicate(CriteriaBuilder cb, Join<?, ?> join, TrainingFilter filter, List<Predicate> predicates) {
-        String firstName = filter.getFirstName();
-        String lastName = filter.getLastName();
+        String fullName = filter.getJoinFullName();
 
-        if ((firstName == null || firstName.isBlank()) && (lastName == null || lastName.isBlank())) {
+        if (fullName == null || fullName.isBlank()) {
             return;
         }
 
-        likePredicate(cb, join.get("firstName"), filter.getFirstName()).ifPresent(predicates::add);
-        likePredicate(cb, join.get("lastName"), filter.getLastName()).ifPresent(predicates::add);
+        Expression<String> concatenated = cb.concat(
+                cb.concat(cb.lower(join.get("firstName")), " "),
+                cb.lower(join.get("lastName")));
+
+        predicates.add(cb.equal(concatenated, fullName.trim().toLowerCase()));
     }
 
     private Optional<Predicate> likePredicate(CriteriaBuilder cb, Expression<String> field, String value) {

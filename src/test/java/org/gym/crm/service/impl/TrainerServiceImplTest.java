@@ -55,9 +55,9 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class TrainerServiceImplTest {
-    private static final String FIRST_NAME = "John";
-    private static final String LAST_NAME = "Smith";
-    private static final String USERNAME = "John.Smith";
+    private static final String FIRST_NAME = "Tom";
+    private static final String LAST_NAME = "Tomas";
+    private static final String USERNAME = "Tom.Tomas";
     private static final String RAW_PASSWORD = "rawPassword";
     private static final String ENCODED_PASSWORD = "encodedPassword";
     private static final String SPECIALIZATION = "Yoga";

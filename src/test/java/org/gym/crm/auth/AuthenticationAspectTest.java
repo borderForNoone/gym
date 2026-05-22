@@ -27,7 +27,7 @@ class AuthenticationAspectTest {
     @BeforeEach
     void setUp() {
         authenticatedUser = User.builder()
-                .username("John.Doe")
+                .username("Tom.Tomas")
                 .build();
     }
 
@@ -35,7 +35,7 @@ class AuthenticationAspectTest {
     void checkAuthentication_shouldPass_whenUserMatchesSession() {
         when(sessionContext.getAuthenticatedUser()).thenReturn(authenticatedUser);
 
-        assertDoesNotThrow(() -> aspect.checkAuthentication("John.Doe"));
+        assertDoesNotThrow(() -> aspect.checkAuthentication("Tom.Tomas"));
     }
 
     @Test
@@ -43,7 +43,7 @@ class AuthenticationAspectTest {
         when(sessionContext.getAuthenticatedUser()).thenReturn(null);
 
         UserAuthenticationException ex = assertThrows(UserAuthenticationException.class,
-                () -> aspect.checkAuthentication("John.Doe"));
+                () -> aspect.checkAuthentication("Tom.Tomas"));
 
         assertTrue(ex.getMessage().contains("No user authenticated"));
     }
@@ -63,9 +63,9 @@ class AuthenticationAspectTest {
         when(sessionContext.getAuthenticatedUser()).thenReturn(authenticatedUser);
 
         UserAuthenticationException ex = assertThrows(UserAuthenticationException.class,
-                () -> aspect.checkAuthentication("Jane.Smith"));
+                () -> aspect.checkAuthentication("Julia.Tomas"));
 
-        assertTrue(ex.getMessage().contains("John.Doe"));
-        assertTrue(ex.getMessage().contains("Jane.Smith"));
+        assertTrue(ex.getMessage().contains("Tom.Tomas"));
+        assertTrue(ex.getMessage().contains("Julia.Tomas"));
     }
 }

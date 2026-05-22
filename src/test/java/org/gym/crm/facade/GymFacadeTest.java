@@ -10,13 +10,16 @@ import org.gym.crm.dto.TrainerAssignmentUpdateDTO;
 import org.gym.crm.dto.TrainerInfoDTO;
 import org.gym.crm.dto.TrainerRequestDTO;
 import org.gym.crm.dto.TrainerResponseDTO;
+import org.gym.crm.dto.TrainerUpdateDTO;
 import org.gym.crm.dto.TrainingRequestDTO;
 import org.gym.crm.dto.TrainingResponseDTO;
+import org.gym.crm.dto.TrainingTypeDTO;
 import org.gym.crm.mapper.TraineeMapper;
 import org.gym.crm.mapper.TraineeRestMapper;
 import org.gym.crm.mapper.TrainerMapper;
 import org.gym.crm.mapper.TrainerRestMapper;
 import org.gym.crm.mapper.TrainingMapper;
+import org.gym.crm.mapper.TrainingRestMapper;
 import org.gym.crm.model.Trainee;
 import org.gym.crm.model.Trainer;
 import org.gym.crm.model.Training;
@@ -24,6 +27,8 @@ import org.gym.crm.model.TrainingType;
 import org.gym.crm.model.User;
 import org.gym.crm.rest.ActivationStatusRequest;
 import org.gym.crm.rest.AssignedTrainerResponse;
+import org.gym.crm.rest.GetTraineeTrainingResponse;
+import org.gym.crm.rest.GetTrainerTrainingResponse;
 import org.gym.crm.rest.LoginChangeRequest;
 import org.gym.crm.rest.LoginRequest;
 import org.gym.crm.rest.TraineeAssignedTrainersUpdateRequest;
@@ -34,6 +39,9 @@ import org.gym.crm.rest.TraineeUpdateResponse;
 import org.gym.crm.rest.TrainerCreateRequest;
 import org.gym.crm.rest.TrainerCreateResponse;
 import org.gym.crm.rest.TrainerGetResponse;
+import org.gym.crm.rest.TrainerUpdateRequest;
+import org.gym.crm.rest.TrainerUpdateResponse;
+import org.gym.crm.rest.TrainingTypeResponse;
 import org.gym.crm.search.filter.TraineeTrainingFilter;
 import org.gym.crm.search.filter.TrainerTrainingFilter;
 import org.gym.crm.service.TraineeService;
@@ -47,16 +55,21 @@ import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import javax.naming.AuthenticationException;
 import java.time.LocalDate;
 import java.util.List;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -90,6 +103,8 @@ public class GymFacadeTest {
     private TrainerMapper trainerMapper;
     @Mock
     private TrainingMapper trainingMapper;
+    @Mock
+    private TrainingRestMapper trainingRestMapper;
 
     private GymFacade facade;
     private Trainee trainee;
@@ -104,8 +119,13 @@ public class GymFacadeTest {
     @BeforeEach
     void setUp() {
         facade = new GymFacade(
-                traineeService, trainerService, trainingService,
-                userProfileService, traineeRestMapper, trainerRestMapper
+                traineeService,
+                trainerService,
+                trainingService,
+                userProfileService,
+                traineeRestMapper,
+                trainerRestMapper,
+                trainingRestMapper
         );
         facade.setTraineeMapper(traineeMapper);
         facade.setTrainerMapper(trainerMapper);
@@ -231,7 +251,7 @@ public class GymFacadeTest {
         List<TrainingResponseDTO> actual = facade.getTraineeTrainings(filter);
 
         assertTrue(actual.isEmpty());
-        verify(trainingMapper, never()).toDto(any());
+        verify(trainingMapper, never()).toDto((Training) any());
     }
 
     @Test
@@ -256,7 +276,7 @@ public class GymFacadeTest {
         List<TrainingResponseDTO> actual = facade.getTrainerTrainings(filter);
 
         assertTrue(actual.isEmpty());
-        verify(trainingMapper, never()).toDto(any());
+        verify(trainingMapper, never()).toDto((Training) any());
     }
 
     @Test
@@ -391,6 +411,150 @@ public class GymFacadeTest {
         facade.changePassword(request, USERNAME);
 
         inOrder.verify(userProfileService).changePassword(any(PasswordChangeRequest.class));
+    }
+
+    @Test
+    void getTraineeTrainingsByFilter_shouldReturnMappedResponses() {
+        TraineeTrainingFilter filter = TraineeTrainingFilter.builder().build();
+        TrainingResponseDTO dto1 = TrainingResponseDTO.builder().id(1L).build();
+        TrainingResponseDTO dto2 = TrainingResponseDTO.builder().id(2L).build();
+        GetTraineeTrainingResponse response1 = new GetTraineeTrainingResponse();
+        GetTraineeTrainingResponse response2 = new GetTraineeTrainingResponse();
+
+        when(trainingService.getTraineeTrainings(filter)).thenReturn(List.of(dto1, dto2));
+        when(trainingRestMapper.toRestTraineeResponse(dto1)).thenReturn(response1);
+        when(trainingRestMapper.toRestTraineeResponse(dto2)).thenReturn(response2);
+
+        List<GetTraineeTrainingResponse> result =
+                facade.getTraineeTrainingsByFilter(filter);
+
+        assertThat(result).containsExactly(response1, response2);
+        verify(trainingRestMapper).toRestTraineeResponse(dto1);
+        verify(trainingRestMapper).toRestTraineeResponse(dto2);
+    }
+
+    @Test
+    void getTraineeTrainingsByFilter_shouldReturnEmptyListWhenNoTrainings() {
+        TraineeTrainingFilter filter = TraineeTrainingFilter.builder().build();
+        when(trainingService.getTraineeTrainings(filter)).thenReturn(List.of());
+
+        List<GetTraineeTrainingResponse> result =
+                facade.getTraineeTrainingsByFilter(filter);
+
+        assertThat(result).isEmpty();
+        verifyNoInteractions(trainingRestMapper);
+    }
+
+    @Test
+    void getTrainerTrainingsByFilter_shouldReturnMappedResponses() {
+        TrainerTrainingFilter filter = TrainerTrainingFilter.builder().build();
+        TrainingResponseDTO dto1 = TrainingResponseDTO.builder().id(1L).build();
+        TrainingResponseDTO dto2 = TrainingResponseDTO.builder().id(2L).build();
+        GetTrainerTrainingResponse response1 = new GetTrainerTrainingResponse();
+        GetTrainerTrainingResponse response2 = new GetTrainerTrainingResponse();
+
+        when(trainingService.getTrainerTrainings(filter)).thenReturn(List.of(dto1, dto2));
+        when(trainingRestMapper.toRestTrainerResponse(dto1)).thenReturn(response1);
+        when(trainingRestMapper.toRestTrainerResponse(dto2)).thenReturn(response2);
+
+        List<GetTrainerTrainingResponse> result = facade.getTrainerTrainingsByFilter(filter);
+
+        assertThat(result).containsExactly(response1, response2);
+        verify(trainingService).getTrainerTrainings(filter);
+        verify(trainingRestMapper).toRestTrainerResponse(dto1);
+        verify(trainingRestMapper).toRestTrainerResponse(dto2);
+    }
+
+    @Test
+    void getTrainerTrainingsByFilter_shouldReturnEmptyListWhenNoTrainings() {
+        TrainerTrainingFilter filter = TrainerTrainingFilter.builder().build();
+        when(trainingService.getTrainerTrainings(filter)).thenReturn(List.of());
+
+        List<GetTrainerTrainingResponse> result = facade.getTrainerTrainingsByFilter(filter);
+
+        assertThat(result).isEmpty();
+        verifyNoInteractions(trainingRestMapper);
+    }
+
+    @Test
+    void changeTraineePassword_shouldDelegateToTraineeService() throws AuthenticationException {
+        facade.changeTraineePassword("tom.tomas", "old123", "new456");
+
+        verify(traineeService).changePassword("tom.tomas", "old123", "new456");
+    }
+
+    @Test
+    void changeTraineePassword_shouldPropagateAuthenticationException() throws AuthenticationException {
+        doThrow(new AuthenticationException("Invalid credentials"))
+                .when(traineeService).changePassword("tom.tomas", "wrong", "new456");
+
+        assertThatThrownBy(() -> facade.changeTraineePassword("tom.tomas", "wrong", "new456"))
+                .isInstanceOf(AuthenticationException.class)
+                .hasMessage("Invalid credentials");
+    }
+
+    @Test
+    void changeTrainerPassword_shouldDelegateToTrainerService() throws AuthenticationException {
+        facade.changeTrainerPassword("julia.tomas", "old123", "new456");
+
+        verify(trainerService).changePassword("julia.tomas", "old123", "new456");
+    }
+
+    @Test
+    void changeTrainerPassword_shouldPropagateAuthenticationException() throws AuthenticationException {
+        doThrow(new AuthenticationException("Invalid credentials"))
+                .when(trainerService).changePassword("julia.tomas", "wrong", "new456");
+
+        assertThatThrownBy(() -> facade.changeTrainerPassword("julia.tomas", "wrong", "new456"))
+                .isInstanceOf(AuthenticationException.class)
+                .hasMessage("Invalid credentials");
+    }
+
+    @Test
+    void updateTrainer_shouldMapRequestAndReturnResponse() {
+        TrainerUpdateRequest request = new TrainerUpdateRequest();
+        TrainerUpdateDTO dto = TrainerUpdateDTO.builder().build();
+        TrainerResponseDTO responseDTO = TrainerResponseDTO.builder().build();
+        TrainerUpdateResponse updateResponse = new TrainerUpdateResponse();
+
+        when(trainerRestMapper.toDto("julia.tomas", request)).thenReturn(dto);
+        when(trainerService.updateTrainer(dto)).thenReturn(responseDTO);
+        when(trainerRestMapper.toRestUpdateResponse(responseDTO)).thenReturn(updateResponse);
+
+        TrainerUpdateResponse result = facade.updateTrainer(request, "julia.tomas");
+
+        assertThat(result).isEqualTo(updateResponse);
+        var inOrder = inOrder(trainerRestMapper, trainerService);
+        inOrder.verify(trainerRestMapper).toDto("julia.tomas", request);
+        inOrder.verify(trainerService).updateTrainer(dto);
+        inOrder.verify(trainerRestMapper).toRestUpdateResponse(responseDTO);
+    }
+
+    @Test
+    void getTrainingTypes_shouldReturnMappedResponses() {
+        TrainingTypeDTO typeDto1 = TrainingTypeDTO.builder().id(1L).trainingTypeName("Yoga").build();
+        TrainingTypeDTO typeDto2 = TrainingTypeDTO.builder().id(2L).trainingTypeName("Boxing").build();
+        TrainingTypeResponse response1 = new TrainingTypeResponse();
+        TrainingTypeResponse response2 = new TrainingTypeResponse();
+
+        when(trainingService.getAllTrainingTypes()).thenReturn(List.of(typeDto1, typeDto2));
+        when(trainingRestMapper.toRest(typeDto1)).thenReturn(response1);
+        when(trainingRestMapper.toRest(typeDto2)).thenReturn(response2);
+
+        List<TrainingTypeResponse> result = facade.getTrainingTypes();
+
+        assertThat(result).containsExactly(response1, response2);
+        verify(trainingService).getAllTrainingTypes();
+    }
+
+    @Test
+    void getTrainingTypes_shouldReturnEmptyListWhenNoneExist() {
+        when(trainingService.getAllTrainingTypes()).thenReturn(List.of());
+
+        List<TrainingTypeResponse> result = facade.getTrainingTypes();
+
+        assertThat(result).isEmpty();
+        verifyNoInteractions(trainingRestMapper);
     }
 
     private Trainee buildTrainee() {
