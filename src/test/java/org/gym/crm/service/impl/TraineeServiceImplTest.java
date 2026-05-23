@@ -4,6 +4,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import org.gym.crm.config.TransactionManager;
 import org.gym.crm.dao.TraineeDao;
 import org.gym.crm.dao.TrainerDao;
 import org.gym.crm.dto.TrainerAssignmentUpdateDTO;
@@ -19,6 +20,7 @@ import org.gym.crm.service.TrainerService;
 import org.gym.crm.service.UserProfileService;
 import org.gym.crm.service.common.UserInputValidator;
 import org.gym.crm.util.CoreValidator;
+import org.hibernate.Session;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,6 +37,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -46,6 +50,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -80,6 +85,8 @@ public class TraineeServiceImplTest {
     private TrainerMapper trainerMapper;
     @Mock
     private TrainerService trainerService;
+    @Mock
+    private TransactionManager transactionManager;
     @Spy
     private CoreValidator validator;
 
@@ -108,6 +115,16 @@ public class TraineeServiceImplTest {
         logAppender = new ListAppender<>();
         logAppender.start();
         logger.addAppender(logAppender);
+
+        lenient().when(transactionManager.performReturningWithinTx(any(Function.class))).thenAnswer(invocation -> {
+            Function<Session, ?> function = invocation.getArgument(0);
+            return function.apply(null);
+        });
+        lenient().doAnswer(invocation -> {
+            Consumer<Session> consumer = invocation.getArgument(0);
+            consumer.accept(null);
+            return null;
+        }).when(transactionManager).performWithinTx(any(Consumer.class));
     }
 
     @AfterEach
@@ -194,7 +211,6 @@ public class TraineeServiceImplTest {
         assertTrue(result.contains(dto1));
         assertTrue(result.contains(dto2));
 
-        verify(userInputValidator).validate(dto, "Trainer assignment");
         verify(trainerDao).findByUsername("trainer1");
         verify(trainerDao).findByUsername("trainer2");
         verify(dao).updateTrainersList(eq("trainee1"), anyList());

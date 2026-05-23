@@ -1,14 +1,13 @@
 package org.gym.crm.dao.impl;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import org.gym.crm.dao.TraineeDao;
 import org.gym.crm.model.Trainee;
 import org.gym.crm.model.Trainer;
 import org.gym.crm.util.Validator;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
@@ -21,12 +20,14 @@ public class TraineeDaoImpl implements TraineeDao {
     private static final String USERNAME_LABEL = "Username";
     private static final String TRAINEE_LABEL = "Trainee";
     private static final String TRAINEE_USERNAME_LABEL = "Trainee username";
+
     private static final String FIND_TRAINEE_BY_USERNAME_QUERY = """
             SELECT t FROM Trainee t
             JOIN FETCH t.user u
             LEFT JOIN FETCH t.trainers
             WHERE u.username = :username
             """;
+
     private static final String FIND_UNASSIGNED_TRAINERS_QUERY = """
             SELECT tr FROM Trainer tr
             JOIN FETCH tr.user u
@@ -36,73 +37,59 @@ public class TraineeDaoImpl implements TraineeDao {
                 WHERE tn.user.username = :username
             )
             """;
-    private static final String FIND_TRAINEE_WITH_TRAINERS_QUERY = """
-            SELECT t FROM Trainee t
-            JOIN FETCH t.user u
-            LEFT JOIN FETCH t.trainers
-            WHERE u.username = :username
-            """;
+
     private static final String FIND_TRAINERS_BY_USERNAMES_QUERY = """
             SELECT tr FROM Trainer tr
             JOIN FETCH tr.user u
             WHERE u.username IN :usernames
             """;
-    private static final String FIND_TRAINEE_BY_USERNAME_FETCH_QUERY = """
-                SELECT t FROM Trainee t
-                JOIN FETCH t.user u
-                WHERE u.username = :username
-            """;
 
-    @PersistenceContext
-    private EntityManager entityManager;
+    private final SessionFactory sessionFactory;
+
+    private Session session() {
+        return sessionFactory.getCurrentSession();
+    }
 
     @Override
-    @Transactional
     public Trainee save(Trainee trainee) {
         Validator.validateNotNull(trainee, TRAINEE_LABEL);
 
-        entityManager.persist(trainee);
-
+        session().persist(trainee);
         return trainee;
     }
 
     @Override
-    @Transactional
     public Trainee update(Trainee trainee) {
         Validator.validateId(trainee.getId());
 
-        return entityManager.merge(trainee);
+        return session().merge(trainee);
     }
 
     @Override
-    @Transactional
     public void delete(Trainee trainee) {
-        Validator.validateNotNull(trainee, "Trainee");
+        Validator.validateNotNull(trainee, TRAINEE_LABEL);
         Validator.validateId(trainee.getId());
 
-        Trainee managed = entityManager.contains(trainee) ? trainee : entityManager.merge(trainee);
+        Session session = session();
 
-        entityManager.remove(managed);
+        Trainee managed = session.contains(trainee) ? trainee : session.merge(trainee);
+
+        session.remove(managed);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Optional<Trainee> findByUsername(String username) {
         Validator.validateNotBlank(username, USERNAME_LABEL);
 
-        return entityManager.createQuery(FIND_TRAINEE_BY_USERNAME_QUERY, Trainee.class)
-                .setParameter(USERNAME, username)
-                .getResultList()
-                .stream()
-                .findFirst();
+        return session().createQuery(FIND_TRAINEE_BY_USERNAME_QUERY, Trainee.class).setParameter(USERNAME, username).getResultStream().findFirst();
     }
 
     @Override
-    @Transactional(readOnly = true)
     public boolean existsByUsername(String username) {
         Validator.validateNotBlank(username, USERNAME_LABEL);
 
-        Long count = entityManager.createQuery("""
+        Long count = session()
+                .createQuery("""
                         SELECT COUNT(t) FROM Trainee t
                         JOIN t.user u
                         WHERE u.username = :username
@@ -114,58 +101,62 @@ public class TraineeDaoImpl implements TraineeDao {
     }
 
     @Override
-    @Transactional
     public void deleteByUsername(String username) {
         Validator.validateNotBlank(username, USERNAME_LABEL);
 
-        Trainee trainee = entityManager.createQuery("SELECT t FROM Trainee t JOIN FETCH t.user u WHERE u.username = :username", Trainee.class)
+        Trainee trainee = session()
+                .createQuery("""
+                        SELECT t FROM Trainee t
+                        JOIN FETCH t.user u
+                        WHERE u.username = :username
+                        """, Trainee.class)
                 .setParameter(USERNAME, username)
-                .getResultList()
-                .stream()
+                .getResultStream()
                 .findFirst()
                 .orElse(null);
 
         if (trainee != null) {
-            entityManager.remove(trainee);
+            session().remove(trainee);
         }
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<Trainer> findUnassignedTrainers(String traineeUsername) {
         Validator.validateNotBlank(traineeUsername, TRAINEE_USERNAME_LABEL);
 
-        return entityManager.createQuery(FIND_UNASSIGNED_TRAINERS_QUERY, Trainer.class)
-                .setParameter(USERNAME, traineeUsername)
-                .getResultList();
+        return session().createQuery(FIND_UNASSIGNED_TRAINERS_QUERY, Trainer.class).setParameter(USERNAME, traineeUsername).getResultList();
     }
 
     @Override
-    @Transactional
     public void updateTrainersList(String username, List<Trainer> trainers) {
         Validator.validateNotBlank(username, USERNAME_LABEL);
         Validator.validateNotNull(trainers, "Trainers");
 
-        Trainee trainee = entityManager.createQuery("SELECT t FROM Trainee t JOIN FETCH t.user u LEFT JOIN FETCH t.trainers WHERE u.username = :username", Trainee.class)
+        Session session = session();
+
+        Trainee trainee = session.createQuery("""
+                        SELECT t FROM Trainee t
+                        JOIN FETCH t.user u
+                        LEFT JOIN FETCH t.trainers
+                        WHERE u.username = :username
+                        """, Trainee.class)
                 .setParameter(USERNAME, username)
-                .getResultList()
-                .stream()
+                .getResultStream()
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Trainee not found: " + username));
 
         List<Trainer> managedTrainers = trainers.stream()
-                .map(tr -> entityManager.find(Trainer.class, tr.getId()))
+                .map(tr -> session.find(Trainer.class, tr.getId()))
                 .filter(Objects::nonNull)
                 .toList();
 
         trainee.getTrainers().clear();
         trainee.getTrainers().addAll(managedTrainers);
 
-        entityManager.merge(trainee);
+        session.merge(trainee);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<Trainer> findAllByUsernames(List<String> trainerUsernames) {
         Validator.validateNotNull(trainerUsernames, "Trainer usernames");
 
@@ -173,8 +164,6 @@ public class TraineeDaoImpl implements TraineeDao {
             return List.of();
         }
 
-        return entityManager.createQuery(FIND_TRAINERS_BY_USERNAMES_QUERY, Trainer.class)
-                .setParameter("usernames", trainerUsernames)
-                .getResultList();
+        return session().createQuery(FIND_TRAINERS_BY_USERNAMES_QUERY, Trainer.class).setParameter("usernames", trainerUsernames).getResultList();
     }
 }

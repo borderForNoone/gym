@@ -1,14 +1,13 @@
 package org.gym.crm.dao.impl;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.gym.crm.dao.TrainerDao;
 import org.gym.crm.model.Trainer;
 import org.gym.crm.util.Validator;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -42,15 +41,18 @@ public class TrainerDaoImpl implements TrainerDao {
             WHERE u.username = :username
             """;
 
-    @PersistenceContext
-    private EntityManager entityManager;
+    private final SessionFactory sessionFactory;
+
+    private Session session() {
+        return sessionFactory.getCurrentSession();
+    }
 
     @Override
-    @Transactional
     public Trainer save(Trainer trainer) {
         Validator.validateNotNull(trainer, TRAINER_LABEL);
 
-        entityManager.persist(trainer);
+        session().persist(trainer);
+
         return trainer;
     }
 
@@ -58,30 +60,29 @@ public class TrainerDaoImpl implements TrainerDao {
     public Optional<Trainer> findByUsername(String username) {
         Validator.validateNotBlank(username, USERNAME_LABEL);
 
-        return entityManager.createQuery(FIND_BY_USERNAME_QUERY, Trainer.class).setParameter(USERNAME, username).getResultList().stream().findFirst();
+        return session().createQuery(FIND_BY_USERNAME_QUERY, Trainer.class).setParameter(USERNAME, username).getResultStream().findFirst();
     }
 
     @Override
     public List<Trainer> findNotAssignedToTrainee(String traineeUsername) {
         Validator.validateNotBlank(traineeUsername, TRAINEE_USERNAME_LABEL);
 
-        return entityManager.createQuery(FIND_NOT_ASSIGNED_QUERY, Trainer.class).setParameter(USERNAME, traineeUsername).getResultList();
+        return session().createQuery(FIND_NOT_ASSIGNED_QUERY, Trainer.class).setParameter(USERNAME, traineeUsername).getResultList();
     }
 
     @Override
     public boolean existsByUsername(String username) {
         Validator.validateNotBlank(username, USERNAME_LABEL);
 
-        Long count = entityManager.createQuery(EXISTS_BY_USERNAME_QUERY, Long.class).setParameter(USERNAME, username).getSingleResult();
+        Long count = session().createQuery(EXISTS_BY_USERNAME_QUERY, Long.class).setParameter(USERNAME, username).getSingleResult();
 
         return count > 0;
     }
 
     @Override
-    @Transactional
     public Trainer update(Trainer trainer) {
         Validator.validateId(trainer.getId());
 
-        return entityManager.merge(trainer);
+        return session().merge(trainer);
     }
 }

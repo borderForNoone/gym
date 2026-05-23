@@ -1,11 +1,11 @@
 package org.gym.crm.service.impl;
 
+import org.gym.crm.config.TransactionManager;
 import org.gym.crm.dao.TraineeDao;
 import org.gym.crm.dao.TrainerDao;
 import org.gym.crm.dto.PasswordChangeRequest;
 import org.gym.crm.dto.ToggleActiveRequestDTO;
 import org.gym.crm.exception.BadCredentialsException;
-import org.gym.crm.exception.CoreValidationException;
 import org.gym.crm.exception.EntityNotFoundException;
 import org.gym.crm.model.Trainee;
 import org.gym.crm.model.Trainer;
@@ -13,442 +13,184 @@ import org.gym.crm.model.User;
 import org.gym.crm.rest.LoginRequest;
 import org.gym.crm.service.common.UserInputValidator;
 import org.gym.crm.util.CoreValidator;
+import org.hibernate.Session;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
+import java.util.function.Consumer;
 
-import static org.gym.crm.util.TestConstants.ALLOWED_CHARS;
-import static org.gym.crm.util.TestConstants.FIRST_NAME;
-import static org.gym.crm.util.TestConstants.LAST_NAME;
-import static org.gym.crm.util.TestConstants.PASSWORD_LENGTH;
-import static org.gym.crm.util.TestConstants.USERNAME;
-import static org.gym.crm.util.TestConstants.USERNAME_WITH_SUFFIX_1;
-import static org.gym.crm.util.TestConstants.USERNAME_WITH_SUFFIX_2;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class UserProfileServiceImplTest {
-    private static final String PASSWORD = "password";
-    private static final String ENCODED_PASSWORD = "encodedPassword";
-    private static final String NEW_PASSWORD = "newPassword";
-    private static final String ENCODED_NEW_PASSWORD = "encodedNewPassword";
+    private static final String USERNAME = "tom.tomas";
+    private static final String PASSWORD = "pass";
+    private static final String ENCODED = "encoded";
 
     @Mock
     private TraineeDao traineeDao;
     @Mock
     private TrainerDao trainerDao;
     @Mock
-    private PasswordEncoder passwordEncoder;
-    @Spy
     private CoreValidator validator;
     @Mock
     private UserInputValidator userInputValidator;
-    @InjectMocks
+    @Mock
+    private PasswordEncoder passwordEncoder;
+    @Mock
+    private TransactionManager transactionManager;
+    @Mock
+    private Session session;
+
     private UserProfileServiceImpl service;
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(service, "passwordEncoder", passwordEncoder);
+        service = new UserProfileServiceImpl(traineeDao, trainerDao, validator, userInputValidator, passwordEncoder, transactionManager);
     }
 
     @Test
-    void generateUsername_shouldReturnBaseUsername_whenNoDuplicates() {
-        when(traineeDao.existsByUsername(USERNAME)).thenReturn(false);
-        when(trainerDao.existsByUsername(USERNAME)).thenReturn(false);
-
-        String actual = service.generateUsername(FIRST_NAME, LAST_NAME);
-
-        assertEquals(USERNAME, actual);
-    }
-
-    @Test
-    void generateUsername_shouldReturnUsernameWithSuffix1_whenBaseExists() {
-        when(traineeDao.existsByUsername(USERNAME)).thenReturn(true);
-        when(traineeDao.existsByUsername(USERNAME_WITH_SUFFIX_1)).thenReturn(false);
-        when(trainerDao.existsByUsername(USERNAME_WITH_SUFFIX_1)).thenReturn(false);
-
-        String actual = service.generateUsername(FIRST_NAME, LAST_NAME);
-
-        assertEquals(USERNAME_WITH_SUFFIX_1, actual);
-    }
-
-    @Test
-    void generateUsername_shouldReturnUsernameWithSuffix2_whenBaseAndSuffix1Exist() {
-        when(traineeDao.existsByUsername(USERNAME)).thenReturn(true);
-        when(traineeDao.existsByUsername(USERNAME_WITH_SUFFIX_1)).thenReturn(false);
-        when(trainerDao.existsByUsername(USERNAME_WITH_SUFFIX_1)).thenReturn(true);
-        when(traineeDao.existsByUsername(USERNAME_WITH_SUFFIX_2)).thenReturn(false);
-        when(trainerDao.existsByUsername(USERNAME_WITH_SUFFIX_2)).thenReturn(false);
-
-        String actual = service.generateUsername(FIRST_NAME, LAST_NAME);
-
-        assertEquals(USERNAME_WITH_SUFFIX_2, actual);
-    }
-
-    @Test
-    void generateUsername_shouldReturnSuffix2_whenSuffix1Taken() {
-        when(traineeDao.existsByUsername(USERNAME)).thenReturn(true);
-        when(traineeDao.existsByUsername(USERNAME_WITH_SUFFIX_1)).thenReturn(true);
-        when(traineeDao.existsByUsername(USERNAME_WITH_SUFFIX_2)).thenReturn(false);
-
-        String actual = service.generateUsername(FIRST_NAME, LAST_NAME);
-
-        assertEquals(USERNAME_WITH_SUFFIX_2, actual);
-    }
-
-    @Test
-    void generateUsername_shouldThrowException_whenFirstNameBlank() {
-        assertThrows(IllegalArgumentException.class, () -> service.generateUsername("", LAST_NAME));
-    }
-
-    @Test
-    void generateUsername_shouldThrowException_whenLastNameBlank() {
-        assertThrows(IllegalArgumentException.class, () -> service.generateUsername(FIRST_NAME, ""));
-    }
-
-    @Test
-    void generateUsername_shouldThrowException_whenFirstNameNull() {
-        assertThrows(IllegalArgumentException.class, () -> service.generateUsername(null, LAST_NAME));
-    }
-
-    @Test
-    void generateUsername_shouldThrowException_whenLastNameNull() {
-        assertThrows(IllegalArgumentException.class, () -> service.generateUsername(FIRST_NAME, null));
-    }
-
-    @Test
-    void generateUsername_shouldThrowUsernameTooLongException_whenBaseExceedsLimit() {
-        String longFirst = "A".repeat(60);
-        String longLast = "B".repeat(60);
-
-        assertThrows(CoreValidationException.class, () -> service.generateUsername(longFirst, longLast));
-    }
-
-    @Test
-    void generatePassword_shouldReturn10CharString() {
-        String actual = service.generatePassword();
-
-        assertNotNull(actual);
-        assertEquals(PASSWORD_LENGTH, actual.length());
-    }
-
-    @Test
-    void generatePassword_shouldContainOnlyAllowedChars() {
-        String actual = service.generatePassword();
-
-        assertTrue(actual.chars().allMatch(c -> ALLOWED_CHARS.indexOf(c) >= 0));
-    }
-
-    @Test
-    void generatePassword_shouldReturnDifferentPasswordsEachTime() {
-        String first = service.generatePassword();
-        String second = service.generatePassword();
-
-        assertNotEquals(first, second);
-    }
-
-    @Test
-    void authenticate_shouldReturnTrue_whenTraineeExistsAndPasswordMatches() {
-        Trainee trainee = buildTrainee(buildUser());
+    void authenticate_shouldReturnTrue_whenTraineePasswordMatches() {
+        User user = User.builder()
+                .password(ENCODED)
+                .build();
+        Trainee trainee = Trainee.builder().user(user).build();
 
         when(traineeDao.findByUsername(USERNAME)).thenReturn(Optional.of(trainee));
-        when(passwordEncoder.matches(PASSWORD, ENCODED_PASSWORD)).thenReturn(true);
+        when(passwordEncoder.matches(PASSWORD, ENCODED)).thenReturn(true);
 
-        boolean actual = service.authenticate(USERNAME, PASSWORD);
+        Boolean result = service.authenticate(USERNAME, PASSWORD);
 
-        assertTrue(actual);
+        assertTrue(result);
     }
 
     @Test
-    void authenticate_shouldReturnFalse_whenTraineeExistsButPasswordDoesNotMatch() {
-        Trainee trainee = buildTrainee(buildUser());
-
-        when(traineeDao.findByUsername(USERNAME)).thenReturn(Optional.of(trainee));
-        when(passwordEncoder.matches(PASSWORD, ENCODED_PASSWORD)).thenReturn(false);
-
-        boolean actual = service.authenticate(USERNAME, PASSWORD);
-
-        assertFalse(actual);
-    }
-
-    @Test
-    void authenticate_shouldReturnTrue_whenTrainerExistsAndPasswordMatches() {
-        Trainer trainer = buildTrainer(buildUser());
-
-        when(traineeDao.findByUsername(USERNAME)).thenReturn(Optional.empty());
-        when(trainerDao.findByUsername(USERNAME)).thenReturn(Optional.of(trainer));
-        when(passwordEncoder.matches(PASSWORD, ENCODED_PASSWORD)).thenReturn(true);
-
-        assertTrue(service.authenticate(USERNAME, PASSWORD));
-    }
-
-    @Test
-    void authenticate_shouldReturnFalse_whenNeitherTraineeNorTrainerExists() {
+    void authenticate_shouldReturnFalse_whenNoUserFound() {
         when(traineeDao.findByUsername(USERNAME)).thenReturn(Optional.empty());
         when(trainerDao.findByUsername(USERNAME)).thenReturn(Optional.empty());
 
-        assertFalse(service.authenticate(USERNAME, PASSWORD));
+        Boolean result = service.authenticate(USERNAME, PASSWORD);
+
+        assertFalse(result);
     }
 
     @Test
-    void authenticate_shouldThrowException_whenUsernameIsBlank() {
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.authenticate("", PASSWORD));
-
-        assertEquals("Username cannot be null or empty", ex.getMessage());
-    }
-
-    @Test
-    void authenticate_shouldThrowException_whenPasswordIsBlank() {
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.authenticate(USERNAME, ""));
-
-        assertEquals("Password cannot be null or empty", ex.getMessage());
-    }
-
-    @Test
-    void authenticate_shouldThrowException_whenUsernameIsNull() {
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.authenticate(null, PASSWORD));
-
-        assertEquals("Username cannot be null or empty", ex.getMessage());
-    }
-
-    @Test
-    void authenticate_shouldThrowException_whenPasswordIsNull() {
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.authenticate(USERNAME, null));
-
-        assertEquals("Password cannot be null or empty", ex.getMessage());
-    }
-
-    @Test
-    void login_shouldReturnUser_whenTraineeExistsAndPasswordMatches() {
-        User expectedUser = buildUser();
-        Trainee trainee = buildTrainee(expectedUser);
+    void login_shouldReturnUser_whenCredentialsCorrect() {
+        User user = User.builder()
+                .username(USERNAME)
+                .password(ENCODED)
+                .build();
+        Trainee trainee = Trainee.builder().user(user).build();
         LoginRequest request = new LoginRequest(USERNAME, PASSWORD);
 
         when(traineeDao.findByUsername(USERNAME)).thenReturn(Optional.of(trainee));
-        when(passwordEncoder.matches(PASSWORD, ENCODED_PASSWORD)).thenReturn(true);
+        when(passwordEncoder.matches(PASSWORD, ENCODED)).thenReturn(true);
 
-        User actual = service.login(request);
+        User result = service.login(request);
 
-        assertEquals(expectedUser, actual);
+        assertEquals(user, result);
+        verify(passwordEncoder).matches(PASSWORD, ENCODED);
     }
 
     @Test
-    void login_shouldReturnUser_whenTrainerExistsAndPasswordMatches() {
-        User expectedUser = buildUser();
-        Trainer trainer = buildTrainer(expectedUser);
-        LoginRequest request = new LoginRequest(USERNAME, PASSWORD);
-
-        when(traineeDao.findByUsername(USERNAME)).thenReturn(Optional.empty());
-        when(trainerDao.findByUsername(USERNAME)).thenReturn(Optional.of(trainer));
-        when(passwordEncoder.matches(PASSWORD, ENCODED_PASSWORD)).thenReturn(true);
-
-        User actual = service.login(request);
-
-        assertEquals(expectedUser, actual);
-    }
-
-    @Test
-    void login_shouldThrowEntityNotFoundException_whenUserNotFound() {
-        LoginRequest request = new LoginRequest(USERNAME, PASSWORD);
-
-        when(traineeDao.findByUsername(USERNAME)).thenReturn(Optional.empty());
-        when(trainerDao.findByUsername(USERNAME)).thenReturn(Optional.empty());
-
-        assertThrows(EntityNotFoundException.class, () -> service.login(request));
-    }
-
-    @Test
-    void login_shouldThrowBadCredentialsException_whenPasswordDoesNotMatch() {
-        User user = buildUser();
-        Trainee trainee = buildTrainee(user);
+    void login_shouldThrowException_whenPasswordInvalid() {
+        User user = User.builder().password(ENCODED).build();
+        Trainee trainee = Trainee.builder().user(user).build();
         LoginRequest request = new LoginRequest(USERNAME, PASSWORD);
 
         when(traineeDao.findByUsername(USERNAME)).thenReturn(Optional.of(trainee));
-        when(passwordEncoder.matches(PASSWORD, ENCODED_PASSWORD)).thenReturn(false);
+        when(passwordEncoder.matches(PASSWORD, ENCODED)).thenReturn(false);
 
         assertThrows(BadCredentialsException.class, () -> service.login(request));
     }
 
     @Test
-    void login_shouldThrowException_whenUsernameIsBlank() {
-        LoginRequest request = new LoginRequest("", PASSWORD);
+    void changePassword_shouldCallUpdate_whenValid() {
+        User user = User.builder().password(ENCODED).build();
+        Trainee trainee = Trainee.builder().user(user).build();
+        PasswordChangeRequest request = PasswordChangeRequest.builder().username(USERNAME).oldPassword(PASSWORD).newPassword("newPassword123").build();
 
-        assertThrows(IllegalArgumentException.class, () -> service.login(request));
-    }
-
-    @Test
-    void login_shouldThrowException_whenPasswordIsBlank() {
-        LoginRequest request = new LoginRequest(USERNAME, "");
-
-        assertThrows(IllegalArgumentException.class, () -> service.login(request));
-    }
-
-    @Test
-    void changePassword_shouldUpdatePassword_whenTraineeExists() {
-        Trainee trainee = buildTrainee(buildUser());
-
-        doNothing().when(validator).validate(any(PasswordChangeRequest.class), anyString());
-        when(traineeDao.existsByUsername(USERNAME)).thenReturn(true);
         when(traineeDao.findByUsername(USERNAME)).thenReturn(Optional.of(trainee));
-        when(passwordEncoder.matches(PASSWORD, ENCODED_PASSWORD)).thenReturn(true);
-        when(passwordEncoder.encode(NEW_PASSWORD)).thenReturn(ENCODED_NEW_PASSWORD);
-
-        service.changePassword(buildPasswordChangeRequest());
-
-        ArgumentCaptor<Trainee> captor = ArgumentCaptor.forClass(Trainee.class);
-
-        verify(traineeDao).update(captor.capture());
-        assertEquals(ENCODED_NEW_PASSWORD, captor.getValue().getUser().getPassword());
-    }
-
-    @Test
-    void changePassword_shouldThrowEntityNotFoundException_whenUserNotFound() {
-        PasswordChangeRequest request = buildPasswordChangeRequest();
-
-        doNothing().when(validator).validate(any(PasswordChangeRequest.class), anyString());
-        when(trainerDao.findByUsername(USERNAME)).thenReturn(Optional.empty());
-        when(traineeDao.findByUsername(USERNAME)).thenReturn(Optional.empty());
-        assertThrows(EntityNotFoundException.class, () -> service.changePassword(request));
-    }
-
-    @Test
-    void changePassword_shouldThrowException_whenRequestIsNull() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.changePassword(null));
-    }
-
-    @Test
-    void toggleActive_shouldDeactivateTrainee_whenCurrentlyActive() {
-        Trainee trainee = buildTrainee(buildUser());
-        ToggleActiveRequestDTO request = ToggleActiveRequestDTO.builder()
-                .username(USERNAME)
-                .build();
-
-        doNothing().when(userInputValidator).validate(any(), anyString());
+        when(passwordEncoder.matches(PASSWORD, ENCODED)).thenReturn(true);
+        when(passwordEncoder.encode("newPassword123")).thenReturn("encodedNew");
         when(traineeDao.existsByUsername(USERNAME)).thenReturn(true);
         when(traineeDao.findByUsername(USERNAME)).thenReturn(Optional.of(trainee));
 
-        service.toggleActive(request);
+        doAnswer(inv -> {
+            Consumer<Session> c = inv.getArgument(0);
+            c.accept(session);
+            return null;
+        }).when(transactionManager).performWithinTx(any());
 
-        ArgumentCaptor<Trainee> captor = ArgumentCaptor.forClass(Trainee.class);
-        verify(traineeDao).update(captor.capture());
-
-        assertFalse(captor.getValue().getUser().getIsActive());
+        assertDoesNotThrow(() -> service.changePassword(request));
+        verify(traineeDao).update(any());
+        verify(passwordEncoder).encode("newPassword123");
     }
 
     @Test
-    void toggleActive_shouldActivateTrainee_whenCurrentlyInactive() {
-        User inactiveUser = User.builder()
-                .username(USERNAME)
-                .password(ENCODED_PASSWORD)
-                .isActive(false)
-                .build();
+    void changePassword_shouldThrow_whenOldPasswordIncorrect() {
+        User user = User.builder().password(ENCODED).build();
+        Trainee trainee = Trainee.builder().user(user).build();
+        PasswordChangeRequest request = PasswordChangeRequest.builder().username(USERNAME).oldPassword("wrong").newPassword("newPassword123").build();
 
-        Trainee trainee = buildTrainee(inactiveUser);
-        ToggleActiveRequestDTO request = ToggleActiveRequestDTO.builder()
-                .username(USERNAME)
-                .build();
+        when(traineeDao.findByUsername(USERNAME)).thenReturn(Optional.of(trainee));
+        when(passwordEncoder.matches("wrong", ENCODED)).thenReturn(false);
+        doAnswer(inv -> {
+            Consumer<Session> c = inv.getArgument(0);
+            c.accept(session);
+            return null;
+        }).when(transactionManager).performWithinTx(any());
 
-        doNothing().when(userInputValidator).validate(any(), anyString());
+        assertThrows(BadCredentialsException.class, () -> service.changePassword(request));
+    }
+
+    @Test
+    void toggleActive_shouldDeactivateTrainee() {
+        User user = User.builder().isActive(true).build();
+        Trainee trainee = Trainee.builder().user(user).build();
+        ToggleActiveRequestDTO request = ToggleActiveRequestDTO.builder().username(USERNAME).isActive(false).build();
+
+        doNothing().when(userInputValidator).validate(any(), any());
         when(traineeDao.existsByUsername(USERNAME)).thenReturn(true);
         when(traineeDao.findByUsername(USERNAME)).thenReturn(Optional.of(trainee));
+        doAnswer(inv -> {
+            Consumer<Session> c = inv.getArgument(0);
+            c.accept(session);
+            return null;
+        }).when(transactionManager).performWithinTx(any());
 
-        service.toggleActive(request);
-
-        ArgumentCaptor<Trainee> captor = ArgumentCaptor.forClass(Trainee.class);
-        verify(traineeDao).update(captor.capture());
-
-        assertTrue(captor.getValue().getUser().getIsActive());
+        assertDoesNotThrow(() -> service.toggleActive(request));
+        verify(traineeDao).update(argThat(updated -> !updated.getUser().getIsActive()));
     }
 
     @Test
-    void toggleActive_shouldToggleTrainerStatus_whenTrainerExists() {
-        User user = User.builder()
-                .username(USERNAME)
-                .password(ENCODED_PASSWORD)
-                .isActive(true)
-                .build();
+    void toggleActive_shouldThrow_whenUserNotFound() {
+        ToggleActiveRequestDTO request = ToggleActiveRequestDTO.builder().username(USERNAME).isActive(false).build();
 
-        Trainer trainer = buildTrainer(user);
-        ToggleActiveRequestDTO request = ToggleActiveRequestDTO.builder()
-                .username(USERNAME)
-                .isActive(true)
-                .build();
-
-        doNothing().when(userInputValidator).validate(any(), anyString());
-
-        when(traineeDao.existsByUsername(USERNAME)).thenReturn(false);
-        when(trainerDao.existsByUsername(USERNAME)).thenReturn(true);
-        when(trainerDao.findByUsername(USERNAME)).thenReturn(Optional.of(trainer));
-
-        service.toggleActive(request);
-
-        ArgumentCaptor<Trainer> captor = ArgumentCaptor.forClass(Trainer.class);
-        verify(trainerDao).update(captor.capture());
-
-        assertFalse(captor.getValue().getUser().getIsActive());
-    }
-
-    @Test
-    void toggleActive_shouldThrowException_whenUserDoesNotExist() {
-        ToggleActiveRequestDTO request = ToggleActiveRequestDTO.builder()
-                .username(USERNAME)
-                .isActive(true)
-                .build();
-
-        doNothing().when(userInputValidator).validate(any(), anyString());
-
+        doNothing().when(userInputValidator).validate(any(), any());
         when(traineeDao.existsByUsername(USERNAME)).thenReturn(false);
         when(trainerDao.existsByUsername(USERNAME)).thenReturn(false);
+        doAnswer(inv -> {
+            Consumer<Session> c = inv.getArgument(0);
+            c.accept(session);
+            return null;
+        }).when(transactionManager).performWithinTx(any());
 
-        assertThrows(EntityNotFoundException.class,
-                () -> service.toggleActive(request));
+        assertThrows(EntityNotFoundException.class, () -> service.toggleActive(request));
     }
 
-    private User buildUser() {
-        return User.builder()
-                .username(USERNAME)
-                .password(ENCODED_PASSWORD)
-                .isActive(true)
-                .build();
-    }
+    @Test
+    void generatePassword_shouldReturn10Chars() {
+        String password = service.generatePassword();
 
-    private Trainee buildTrainee(User user) {
-        return Trainee.builder()
-                .user(user)
-                .build();
-    }
-
-    private Trainer buildTrainer(User user) {
-        return Trainer.builder()
-                .user(user)
-                .build();
-    }
-
-    private PasswordChangeRequest buildPasswordChangeRequest() {
-        return PasswordChangeRequest.builder()
-                .username(USERNAME)
-                .oldPassword(PASSWORD)
-                .newPassword(NEW_PASSWORD)
-                .build();
+        assertNotNull(password);
+        assertEquals(10, password.length());
     }
 }

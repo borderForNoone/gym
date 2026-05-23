@@ -1,20 +1,15 @@
 package org.gym.crm.dao.impl;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.gym.crm.dao.TrainingDao;
 import org.gym.crm.model.Training;
-import org.gym.crm.search.criteria.TraineeTrainingCriteriaBuilder;
-import org.gym.crm.search.criteria.TrainerTrainingCriteriaBuilder;
 import org.gym.crm.search.filter.TraineeTrainingFilter;
 import org.gym.crm.search.filter.TrainerTrainingFilter;
 import org.gym.crm.util.Validator;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -22,18 +17,17 @@ import java.util.List;
 @Repository
 @RequiredArgsConstructor
 public class TrainingDaoImpl implements TrainingDao {
-    @PersistenceContext
-    private EntityManager entityManager;
+    private final SessionFactory sessionFactory;
 
-    private final TraineeTrainingCriteriaBuilder traineeCriteriaBuilder;
-    private final TrainerTrainingCriteriaBuilder trainerCriteriaBuilder;
+    private Session session() {
+        return sessionFactory.getCurrentSession();
+    }
 
     @Override
-    @Transactional
     public Training save(Training training) {
         Validator.validateNotNull(training, "Training");
 
-        entityManager.persist(training);
+        session().persist(training);
 
         return training;
     }
@@ -42,19 +36,36 @@ public class TrainingDaoImpl implements TrainingDao {
     public List<Training> findByTraineeCriteria(TraineeTrainingFilter filter) {
         Validator.validateNotNull(filter, "Filter");
 
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<Training> cq = traineeCriteriaBuilder.build(cb, filter);
+        String hql = """
+                SELECT t FROM Training t
+                JOIN t.trainee tr
+                JOIN tr.user u
+                JOIN t.trainer tn
+                WHERE (:username IS NULL OR u.username = :username)
+                AND (:fromDate IS NULL OR t.trainingDate >= :fromDate)
+                AND (:toDate IS NULL OR t.trainingDate <= :toDate)
+                """;
 
-        return entityManager.createQuery(cq).getResultList();
+        return session().createQuery(hql, Training.class).setParameter("username", filter.getUsername()).setParameter("fromDate", filter.getFromDate())
+                .setParameter("toDate", filter.getToDate())
+                .getResultList();
     }
 
     @Override
     public List<Training> findByTrainerCriteria(TrainerTrainingFilter filter) {
         Validator.validateNotNull(filter, "Filter");
 
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<Training> cq = trainerCriteriaBuilder.build(cb, filter);
+        String hql = """
+                SELECT t FROM Training t
+                JOIN t.trainer tr
+                JOIN tr.user u
+                WHERE (:username IS NULL OR u.username = :username)
+                AND (:fromDate IS NULL OR t.trainingDate >= :fromDate)
+                AND (:toDate IS NULL OR t.trainingDate <= :toDate)
+                """;
 
-        return entityManager.createQuery(cq).getResultList();
+        return session().createQuery(hql, Training.class).setParameter("username", filter.getUsername()).setParameter("fromDate", filter.getFromDate())
+                .setParameter("toDate", filter.getToDate())
+                .getResultList();
     }
 }

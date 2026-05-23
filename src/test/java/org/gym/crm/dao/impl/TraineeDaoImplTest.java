@@ -1,217 +1,371 @@
 package org.gym.crm.dao.impl;
 
-import com.github.springtestdbunit.annotation.DatabaseSetup;
 import org.gym.crm.model.Trainee;
 import org.gym.crm.model.Trainer;
 import org.gym.crm.model.User;
-import org.hibernate.Hibernate;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.query.Query;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
+import java.util.stream.Stream;
 
-import static java.lang.String.format;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
-@DatabaseSetup(value = "/dataset/trainee-dataset.xml")
-class TraineeDaoImplTest extends AbstractDaoTest<TraineeDaoImpl> {
-    private static final String INVALID_ID_MESSAGE = "ID must be positive and not null, got: %s";
+@ExtendWith(MockitoExtension.class)
+class TraineeDaoImplTest {
+    @Mock
+    private SessionFactory sessionFactory;
 
-    @Test
-    void save_shouldSaveTrainee_whenValid() {
-        String uniqueUsername = "Simone.Radcliffe_" + UUID.randomUUID();
-        User user = User.builder()
-                .firstName("Simone")
-                .lastName("Radcliffe")
-                .username(uniqueUsername)
-                .password("pass444")
-                .isActive(true)
-                .build();
-        Trainee trainee = Trainee.builder()
-                .user(user)
-                .dateOfBirth(LocalDate.of(2000, 3, 10))
-                .address("10 Sheep St")
-                .build();
+    @Mock
+    private Session session;
 
-        Trainee actual = dao.save(trainee);
+    @Mock
+    @SuppressWarnings("rawtypes")
+    private Query query;
 
-        assertThat(actual.getId()).isNotNull();
-        assertThat(actual.getUser().getUsername()).isEqualTo(uniqueUsername);
-        assertThat(dao.findByUsername(uniqueUsername)).isPresent();
-        assertThat(actual.getUser().getFirstName()).isEqualTo("Simone");
-        assertThat(actual.getUser().getLastName()).isEqualTo("Radcliffe");
-        assertThat(actual.getUser().getIsActive()).isTrue();
-        assertThat(actual.getDateOfBirth()).isEqualTo(LocalDate.of(2000, 3, 10));
-        assertThat(actual.getAddress()).isEqualTo("10 Sheep St");
+    @InjectMocks
+    private TraineeDaoImpl traineeDao;
+
+    private void stubSession() {
+        when(sessionFactory.getCurrentSession()).thenReturn(session);
     }
 
     @Test
-    void save_shouldThrowException_whenSavingNullTrainee() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> dao.save(null));
+    void save_validTrainee_persistsAndReturns() {
+        stubSession();
+        Trainee trainee = buildTrainee(1L, "tom.tomas");
 
-        assertThat(exception.getMessage()).isEqualTo("Trainee cannot be null");
+        Trainee result = traineeDao.save(trainee);
+
+        verify(session).persist(trainee);
+        assertThat(result).isSameAs(trainee);
     }
 
     @Test
-    void update_shouldUpdateExistingTrainee_whenExists() {
-        Trainee trainee = dao.findByUsername("Simone.Radcliffe")
-                .orElseThrow(() -> new AssertionError("Trainee not found"));
-        Trainee updated = trainee.toBuilder()
-                .address("new address")
-                .build();
-
-        Trainee saved = dao.update(updated);
-        Trainee actual = dao.findByUsername(saved.getUser().getUsername())
-                .orElseThrow(() -> new AssertionError("Trainee not found"));
-
-        assertThat(actual.getAddress()).isEqualTo("new address");
+    void save_nullTrainee_throwsException() {
+        assertThatThrownBy(() -> traineeDao.save(null)).isInstanceOf(IllegalArgumentException.class);
+        verify(session, never()).persist(any());
     }
 
     @Test
-    void update_shouldThrowException_whenIdIsNull() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> dao.update(buildTrainee()));
+    void update_validTrainee_mergesAndReturns() {
+        stubSession();
+        Trainee trainee = buildTrainee(1L, "tom.tomas");
+        when(session.merge(trainee)).thenReturn(trainee);
 
-        assertThat(exception.getMessage()).isEqualTo(format(INVALID_ID_MESSAGE, "null"));
+        Trainee result = traineeDao.update(trainee);
+
+        verify(session).merge(trainee);
+        assertThat(result).isSameAs(trainee);
     }
 
     @Test
-    void delete_shouldRemoveTrainee_whenExists() {
-        Trainee trainee = dao.findByUsername("Julia.Tomas")
-                .orElseThrow(() -> new AssertionError("Trainee not found"));
+    void update_traineeWithNullId_throwsException() {
+        Trainee trainee = buildTrainee(null, "tom.tomas");
 
-        dao.delete(trainee);
-
-        assertThat(dao.findByUsername("Julia.Tomas")).isEmpty();
+        assertThatThrownBy(() -> traineeDao.update(trainee)).isInstanceOf(IllegalArgumentException.class);
+        verify(session, never()).merge(any());
     }
 
     @Test
-    void delete_shouldThrowException_whenTraineeIsNull() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> dao.delete(null));
+    void delete_managedTrainee_removesDirectly() {
+        stubSession();
+        Trainee trainee = buildTrainee(1L, "tom.tomas");
+        when(session.contains(trainee)).thenReturn(true);
 
-        assertThat(exception.getMessage()).isEqualTo("Trainee cannot be null");
+        traineeDao.delete(trainee);
+
+        verify(session, never()).merge(any());
+        verify(session).remove(trainee);
     }
 
     @Test
-    void existsByUsername_shouldReturnTrue_whenUserExists() {
-        boolean result = dao.existsByUsername("Julia.Tomas");
+    void delete_detachedTrainee_mergesThenRemoves() {
+        stubSession();
+        Trainee trainee = buildTrainee(1L, "tom.tomas");
+        Trainee managed = buildTrainee(1L, "tom.tomas");
+        when(session.contains(trainee)).thenReturn(false);
+        when(session.merge(trainee)).thenReturn(managed);
 
-        assertThat(result).isTrue();
+        traineeDao.delete(trainee);
+
+        verify(session).merge(trainee);
+        verify(session).remove(managed);
     }
 
     @Test
-    void existsByUsername_shouldReturnFalse_whenUserNotExists() {
-        boolean result = dao.existsByUsername("unknown.user");
-
-        assertThat(result).isFalse();
+    void delete_nullTrainee_throwsException() {
+        assertThatThrownBy(() -> traineeDao.delete(null)).isInstanceOf(IllegalArgumentException.class);
+        verify(session, never()).remove(any());
     }
 
     @Test
-    void findByUsername_shouldReturnTrainee_whenExists() {
-        Optional<Trainee> result = dao.findByUsername("Julia.Tomas");
+    void delete_traineeWithNullId_throwsException() {
+        Trainee trainee = buildTrainee(null, "tom.tomas");
 
-        assertThat(result).isPresent();
-        assertThat(result.get().getUser().getUsername()).isEqualTo("Julia.Tomas");
+        assertThatThrownBy(() -> traineeDao.delete(trainee)).isInstanceOf(IllegalArgumentException.class);
+        verify(session, never()).remove(any());
     }
 
     @Test
-    void findByUsername_shouldReturnEmpty_whenUserNotFound() {
-        Optional<Trainee> result = dao.findByUsername("non.existing.user");
+    @SuppressWarnings("unchecked")
+    void findByUsername_existingUsername_returnsTrainee() {
+        stubSession();
+        Trainee trainee = buildTrainee(1L, "tom.tomas");
+        when(session.createQuery(anyString(), eq(Trainee.class))).thenReturn(query);
+        when(query.setParameter(anyString(), any())).thenReturn(query);
+        when(query.getResultStream()).thenReturn(Stream.of(trainee));
+
+        Optional<Trainee> result = traineeDao.findByUsername("tom.tomas");
+
+        assertThat(result).isPresent().contains(trainee);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void findByUsername_nonExistingUsername_returnsEmpty() {
+        stubSession();
+        when(session.createQuery(anyString(), eq(Trainee.class))).thenReturn(query);
+        when(query.setParameter(anyString(), any())).thenReturn(query);
+        when(query.getResultStream()).thenReturn(Stream.empty());
+
+        Optional<Trainee> result = traineeDao.findByUsername("ghost");
 
         assertThat(result).isEmpty();
     }
 
     @Test
-    void deleteByUsername_shouldRemoveTrainee_whenExists() {
-        dao.deleteByUsername("Nora.Pemberton");
-
-        assertThat(dao.findByUsername("Nora.Pemberton")).isEmpty();
+    void findByUsername_blankUsername_throwsException() {
+        assertThatThrownBy(() -> traineeDao.findByUsername("  ")).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
-    void deleteByUsername_shouldDoNothing_whenUserNotExists() {
-        dao.deleteByUsername("ghost.user");
-
-        assertThat(dao.findByUsername("ghost.user")).isEmpty();
+    void findByUsername_nullUsername_throwsException() {
+        assertThatThrownBy(() -> traineeDao.findByUsername(null)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
-    void findUnassignedTrainers_shouldReturnTrainersList() {
-        List<Trainer> result = dao.findUnassignedTrainers("Nora.Pemberton");
+    @SuppressWarnings("unchecked")
+    void existsByUsername_exists_returnsTrue() {
+        stubSession();
+        when(session.createQuery(anyString(), eq(Long.class))).thenReturn(query);
+        when(query.setParameter(anyString(), any())).thenReturn(query);
+        when(query.getSingleResult()).thenReturn(1L);
 
-        assertThat(result).isNotNull();
+        assertThat(traineeDao.existsByUsername("tom.tomas")).isTrue();
     }
 
     @Test
-    @Transactional
-    void updateTrainersList_shouldReplaceTrainersList() {
-        List<Trainer> trainers = dao.findAllByUsernames(List.of("Tom.Trainer"));
+    @SuppressWarnings("unchecked")
+    void existsByUsername_notExists_returnsFalse() {
+        stubSession();
+        when(session.createQuery(anyString(), eq(Long.class))).thenReturn(query);
+        when(query.setParameter(anyString(), any())).thenReturn(query);
+        when(query.getSingleResult()).thenReturn(0L);
 
-        dao.updateTrainersList("Julia.Tomas", trainers);
-
-        Trainee updated = dao.findByUsername("Julia.Tomas")
-                .orElseThrow(() -> new AssertionError("Trainee not found"));
-
-        assertThat(updated.getTrainers())
-                .isNotNull()
-                .hasSize(1)
-                .extracting(t -> t.getUser().getUsername())
-                .containsExactly("Tom.Trainer");
+        assertThat(traineeDao.existsByUsername("ghost")).isFalse();
     }
 
     @Test
-    @Transactional
-    void updateTrainersList_shouldClearTrainers_whenEmptyListProvided() {
-        dao.updateTrainersList("Julia.Tomas", List.of());
-
-        Trainee updated = dao.findByUsername("Julia.Tomas")
-                .orElseThrow(() -> new AssertionError("Trainee not found"));
-
-        Hibernate.initialize(updated.getTrainers());
-
-        assertThat(updated.getTrainers())
-                .isNotNull()
-                .isEmpty();
+    void existsByUsername_blankUsername_throwsException() {
+        assertThatThrownBy(() -> traineeDao.existsByUsername("")).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
-    void findAllByUsernames_shouldReturnEmptyList_whenInputIsEmpty() {
-        List<Trainer> result = dao.findAllByUsernames(List.of());
+    void existsByUsername_nullUsername_throwsException() {
+        assertThatThrownBy(() -> traineeDao.existsByUsername(null)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void deleteByUsername_existingUser_removesTrainee() {
+        stubSession();
+        Trainee trainee = buildTrainee(1L, "tom.tomas");
+        when(session.createQuery(anyString(), eq(Trainee.class))).thenReturn(query);
+        when(query.setParameter(anyString(), any())).thenReturn(query);
+        when(query.getResultStream()).thenReturn(Stream.of(trainee));
+
+        traineeDao.deleteByUsername("tom.tomas");
+
+        verify(session).remove(trainee);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void deleteByUsername_nonExistingUser_doesNothing() {
+        stubSession();
+        when(session.createQuery(anyString(), eq(Trainee.class))).thenReturn(query);
+        when(query.setParameter(anyString(), any())).thenReturn(query);
+        when(query.getResultStream()).thenReturn(Stream.empty());
+
+        traineeDao.deleteByUsername("ghost");
+
+        verify(session, never()).remove(any());
+    }
+
+    @Test
+    void deleteByUsername_blankUsername_throwsException() {
+        assertThatThrownBy(() -> traineeDao.deleteByUsername("  ")).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void findUnassignedTrainers_validUsername_returnsList() {
+        stubSession();
+        Trainer trainer = buildTrainer(10L, "trainer.one");
+        when(session.createQuery(anyString(), eq(Trainer.class))).thenReturn(query);
+        when(query.setParameter(anyString(), any())).thenReturn(query);
+        when(query.getResultList()).thenReturn(List.of(trainer));
+
+        List<Trainer> result = traineeDao.findUnassignedTrainers("tom.tomas");
+
+        assertThat(result).containsExactly(trainer);
+    }
+
+    @Test
+    void findUnassignedTrainers_blankUsername_throwsException() {
+        assertThatThrownBy(() -> traineeDao.findUnassignedTrainers("")).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void updateTrainersList_validData_updatesCollection() {
+        stubSession();
+        Trainer trainerArg = buildTrainer(10L, "trainer.one");
+        Trainer managedTrainer = buildTrainer(10L, "trainer.one");
+        Trainee trainee = buildTraineeWithTrainer(1L, "tom.tomas", buildTrainer(99L, "old.trainer"));
+
+        when(session.createQuery(anyString(), eq(Trainee.class))).thenReturn(query);
+        when(query.setParameter(anyString(), any())).thenReturn(query);
+        when(query.getResultStream()).thenReturn(Stream.of(trainee));
+        when(session.find(Trainer.class, 10L)).thenReturn(managedTrainer);
+
+        traineeDao.updateTrainersList("tom.tomas", List.of(trainerArg));
+
+        assertThat(trainee.getTrainers()).containsExactly(managedTrainer);
+        verify(session).merge(trainee);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void updateTrainersList_trainerNotInDb_skipsNullTrainers() {
+        stubSession();
+        Trainer trainerArg = buildTrainer(10L, "trainer.one");
+        Trainee trainee = buildTrainee(1L, "tom.tomas");
+
+        when(session.createQuery(anyString(), eq(Trainee.class))).thenReturn(query);
+        when(query.setParameter(anyString(), any())).thenReturn(query);
+        when(query.getResultStream()).thenReturn(Stream.of(trainee));
+        when(session.find(Trainer.class, 10L)).thenReturn(null);
+
+        traineeDao.updateTrainersList("tom.tomas", List.of(trainerArg));
+
+        assertThat(trainee.getTrainers()).isEmpty();
+        verify(session).merge(trainee);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void updateTrainersList_traineeNotFound_throwsException() {
+        stubSession();
+        when(session.createQuery(anyString(), eq(Trainee.class))).thenReturn(query);
+        when(query.setParameter(anyString(), any())).thenReturn(query);
+        when(query.getResultStream()).thenReturn(Stream.empty());
+
+        assertThatThrownBy(() -> traineeDao.updateTrainersList("ghost", List.of()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("ghost");
+    }
+
+    @Test
+    void updateTrainersList_blankUsername_throwsException() {
+        assertThatThrownBy(() -> traineeDao.updateTrainersList("  ", List.of())).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void updateTrainersList_nullTrainers_throwsException() {
+        assertThatThrownBy(() -> traineeDao.updateTrainersList("tom.tomas", null)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void findAllByUsernames_validList_returnsTrainers() {
+        stubSession();
+        Trainer trainer = buildTrainer(10L, "trainer.one");
+        when(session.createQuery(anyString(), eq(Trainer.class))).thenReturn(query);
+        when(query.setParameter(anyString(), any())).thenReturn(query);
+        when(query.getResultList()).thenReturn(List.of(trainer));
+
+        List<Trainer> result = traineeDao.findAllByUsernames(List.of("trainer.one"));
+
+        assertThat(result).containsExactly(trainer);
+    }
+
+    @Test
+    void findAllByUsernames_emptyList_returnsEmptyWithoutQuery() {
+        List<Trainer> result = traineeDao.findAllByUsernames(List.of());
 
         assertThat(result).isEmpty();
+        verifyNoInteractions(sessionFactory, session);
     }
 
     @Test
-    void findAllByUsernames_shouldReturnTrainers_whenTomTrainerRequested() {
-        List<Trainer> result = dao.findAllByUsernames(List.of("Tom.Trainer"));
-
-        assertThat(result)
-                .hasSize(1)
-                .extracting("user.username")
-                .containsExactly("Tom.Trainer");
+    void findAllByUsernames_nullList_throwsException() {
+        assertThatThrownBy(() -> traineeDao.findAllByUsernames(null)).isInstanceOf(IllegalArgumentException.class);
     }
 
-    private Trainee buildTrainee() {
-        return Trainee.builder()
-                .user(buildUser())
-                .dateOfBirth(LocalDate.of(2000, 3, 10))
-                .address("10 Sheep St")
-                .build();
+    private User buildUser(String username) {
+        return User.builder().username(username).build();
     }
 
-    private User buildUser() {
-        return User.builder()
-                .firstName("Simone")
-                .lastName("Radcliffe")
-                .username("Simone.Radcliffe")
-                .password("pass444")
-                .isActive(true)
-                .build();
+    private Trainee buildTrainee(Long id, String username) {
+        Trainee trainee = Trainee.builder().user(buildUser(username)).build();
+        setId(trainee, id);
+
+        return trainee;
+    }
+
+    private Trainee buildTraineeWithTrainer(Long id, String username, Trainer trainer) {
+        Trainee trainee = buildTrainee(id, username);
+        trainee.getTrainers().add(trainer);
+
+        return trainee;
+    }
+
+    private Trainer buildTrainer(Long id, String username) {
+        Trainer trainer = Trainer.builder().user(buildUser(username)).build();
+        setId(trainer, id);
+
+        return trainer;
+    }
+
+    private void setId(Object entity, Long id) {
+        if (id == null) {
+            return;
+        }
+        Class<?> entityClass = entity.getClass();
+
+        while (entityClass != null) {
+            try {
+                var field = entityClass.getDeclaredField("id");
+                field.setAccessible(true);
+                field.set(entity, id);
+                return;
+            } catch (NoSuchFieldException e) {
+                entityClass = entityClass.getSuperclass();
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException("Cannot set id on " + entity.getClass(), e);
+            }
+        }
+        throw new RuntimeException("Field 'id' not found in hierarchy of " + entity.getClass());
     }
 }
