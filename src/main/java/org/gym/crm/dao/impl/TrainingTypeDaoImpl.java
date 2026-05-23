@@ -1,7 +1,8 @@
 package org.gym.crm.dao.impl;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
-import org.gym.crm.config.TransactionManager;
 import org.gym.crm.dao.TrainingTypeDao;
 import org.gym.crm.model.TrainingType;
 import org.gym.crm.util.Validator;
@@ -13,25 +14,21 @@ import java.util.Optional;
 @Repository
 @RequiredArgsConstructor
 public class TrainingTypeDaoImpl implements TrainingTypeDao {
-    private final TransactionManager transactionManager;
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Override
     public Optional<TrainingType> findByTrainingTypeName(String name) {
         Validator.validateNotBlank(name, "Training Type Name");
 
-        return transactionManager.performReturningWithinTx(manager -> manager
-                .createQuery("SELECT t FROM TrainingType t WHERE t.trainingTypeName = :name", TrainingType.class)
+        return entityManager.createQuery("SELECT t FROM TrainingType t WHERE t.trainingTypeName = :name", TrainingType.class)
                 .setParameter("name", name)
                 .getResultStream()
-                .findFirst()
-        );
+                .findFirst();
     }
 
     @Override
     public List<TrainingType> findAll() {
-        return transactionManager.performReturningWithinTx(manager -> manager
-                .createQuery("from TrainingType", TrainingType.class)
-                .getResultList()
-        );
+        return entityManager.createQuery("FROM TrainingType", TrainingType.class).getResultList();
     }
 }

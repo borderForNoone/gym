@@ -1,10 +1,11 @@
 package org.gym.crm.dao.impl;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.gym.crm.config.TransactionManager;
 import org.gym.crm.dao.TrainingDao;
 import org.gym.crm.model.Training;
 import org.gym.crm.search.criteria.TraineeTrainingCriteriaBuilder;
@@ -20,7 +21,9 @@ import java.util.List;
 @Repository
 @RequiredArgsConstructor
 public class TrainingDaoImpl implements TrainingDao {
-    private final TransactionManager transactionManager;
+    @PersistenceContext
+    private EntityManager entityManager;
+
     private final TraineeTrainingCriteriaBuilder traineeCriteriaBuilder;
     private final TrainerTrainingCriteriaBuilder trainerCriteriaBuilder;
 
@@ -28,7 +31,7 @@ public class TrainingDaoImpl implements TrainingDao {
     public Training save(Training training) {
         Validator.validateNotNull(training, "Training");
 
-        transactionManager.performWithinTx(manager -> manager.persist(training));
+        entityManager.persist(training);
 
         return training;
     }
@@ -37,23 +40,19 @@ public class TrainingDaoImpl implements TrainingDao {
     public List<Training> findByTraineeCriteria(TraineeTrainingFilter filter) {
         Validator.validateNotNull(filter, "Filter");
 
-        return transactionManager.performReturningWithinTx(manager -> {
-            CriteriaBuilder cb = manager.getCriteriaBuilder();
-            CriteriaQuery<Training> cq = traineeCriteriaBuilder.build(cb, filter);
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Training> cq = traineeCriteriaBuilder.build(cb, filter);
 
-            return manager.createQuery(cq).getResultList();
-        });
+        return entityManager.createQuery(cq).getResultList();
     }
 
     @Override
     public List<Training> findByTrainerCriteria(TrainerTrainingFilter filter) {
         Validator.validateNotNull(filter, "Filter");
 
-        return transactionManager.performReturningWithinTx(manager -> {
-            CriteriaBuilder cb = manager.getCriteriaBuilder();
-            CriteriaQuery<Training> cq = trainerCriteriaBuilder.build(cb, filter);
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Training> cq = trainerCriteriaBuilder.build(cb, filter);
 
-            return manager.createQuery(cq).getResultList();
-        });
+        return entityManager.createQuery(cq).getResultList();
     }
 }

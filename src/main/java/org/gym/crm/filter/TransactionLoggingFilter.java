@@ -21,6 +21,7 @@ import java.util.UUID;
 public class TransactionLoggingFilter extends OncePerRequestFilter {
     private static final String TRANSACTION_ID_HEADER = "X-Transaction-Id";
     private static final String MDC_TRANSACTION_ID_KEY = "transactionId";
+    private static final int MAX_PAYLOAD_SIZE = 10_000;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -29,16 +30,18 @@ public class TransactionLoggingFilter extends OncePerRequestFilter {
             transactionId = UUID.randomUUID().toString();
         }
         MDC.put(MDC_TRANSACTION_ID_KEY, transactionId);
-
         response.setHeader(TRANSACTION_ID_HEADER, transactionId);
 
-        ContentCachingRequestWrapper wrappedRequest = new ContentCachingRequestWrapper(request, 10000);
+        ContentCachingRequestWrapper wrappedRequest = new ContentCachingRequestWrapper(request, MAX_PAYLOAD_SIZE);
         ContentCachingResponseWrapper wrappedResponse = new ContentCachingResponseWrapper(response);
 
         long startTime = System.currentTimeMillis();
 
         try {
-            log.info(">>> [{} {}] from IP={} transactionId={}", request.getMethod(), request.getRequestURI(), request.getRemoteAddr(), transactionId);
+            String authHeader = request.getHeader("Authorization");
+            log.info(">>> [{} {}] ip={} auth={} txId={}", request.getMethod(), request.getRequestURI(), request.getRemoteAddr(),
+                    SensitiveDataMasker.maskAuthHeader(authHeader),
+                    transactionId);
 
             filterChain.doFilter(wrappedRequest, wrappedResponse);
 
@@ -46,8 +49,10 @@ public class TransactionLoggingFilter extends OncePerRequestFilter {
             int status = wrappedResponse.getStatus();
 
             if (status >= 400) {
-                String responseBody = new String(wrappedResponse.getContentAsByteArray(), wrappedResponse.getCharacterEncoding());
-                log.warn("<<< [{} {}] status={} duration={}ms body={}", request.getMethod(), request.getRequestURI(), status, duration, responseBody);
+                String rawBody = new String(
+                        wrappedResponse.getContentAsByteArray(),
+                        wrappedResponse.getCharacterEncoding());
+                log.warn("<<< [{} {}] status={} duration={}ms body={}", request.getMethod(), request.getRequestURI(), status, duration, SensitiveDataMasker.maskBody(rawBody));
             } else {
                 log.info("<<< [{} {}] status={} duration={}ms", request.getMethod(), request.getRequestURI(), status, duration);
             }

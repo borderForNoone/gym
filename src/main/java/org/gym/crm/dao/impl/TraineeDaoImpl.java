@@ -1,7 +1,8 @@
 package org.gym.crm.dao.impl;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
-import org.gym.crm.config.TransactionManager;
 import org.gym.crm.dao.TraineeDao;
 import org.gym.crm.model.Trainee;
 import org.gym.crm.model.Trainer;
@@ -51,13 +52,14 @@ public class TraineeDaoImpl implements TraineeDao {
                 WHERE u.username = :username
             """;
 
-    private final TransactionManager transactionManager;
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Override
     public Trainee save(Trainee trainee) {
         Validator.validateNotNull(trainee, TRAINEE_LABEL);
 
-        transactionManager.performWithinTx(manager -> manager.persist(trainee));
+        entityManager.persist(trainee);
 
         return trainee;
     }
@@ -66,110 +68,89 @@ public class TraineeDaoImpl implements TraineeDao {
     public Trainee update(Trainee trainee) {
         Validator.validateId(trainee.getId());
 
-        transactionManager.performWithinTx(manager -> manager.merge(trainee));
-
-        return trainee;
+        return entityManager.merge(trainee);
     }
 
     @Override
     public void delete(Trainee trainee) {
-        Validator.validateNotNull(trainee, TRAINEE_LABEL);
+        Validator.validateNotNull(trainee, "Trainee");
         Validator.validateId(trainee.getId());
 
-        transactionManager.performWithinTx(manager -> {
-            Trainee managed = manager.contains(trainee)
-                    ? trainee
-                    : manager.merge(trainee);
+        Trainee managed = entityManager.contains(trainee) ? trainee : entityManager.merge(trainee);
 
-            manager.remove(managed);
-        });
+        entityManager.remove(managed);
     }
 
     @Override
     public Optional<Trainee> findByUsername(String username) {
         Validator.validateNotBlank(username, USERNAME_LABEL);
 
-        return transactionManager.performReturningWithinTx(manager ->
-                manager.createQuery(FIND_TRAINEE_BY_USERNAME_QUERY, Trainee.class)
-                        .setParameter(USERNAME, username)
-                        .getResultStream()
-                        .findFirst()
-        );
+        return entityManager.createQuery(FIND_TRAINEE_BY_USERNAME_QUERY, Trainee.class).setParameter(USERNAME, username).getResultStream().findFirst();
     }
 
     @Override
     public boolean existsByUsername(String username) {
         Validator.validateNotBlank(username, USERNAME_LABEL);
 
-        return transactionManager.performReturningWithinTx(manager ->
-                manager.createQuery("""
-                                SELECT COUNT(t) FROM Trainee t
-                                JOIN t.user u
-                                WHERE u.username = :username
-                                """, Long.class)
-                        .setParameter(USERNAME, username)
-                        .getSingleResult() > 0
-        );
+        Long count = entityManager.createQuery("""
+                        SELECT COUNT(t) FROM Trainee t
+                        JOIN t.user u
+                        WHERE u.username = :username
+                        """, Long.class)
+                .setParameter(USERNAME, username)
+                .getSingleResult();
+
+        return count > 0;
     }
 
     @Override
     public void deleteByUsername(String username) {
         Validator.validateNotBlank(username, USERNAME_LABEL);
 
-        transactionManager.performWithinTx(manager -> {
-            Trainee trainee = manager.createQuery(
-                            FIND_TRAINEE_BY_USERNAME_FETCH_QUERY,
-                            Trainee.class
-                    )
-                    .setParameter(USERNAME, username)
-                    .getResultStream()
-                    .findFirst()
-                    .orElse(null);
+        Trainee trainee = entityManager.createQuery(
+                        "SELECT t FROM Trainee t JOIN FETCH t.user u WHERE u.username = :username",
+                        Trainee.class)
+                .setParameter(USERNAME, username)
+                .getResultStream()
+                .findFirst()
+                .orElse(null);
 
-            if (trainee != null) {
-                manager.remove(trainee);
-            }
-        });
+        if (trainee != null) {
+            entityManager.remove(trainee);
+        }
     }
 
     @Override
     public List<Trainer> findUnassignedTrainers(String traineeUsername) {
         Validator.validateNotBlank(traineeUsername, TRAINEE_USERNAME_LABEL);
 
-        return transactionManager.performReturningWithinTx(manager ->
-                manager.createQuery(FIND_UNASSIGNED_TRAINERS_QUERY, Trainer.class)
-                        .setParameter(USERNAME, traineeUsername)
-                        .getResultList()
-        );
+        return entityManager.createQuery(FIND_UNASSIGNED_TRAINERS_QUERY, Trainer.class)
+                .setParameter(USERNAME, traineeUsername)
+                .getResultList();
     }
 
     @Override
     public void updateTrainersList(String username, List<Trainer> trainers) {
-        Validator.validateNotBlank(username, USERNAME);
+        Validator.validateNotBlank(username, USERNAME_LABEL);
         Validator.validateNotNull(trainers, "Trainers");
 
-        transactionManager.performWithinTx(manager -> {
-            Trainee trainee = manager.createQuery(
-                            "FROM Trainee t " +
-                                    "JOIN FETCH t.user " +
-                                    "LEFT JOIN FETCH t.trainers " +
-                                    "WHERE t.user.username = :username",
-                            Trainee.class)
-                    .setParameter(USERNAME, username)
-                    .getResultStream()
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalArgumentException("Trainee not found: " + username));
+        Trainee trainee = entityManager.createQuery(
+                        "SELECT t FROM Trainee t JOIN FETCH t.user u LEFT JOIN FETCH t.trainers WHERE u.username = :username",
+                        Trainee.class)
+                .setParameter(USERNAME, username)
+                .getResultStream()
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Trainee not found: " + username));
 
-            List<Trainer> managedTrainers = trainers.stream()
-                    .map(trainer -> manager.find(Trainer.class, trainer.getId()))
-                    .filter(Objects::nonNull)
-                    .toList();
+        List<Trainer> managedTrainers = trainers.stream()
+                .map(tr -> entityManager.find(Trainer.class, tr.getId()))
+                .filter(Objects::nonNull)
+                .toList();
 
-            trainee.getTrainers().clear();
-            trainee.getTrainers().addAll(managedTrainers);
+        trainee.getTrainers().clear();
+        trainee.getTrainers().addAll(managedTrainers);
 
-            manager.merge(trainee);
-        });
+        entityManager.merge(trainee);
     }
 
     @Override
@@ -180,10 +161,8 @@ public class TraineeDaoImpl implements TraineeDao {
             return List.of();
         }
 
-        return transactionManager.performReturningWithinTx(manager ->
-                manager.createQuery(FIND_TRAINERS_BY_USERNAMES_QUERY, Trainer.class)
-                        .setParameter("usernames", trainerUsernames)
-                        .getResultList()
-        );
+        return entityManager.createQuery(FIND_TRAINERS_BY_USERNAMES_QUERY, Trainer.class)
+                .setParameter("usernames", trainerUsernames)
+                .getResultList();
     }
 }

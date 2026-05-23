@@ -1,38 +1,44 @@
 package org.gym.crm.config;
 
-import org.gym.crm.model.Trainee;
-import org.gym.crm.model.Trainer;
-import org.gym.crm.model.Training;
-import org.gym.crm.model.TrainingType;
-import org.gym.crm.model.User;
-import org.hibernate.SessionFactory;
-import org.springframework.beans.factory.annotation.Value;
+import jakarta.persistence.EntityManagerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.orm.jpa.JpaTransactionManager;
+import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import javax.sql.DataSource;
 import java.util.Properties;
 
 @Configuration
+@EnableTransactionManagement
 public class HibernateConfig {
-    @Value("${hibernate.hbm2ddl.auto}")
-    private String hbm2ddlAuto;
 
     @Bean
-    public SessionFactory sessionFactory(DataSource dataSource) {
-        Properties properties = new Properties();
-        properties.put("hibernate.hbm2ddl.auto", hbm2ddlAuto);
-        properties.put("hibernate.show_sql", "true");
-        properties.put("hibernate.format_sql", "true");
-        properties.put("hibernate.connection.datasource", dataSource);
+    public LocalContainerEntityManagerFactoryBean entityManagerFactory(DataSource dataSource) {
 
-        return new org.hibernate.cfg.Configuration()
-                .addProperties(properties)
-                .addAnnotatedClass(User.class)
-                .addAnnotatedClass(Trainer.class)
-                .addAnnotatedClass(Trainee.class)
-                .addAnnotatedClass(Training.class)
-                .addAnnotatedClass(TrainingType.class)
-                .buildSessionFactory();
+        LocalContainerEntityManagerFactoryBean emf = new LocalContainerEntityManagerFactoryBean();
+
+        emf.setDataSource(dataSource);
+        emf.setPackagesToScan("org.gym.crm.model");
+
+        emf.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
+
+        Properties props = new Properties();
+        props.put("hibernate.dialect", "org.hibernate.dialect.MySQLDialect");
+        props.put("hibernate.show_sql", "true");
+        props.put("hibernate.format_sql", "true");
+        props.put("hibernate.hbm2ddl.auto", "validate");
+
+        emf.setJpaProperties(props);
+
+        return emf;
+    }
+
+    @Bean
+    public PlatformTransactionManager transactionManager(EntityManagerFactory emf) {
+        return new JpaTransactionManager(emf);
     }
 }
