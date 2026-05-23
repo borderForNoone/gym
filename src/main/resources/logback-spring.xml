@@ -1,0 +1,44 @@
+<configuration>
+
+    <springProperty scope="context" name="appName" source="spring.application.name" defaultValue="gym-crm"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>
+                %d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [txId=%X{transactionId:-no-txn}] %logger{36} - %msg%n
+            </pattern>
+        </encoder>
+    </appender>
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/${appName}.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/${appName}.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>
+                %d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [txId=%X{transactionId:-no-txn}] %logger{36} - %msg%n
+            </pattern>
+        </encoder>
+    </appender>
+
+    <!-- HTTP layer: INFO to see every request/response -->
+    <logger name="org.gym.crm.filter" level="INFO"/>
+
+    <!-- Your application layers -->
+    <logger name="org.gym.crm.controller" level="DEBUG"/>
+    <logger name="org.gym.crm.facade"     level="DEBUG"/>
+    <logger name="org.gym.crm.service"    level="DEBUG"/>
+    <logger name="org.gym.crm.repository" level="WARN"/>
+
+    <!-- Suppress noisy Spring/Hibernate internals -->
+    <logger name="org.springframework" level="WARN"/>
+    <logger name="org.hibernate"       level="WARN"/>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </root>
+
+</configuration>
