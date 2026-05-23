@@ -16,9 +16,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class TraineeDaoImplTest {
@@ -281,14 +288,16 @@ class TraineeDaoImplTest {
         when(query.setParameter(anyString(), any())).thenReturn(query);
         when(query.getResultStream()).thenReturn(Stream.empty());
 
-        assertThatThrownBy(() -> traineeDao.updateTrainersList("ghost", List.of()))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("ghost");
+        Throwable throwable = catchThrowable(() -> traineeDao.updateTrainersList("ghost", List.of()));
+
+        assertThat(throwable).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("ghost");
     }
 
     @Test
     void updateTrainersList_blankUsername_throwsException() {
-        assertThatThrownBy(() -> traineeDao.updateTrainersList("  ", List.of())).isInstanceOf(IllegalArgumentException.class);
+        Throwable throwable = catchThrowable(() -> traineeDao.updateTrainersList("  ", List.of()));
+
+        assertThat(throwable).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

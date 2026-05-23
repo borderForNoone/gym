@@ -12,6 +12,7 @@ import org.gym.crm.dto.TrainerRequestDTO;
 import org.gym.crm.dto.TrainerResponseDTO;
 import org.gym.crm.dto.TrainerUpdateDTO;
 import org.gym.crm.exception.EntityNotFoundException;
+import org.gym.crm.exception.InvalidPasswordException;
 import org.gym.crm.mapper.TrainerMapper;
 import org.gym.crm.model.Trainer;
 import org.gym.crm.model.Training;
@@ -122,7 +123,7 @@ public class TrainerServiceImpl implements TrainerService {
             User currentUser = trainer.getUser();
 
             if (!passwordEncoder.matches(oldPassword, currentUser.getPassword())) {
-                throw new RuntimeException("Current password is incorrect");
+                throw new InvalidPasswordException("Current password is incorrect");
             }
 
             User updatedUser = currentUser.toBuilder().password(passwordEncoder.encode(newPassword)).build();

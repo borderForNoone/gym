@@ -5,7 +5,7 @@ import java.util.regex.Pattern;
 public final class SensitiveDataMasker {
     private static final String MASK = "***";
     private static final Pattern PASSWORD_PATTERN = Pattern.compile("(\"password\"\\s*:\\s*\")([^\"]+)(\")", Pattern.CASE_INSENSITIVE);
-    private static final Pattern AUTH_HEADER_PATTERN = Pattern.compile("(Bearer|Basic)\\s+[A-Za-z0-9+/=._-]+", Pattern.CASE_INSENSITIVE);
+    private static final Pattern AUTH_HEADER_PATTERN = Pattern.compile("(Bearer|Basic)\\s+[A-Za-z0-9+/=._\\-]+", Pattern.CASE_INSENSITIVE);
 
     private SensitiveDataMasker() {}
 

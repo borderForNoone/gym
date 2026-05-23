@@ -134,12 +134,7 @@ public class TraineeDaoImpl implements TraineeDao {
 
         Session session = session();
 
-        Trainee trainee = session.createQuery("""
-                        SELECT t FROM Trainee t
-                        JOIN FETCH t.user u
-                        LEFT JOIN FETCH t.trainers
-                        WHERE u.username = :username
-                        """, Trainee.class)
+        Trainee trainee = session.createQuery(FIND_TRAINEE_BY_USERNAME_QUERY, Trainee.class)
                 .setParameter(USERNAME, username)
                 .getResultStream()
                 .findFirst()

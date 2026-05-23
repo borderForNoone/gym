@@ -8,7 +8,6 @@ import org.gym.crm.dto.ToggleActiveRequestDTO;
 import org.gym.crm.exception.BadCredentialsException;
 import org.gym.crm.exception.EntityNotFoundException;
 import org.gym.crm.model.Trainee;
-import org.gym.crm.model.Trainer;
 import org.gym.crm.model.User;
 import org.gym.crm.rest.LoginRequest;
 import org.gym.crm.service.common.UserInputValidator;
@@ -24,9 +23,18 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class UserProfileServiceImplTest {

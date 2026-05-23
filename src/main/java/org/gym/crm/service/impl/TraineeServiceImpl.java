@@ -76,7 +76,7 @@ public class TraineeServiceImpl implements TraineeService {
 
     @Override
     public TraineeResponseDTO update(@Valid TraineeUpdateDTO request) {
-        userInputValidator.validate(request, "Trainee");
+        userInputValidator.validate(request, TRAINEE);
 
         return transactionManager.performReturningWithinTx(session -> {
             Trainee existing = dao.findByUsername(request.getUsername())
