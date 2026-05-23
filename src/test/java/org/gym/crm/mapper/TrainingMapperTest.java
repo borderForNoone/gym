@@ -55,14 +55,7 @@ class TrainingMapperTest {
     }
 
     private TrainingRequestDTO buildTrainingRequestDTO() {
-        return TrainingRequestDTO.builder()
-                .traineeId(TRAINEE_ID)
-                .trainerId(TRAINER_ID)
-                .trainingName(TRAINING_NAME)
-                .trainingTypeName(TRAINING_TYPE_NAME)
-                .trainingDate(TRAINING_DATE)
-                .trainingDuration(TRAINING_DURATION)
-                .build();
+        return new TrainingRequestDTO(TRAINEE_ID, TRAINER_ID, TRAINING_NAME, TRAINING_TYPE_NAME, TRAINING_DATE, TRAINING_DURATION);
     }
 
     private Training buildTraining() {

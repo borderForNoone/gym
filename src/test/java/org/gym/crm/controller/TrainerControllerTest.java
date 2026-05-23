@@ -2,8 +2,14 @@ package org.gym.crm.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import jakarta.persistence.PersistenceException;
+import org.gym.crm.exception.ApiError;
+import org.gym.crm.exception.ApiExceptionHandler;
+import org.gym.crm.exception.EntityNotFoundException;
+import org.gym.crm.exception.UserAuthenticationException;
 import org.gym.crm.facade.GymFacade;
 import org.gym.crm.rest.ActivationStatusRequest;
+import org.gym.crm.rest.ErrorResponse;
 import org.gym.crm.rest.GetTrainerTrainingResponse;
 import org.gym.crm.rest.TrainerCreateRequest;
 import org.gym.crm.rest.TrainerCreateResponse;
@@ -28,9 +34,12 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.gym.crm.util.TestConstants.USERNAME;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -55,10 +64,147 @@ class TrainerControllerTest {
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(trainerController)
+                .setControllerAdvice(new ApiExceptionHandler())
                 .addPlaceholderValue("app.api.base-path", "/api/v1")
                 .build();
         objectMapper = new ObjectMapper();
         objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+    }
+
+    @Test
+    void register_shouldReturnNotValid_whenFirstNameMissing() throws Exception {
+        TrainerCreateRequest request = new TrainerCreateRequest();
+        request.setFirstName("Tom");
+        request.setLastName("Tomas");
+        request.setSpecialization("Yoga");
+        request.setFirstName(null);
+
+        String content = mockMvc.perform(post(BASE_PATH + "/register").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        ErrorResponse errorResponse = objectMapper.readValue(content, ErrorResponse.class);
+        assertThat(errorResponse.getErrorCode()).isEqualTo(ApiError.VALIDATION_ERROR.getCode());
+        assertThat(errorResponse.getErrorMessage()).isEqualTo("Validation error: firstName must not be null");
+        verifyNoInteractions(facade);
+    }
+
+    @Test
+    void getTrainerProfile_shouldReturnNotFound_whenTrainerNotFound() throws Exception {
+        doThrow(new EntityNotFoundException("User not found")).when(facade).getTrainerByUsername(USERNAME);
+
+        String content = mockMvc.perform(get(BASE_PATH + "/" + USERNAME)).andExpect(status().isNotFound()).andReturn().getResponse().getContentAsString();
+
+        ErrorResponse errorResponse = objectMapper.readValue(content, ErrorResponse.class);
+        assertThat(errorResponse.getErrorCode()).isEqualTo(ApiError.NOT_FOUND_ERROR.getCode());
+        assertThat(errorResponse.getErrorMessage()).isEqualTo("Requested data was not found: User not found");
+        verify(facade).getTrainerByUsername(USERNAME);
+    }
+
+    @Test
+    void updateTrainerProfile_shouldReturnNotValid_whenFirstNameMissing() throws Exception {
+        TrainerUpdateRequest request = new TrainerUpdateRequest();
+        request.setFirstName("Tom");
+        request.setLastName("Tomas");
+        request.setIsActive(true);
+        request.setFirstName(null);
+
+        String content = mockMvc.perform(put(BASE_PATH + "/" + USERNAME).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        ErrorResponse errorResponse = objectMapper.readValue(content, ErrorResponse.class);
+        assertThat(errorResponse.getErrorCode()).isEqualTo(ApiError.VALIDATION_ERROR.getCode());
+        assertThat(errorResponse.getErrorMessage()).isEqualTo("Validation error: firstName must not be null");
+        verifyNoInteractions(facade);
+    }
+
+    @Test
+    void updateTrainerProfile_shouldReturnNotFound_whenTrainerNotFound() throws Exception {
+        TrainerUpdateRequest request = new TrainerUpdateRequest();
+        request.setFirstName("Tom");
+        request.setLastName("Tomas");
+        request.setIsActive(true);
+
+        doThrow(new EntityNotFoundException("User not found")).when(facade).updateTrainer(any(TrainerUpdateRequest.class), eq(USERNAME));
+
+        String content = mockMvc.perform(put(BASE_PATH + "/" + USERNAME).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        ErrorResponse errorResponse = objectMapper.readValue(content, ErrorResponse.class);
+        assertThat(errorResponse.getErrorCode()).isEqualTo(ApiError.NOT_FOUND_ERROR.getCode());
+        assertThat(errorResponse.getErrorMessage()).isEqualTo("Requested data was not found: User not found");
+        verify(facade).updateTrainer(any(TrainerUpdateRequest.class), eq(USERNAME));
+    }
+
+    @Test
+    void updateTrainerProfile_shouldReturnUnauthorized_whenNoUserAuthenticated() throws Exception {
+        TrainerUpdateRequest request = new TrainerUpdateRequest();
+        request.setFirstName("Tom");
+        request.setLastName("Tomas");
+        request.setIsActive(true);
+
+        doThrow(new UserAuthenticationException("No user authenticated")).when(facade).updateTrainer(any(TrainerUpdateRequest.class), eq(USERNAME));
+
+        String content = mockMvc.perform(put(BASE_PATH + "/" + USERNAME).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        ErrorResponse errorResponse = objectMapper.readValue(content, ErrorResponse.class);
+        assertThat(errorResponse.getErrorCode()).isEqualTo(ApiError.AUTHENTICATION_ERROR.getCode());
+        assertThat(errorResponse.getErrorMessage()).isEqualTo("Authentication fails: No user authenticated");
+        verify(facade).updateTrainer(any(TrainerUpdateRequest.class), eq(USERNAME));
+    }
+
+    @Test
+    void updateTrainerProfile_shouldReturnDBFailure_whenPersistenceException() throws Exception {
+        TrainerUpdateRequest request = new TrainerUpdateRequest();
+        request.setFirstName("Tom");
+        request.setLastName("Tomas");
+        request.setIsActive(true);
+
+        doThrow(new PersistenceException()).when(facade).updateTrainer(any(TrainerUpdateRequest.class), eq(USERNAME));
+
+        String content = mockMvc.perform(put(BASE_PATH + "/" + USERNAME).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isInternalServerError())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        ErrorResponse errorResponse = objectMapper.readValue(content, ErrorResponse.class);
+        assertThat(errorResponse.getErrorCode()).isEqualTo(ApiError.DATABASE_ERROR.getCode());
+        assertThat(errorResponse.getErrorMessage()).isEqualTo("Unexpected database access failure");
+        verify(facade).updateTrainer(any(TrainerUpdateRequest.class), eq(USERNAME));
+    }
+
+    @Test
+    void updateTrainerProfile_shouldReturnUnhandledException_whenUnexpectedError() throws Exception {
+        TrainerUpdateRequest request = new TrainerUpdateRequest();
+        request.setFirstName("Tom");
+        request.setLastName("Tomas");
+        request.setIsActive(true);
+
+        doThrow(new RuntimeException()).when(facade).updateTrainer(any(TrainerUpdateRequest.class), eq(USERNAME));
+
+        String content = mockMvc.perform(put(BASE_PATH + "/" + USERNAME).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isInternalServerError())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        ErrorResponse errorResponse = objectMapper.readValue(content, ErrorResponse.class);
+        assertThat(errorResponse.getErrorCode()).isEqualTo(ApiError.SERVICE_ERROR.getCode());
+        assertThat(errorResponse.getErrorMessage()).isEqualTo("Internal processing error");
+        verify(facade).updateTrainer(any(TrainerUpdateRequest.class), eq(USERNAME));
     }
 
     @Test

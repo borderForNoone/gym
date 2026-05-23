@@ -607,11 +607,7 @@ public class GymFacadeTest {
     }
 
     private TrainingRequestDTO buildTrainingRequestDTO() {
-        return TrainingRequestDTO.builder()
-                .traineeId(VALID_ID).trainerId(VALID_ID).trainingName(TRAINING_NAME)
-                .trainingTypeName(TRAINING_TYPE_NAME).trainingDate(LocalDate.of(2024, 1, 15))
-                .trainingDuration(60)
-                .build();
+        return new TrainingRequestDTO(VALID_ID, VALID_ID, TRAINING_NAME, TRAINING_TYPE_NAME, LocalDate.of(2024, 1, 15), 60);
     }
 
     private TrainingResponseDTO buildTrainingResponseDTO() {
