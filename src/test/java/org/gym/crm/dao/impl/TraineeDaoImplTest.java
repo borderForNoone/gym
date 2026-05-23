@@ -6,6 +6,7 @@ import org.gym.crm.model.Trainer;
 import org.gym.crm.model.User;
 import org.hibernate.Hibernate;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -51,8 +52,7 @@ class TraineeDaoImplTest extends AbstractDaoTest<TraineeDaoImpl> {
 
     @Test
     void save_shouldThrowException_whenSavingNullTrainee() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> dao.save(null));
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> dao.save(null));
 
         assertThat(exception.getMessage()).isEqualTo("Trainee cannot be null");
     }
@@ -213,10 +213,5 @@ class TraineeDaoImplTest extends AbstractDaoTest<TraineeDaoImpl> {
                 .password("pass444")
                 .isActive(true)
                 .build();
-    }
-
-    @Override
-    protected Class<TraineeDaoImpl> getDaoClass() {
-        return TraineeDaoImpl.class;
     }
 }

@@ -5,6 +5,7 @@ import org.gym.crm.model.Trainer;
 import org.gym.crm.model.TrainingType;
 import org.gym.crm.model.User;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 import java.util.Optional;
@@ -85,11 +86,9 @@ class TrainerDaoImplTest extends AbstractDaoTest<TrainerDaoImpl> {
 
     @Test
     void findNotAssignedToTrainee_shouldThrowException_whenUsernameBlank() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> dao.findNotAssignedToTrainee(""));
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> dao.findNotAssignedToTrainee(""));
 
-        assertThat(exception.getMessage())
-                .isEqualTo("Trainee Username cannot be null or empty");
+        assertThat(exception.getMessage()).isEqualTo("Trainee Username cannot be null or empty");
     }
 
     @Test
@@ -161,10 +160,5 @@ class TrainerDaoImplTest extends AbstractDaoTest<TrainerDaoImpl> {
                 .id(10L)
                 .trainingTypeName("Yoga")
                 .build();
-    }
-
-    @Override
-    protected Class<TrainerDaoImpl> getDaoClass() {
-        return TrainerDaoImpl.class;
     }
 }

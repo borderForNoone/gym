@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -23,6 +24,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @DatabaseSetup(value = "/dataset/training.xml")
 class TrainingDaoImplTest extends AbstractDaoTest<TrainingDao> {
+    @Autowired
+    private TrainingDao dao;
+
     @Test
     void save_shouldSaveTraining_whenValid() {
         Training training = buildTraining();
@@ -241,10 +245,5 @@ class TrainingDaoImplTest extends AbstractDaoTest<TrainingDao> {
                 .trainer(buildTrainer())
                 .trainee(buildTrainee())
                 .build();
-    }
-
-    @Override
-    protected Class<TrainingDao> getDaoClass() {
-        return TrainingDao.class;
     }
 }

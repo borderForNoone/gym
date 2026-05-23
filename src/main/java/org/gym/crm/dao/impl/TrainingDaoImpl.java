@@ -14,6 +14,7 @@ import org.gym.crm.search.filter.TraineeTrainingFilter;
 import org.gym.crm.search.filter.TrainerTrainingFilter;
 import org.gym.crm.util.Validator;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -28,6 +29,7 @@ public class TrainingDaoImpl implements TrainingDao {
     private final TrainerTrainingCriteriaBuilder trainerCriteriaBuilder;
 
     @Override
+    @Transactional
     public Training save(Training training) {
         Validator.validateNotNull(training, "Training");
 

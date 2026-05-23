@@ -3,6 +3,7 @@ package org.gym.crm.dao.impl;
 import com.github.springtestdbunit.annotation.DatabaseSetup;
 import org.gym.crm.model.TrainingType;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,6 +15,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @DatabaseSetup(value = "/dataset/training-type.xml")
 class TrainingTypeDaoImplTest extends AbstractDaoTest<TrainingTypeDaoImpl> {
     private static final String EMPTY_STRING_EXCEPTION_MESSAGE = "%s cannot be null or empty";
+
+    @Autowired
+    private TrainingTypeDaoImpl dao;
 
     @Test
     void findByTrainingTypeName_shouldReturnTrainingType_whenExists() {
@@ -36,11 +40,6 @@ class TrainingTypeDaoImplTest extends AbstractDaoTest<TrainingTypeDaoImpl> {
                 () -> dao.findByTrainingTypeName(" "));
 
         assertThat(exception.getMessage()).isEqualTo(format(EMPTY_STRING_EXCEPTION_MESSAGE, "Training Type Name"));
-    }
-
-    @Override
-    protected Class<TrainingTypeDaoImpl> getDaoClass() {
-        return TrainingTypeDaoImpl.class;
     }
 
     @Test

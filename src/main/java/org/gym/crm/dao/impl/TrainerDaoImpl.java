@@ -8,6 +8,7 @@ import org.gym.crm.dao.TrainerDao;
 import org.gym.crm.model.Trainer;
 import org.gym.crm.util.Validator;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -45,6 +46,7 @@ public class TrainerDaoImpl implements TrainerDao {
     private EntityManager entityManager;
 
     @Override
+    @Transactional
     public Trainer save(Trainer trainer) {
         Validator.validateNotNull(trainer, TRAINER_LABEL);
 
@@ -56,7 +58,7 @@ public class TrainerDaoImpl implements TrainerDao {
     public Optional<Trainer> findByUsername(String username) {
         Validator.validateNotBlank(username, USERNAME_LABEL);
 
-        return entityManager.createQuery(FIND_BY_USERNAME_QUERY, Trainer.class).setParameter(USERNAME, username).getResultStream().findFirst();
+        return entityManager.createQuery(FIND_BY_USERNAME_QUERY, Trainer.class).setParameter(USERNAME, username).getResultList().stream().findFirst();
     }
 
     @Override
@@ -76,6 +78,7 @@ public class TrainerDaoImpl implements TrainerDao {
     }
 
     @Override
+    @Transactional
     public Trainer update(Trainer trainer) {
         Validator.validateId(trainer.getId());
 

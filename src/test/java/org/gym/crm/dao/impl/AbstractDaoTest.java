@@ -15,15 +15,11 @@ import org.springframework.test.context.support.DependencyInjectionTestExecution
 @SpringJUnitConfig(classes = {TestAppConfig.class, DbUnitConfig.class})
 @DbUnitConfiguration(databaseConnection = "dbUnitDatabaseConnection")
 public abstract class AbstractDaoTest<T> {
-    @Autowired
-    protected ApplicationContext context;
 
     protected T dao;
 
-    protected abstract Class<T> getDaoClass();
-
-    @BeforeEach
-    void initDbUnit() throws Exception {
-        dao = context.getBean(getDaoClass());
+    @Autowired
+    public void setDao(T dao) {
+        this.dao = dao;
     }
 }

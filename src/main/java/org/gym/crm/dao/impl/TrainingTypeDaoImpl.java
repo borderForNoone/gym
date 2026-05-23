@@ -7,6 +7,7 @@ import org.gym.crm.dao.TrainingTypeDao;
 import org.gym.crm.model.TrainingType;
 import org.gym.crm.util.Validator;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,6 +19,7 @@ public class TrainingTypeDaoImpl implements TrainingTypeDao {
     private EntityManager entityManager;
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<TrainingType> findByTrainingTypeName(String name) {
         Validator.validateNotBlank(name, "Training Type Name");
 

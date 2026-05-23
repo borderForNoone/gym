@@ -8,6 +8,7 @@ import org.gym.crm.model.Trainee;
 import org.gym.crm.model.Trainer;
 import org.gym.crm.util.Validator;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
@@ -56,6 +57,7 @@ public class TraineeDaoImpl implements TraineeDao {
     private EntityManager entityManager;
 
     @Override
+    @Transactional
     public Trainee save(Trainee trainee) {
         Validator.validateNotNull(trainee, TRAINEE_LABEL);
 
@@ -65,6 +67,7 @@ public class TraineeDaoImpl implements TraineeDao {
     }
 
     @Override
+    @Transactional
     public Trainee update(Trainee trainee) {
         Validator.validateId(trainee.getId());
 
@@ -72,6 +75,7 @@ public class TraineeDaoImpl implements TraineeDao {
     }
 
     @Override
+    @Transactional
     public void delete(Trainee trainee) {
         Validator.validateNotNull(trainee, "Trainee");
         Validator.validateId(trainee.getId());
@@ -82,13 +86,19 @@ public class TraineeDaoImpl implements TraineeDao {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<Trainee> findByUsername(String username) {
         Validator.validateNotBlank(username, USERNAME_LABEL);
 
-        return entityManager.createQuery(FIND_TRAINEE_BY_USERNAME_QUERY, Trainee.class).setParameter(USERNAME, username).getResultStream().findFirst();
+        return entityManager.createQuery(FIND_TRAINEE_BY_USERNAME_QUERY, Trainee.class)
+                .setParameter(USERNAME, username)
+                .getResultList()
+                .stream()
+                .findFirst();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public boolean existsByUsername(String username) {
         Validator.validateNotBlank(username, USERNAME_LABEL);
 
@@ -104,14 +114,14 @@ public class TraineeDaoImpl implements TraineeDao {
     }
 
     @Override
+    @Transactional
     public void deleteByUsername(String username) {
         Validator.validateNotBlank(username, USERNAME_LABEL);
 
-        Trainee trainee = entityManager.createQuery(
-                        "SELECT t FROM Trainee t JOIN FETCH t.user u WHERE u.username = :username",
-                        Trainee.class)
+        Trainee trainee = entityManager.createQuery("SELECT t FROM Trainee t JOIN FETCH t.user u WHERE u.username = :username", Trainee.class)
                 .setParameter(USERNAME, username)
-                .getResultStream()
+                .getResultList()
+                .stream()
                 .findFirst()
                 .orElse(null);
 
@@ -121,6 +131,7 @@ public class TraineeDaoImpl implements TraineeDao {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Trainer> findUnassignedTrainers(String traineeUsername) {
         Validator.validateNotBlank(traineeUsername, TRAINEE_USERNAME_LABEL);
 
@@ -130,15 +141,15 @@ public class TraineeDaoImpl implements TraineeDao {
     }
 
     @Override
+    @Transactional
     public void updateTrainersList(String username, List<Trainer> trainers) {
         Validator.validateNotBlank(username, USERNAME_LABEL);
         Validator.validateNotNull(trainers, "Trainers");
 
-        Trainee trainee = entityManager.createQuery(
-                        "SELECT t FROM Trainee t JOIN FETCH t.user u LEFT JOIN FETCH t.trainers WHERE u.username = :username",
-                        Trainee.class)
+        Trainee trainee = entityManager.createQuery("SELECT t FROM Trainee t JOIN FETCH t.user u LEFT JOIN FETCH t.trainers WHERE u.username = :username", Trainee.class)
                 .setParameter(USERNAME, username)
-                .getResultStream()
+                .getResultList()
+                .stream()
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Trainee not found: " + username));
 
@@ -154,6 +165,7 @@ public class TraineeDaoImpl implements TraineeDao {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Trainer> findAllByUsernames(List<String> trainerUsernames) {
         Validator.validateNotNull(trainerUsernames, "Trainer usernames");
 
