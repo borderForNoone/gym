@@ -1,0 +1,638 @@
+{
+  "info": {
+    "_postman_id": "09c2a37a-689a-49aa-9907-242d65201d5f",
+    "name": "gym-crm",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "18297092"
+  },
+  "item": [
+    {
+      "name": "User Profile",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"ricardo.milos\",\n  \"password\": \"123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Change password",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"ricardo.milos\",\n  \"oldPassword\": \"123456\",\n  \"newPassword\": \"654321\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "password"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Trainee",
+      "item": [
+        {
+          "name": "Register new trainee",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Billy\",\n  \"lastName\": \"Herrington\",\n  \"dateOfBirth\": \"2000-03-22\",\n  \"address\": \"420 Oak St\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/trainees/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "trainees",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get trainee profile",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/trainees/Billy.Herrington",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "trainees",
+                "Billy.Herrington"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update trainee profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Jason\",\n  \"lastName\": \"Statham\",\n  \"dateOfBirth\": \"1967-07-26\",\n  \"address\": \"456 Action Ave, London\",\n  \"isActive\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/trainees/Billy.Herrington",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "trainees",
+                "Billy.Herrington"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete trainee profile",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/trainees/Billy.Herrington",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "trainees",
+                "Billy.Herrington"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update trainee's trainer list",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trainerUsernames\": [\n    \"ricardo.milos\",\n    \"eren.yeager\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/trainees/Billy.Herrington/trainers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "trainees",
+                "Billy.Herrington",
+                "trainers"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get available trainers",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/trainees/Billy.Herrington/available-trainers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "trainees",
+                "Billy.Herrington",
+                "available-trainers"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Change trainee activation status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/trainees/Billy.Herrington/activation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "trainees",
+                "Billy.Herrington",
+                "activation"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get trainee's trainings",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/trainees/Billy.Herrington/trainings?username=billy.herington&fromDate=2025-07-14&toDate=2025-07-31&trainerName=Simone Radcliffe&trainingType=Cardio",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "trainees",
+                "Billy.Herrington",
+                "trainings"
+              ],
+              "query": [
+                {
+                  "key": "username",
+                  "value": "billy.herington"
+                },
+                {
+                  "key": "fromDate",
+                  "value": "2025-07-14"
+                },
+                {
+                  "key": "toDate",
+                  "value": "2025-07-31"
+                },
+                {
+                  "key": "trainerName",
+                  "value": "Simone Radcliffe"
+                },
+                {
+                  "key": "trainingType",
+                  "value": "Cardio"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Trainer",
+      "item": [
+        {
+          "name": "Register new trainer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Billy\",\n  \"lastName\": \"Herrington\",\n  \"specialization\": \"Yoga\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/trainers/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "trainers",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get trainer profile",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/trainers/Billy.Herrington",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "trainers",
+                "Billy.Herrington"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update trainer profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Ricardo\",\n  \"lastName\": \"Milos\",\n  \"specialization\": \"Yoga\",\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/trainers/Billy.Herrington",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "trainers",
+                "Billy.Herrington"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Change trainer activation status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/trainers/Billy.Herrington/activation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "trainers",
+                "Billy.Herrington",
+                "activation"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get trainer's trainings",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/trainers/Billy.Herrington/trainings?fromDate=2024-01-01&toDate=2024-01-31&traineeName=Simone Radcliffe",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "trainers",
+                "Billy.Herrington",
+                "trainings"
+              ],
+              "query": [
+                {
+                  "key": "fromDate",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "toDate",
+                  "value": "2024-01-31"
+                },
+                {
+                  "key": "traineeName",
+                  "value": "Simone Radcliffe"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Training",
+      "item": [
+        {
+          "name": "Add new training",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trainingName\": \"Morning Cardio\",\n  \"trainingDate\": \"2025-07-20\",\n  \"trainingDuration\": 55,\n  \"traineeUsername\": \"billy.herrington\",\n  \"trainerUsername\": \"ricardo.milos\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/trainings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "trainings"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get training types",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/trainings/types",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "trainings",
+                "types"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api/v1"
+    }
+  ]
+}
