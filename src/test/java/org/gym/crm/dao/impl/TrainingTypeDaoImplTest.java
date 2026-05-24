@@ -1,55 +1,114 @@
 package org.gym.crm.dao.impl;
 
-import com.github.springtestdbunit.annotation.DatabaseSetup;
 import org.gym.crm.model.TrainingType;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.query.Query;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Optional;
 
-import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
-@DatabaseSetup(value = "/dataset/training-type.xml")
-class TrainingTypeDaoImplTest extends AbstractDaoTest<TrainingTypeDaoImpl> {
-    private static final String EMPTY_STRING_EXCEPTION_MESSAGE = "%s cannot be null or empty";
+@ExtendWith(MockitoExtension.class)
+class TrainingTypeDaoImplTest {
+    @Mock
+    private SessionFactory sessionFactory;
 
-    @Test
-    void findByTrainingTypeName_shouldReturnTrainingType_whenExists() {
-        Optional<TrainingType> actual = dao.findByTrainingTypeName("Yoga");
+    @Mock
+    private Session session;
 
-        assertThat(actual).isPresent();
-        assertThat(actual.get().getTrainingTypeName()).isEqualTo("Yoga");
+    @Mock
+    @SuppressWarnings("rawtypes")
+    private Query query;
+
+    @InjectMocks
+    private TrainingTypeDaoImpl trainingTypeDao;
+
+    private void stubSession() {
+        when(sessionFactory.getCurrentSession()).thenReturn(session);
     }
 
     @Test
-    void findByTrainingTypeName_shouldReturnEmptyOptional_whenNotFound() {
-        Optional<TrainingType> actual = dao.findByTrainingTypeName("Non-Existing");
+    @SuppressWarnings("unchecked")
+    void findByTrainingTypeName_existing_returnsOptional() {
+        stubSession();
 
-        assertThat(actual).isEmpty();
+        TrainingType type = mock(TrainingType.class);
+
+        when(session.createQuery(anyString(), eq(TrainingType.class))).thenReturn(query);
+        when(query.setParameter(eq("name"), any())).thenReturn(query);
+        when(query.getResultList()).thenReturn(List.of(type));
+
+        Optional<TrainingType> result = trainingTypeDao.findByTrainingTypeName("Strength");
+
+        assertThat(result).isPresent().contains(type);
+
+        verify(session).createQuery(anyString(), eq(TrainingType.class));
+        verify(query).setParameter("name", "Strength");
     }
 
     @Test
-    void findByTrainingTypeName_shouldThrowException_whenNullOrEmpty() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> dao.findByTrainingTypeName(" "));
+    @SuppressWarnings("unchecked")
+    void findByTrainingTypeName_notFound_returnsEmpty() {
+        stubSession();
 
-        assertThat(exception.getMessage()).isEqualTo(format(EMPTY_STRING_EXCEPTION_MESSAGE, "Training Type Name"));
-    }
+        when(session.createQuery(anyString(), eq(TrainingType.class))).thenReturn(query);
+        when(query.setParameter(eq("name"), any())).thenReturn(query);
+        when(query.getResultList()).thenReturn(List.of());
 
-    @Override
-    protected Class<TrainingTypeDaoImpl> getDaoClass() {
-        return TrainingTypeDaoImpl.class;
+        Optional<TrainingType> result = trainingTypeDao.findByTrainingTypeName("Unknown");
+
+        assertThat(result).isEmpty();
     }
 
     @Test
-    void findAll_shouldReturnAllTrainingTypes() {
-        List<TrainingType> result = dao.findAll();
+    void findByTrainingTypeName_blank_throwsException() {
+        assertThatThrownBy(() -> trainingTypeDao.findByTrainingTypeName(" ")).isInstanceOf(IllegalArgumentException.class);
 
-        assertThat(result).hasSize(3);
-        assertThat(result)
-                .extracting(TrainingType::getTrainingTypeName)
-                .containsExactlyInAnyOrder("Yoga", "Pilates", "Cardio");
+        verifyNoInteractions(sessionFactory, session);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void findAll_returnsList() {
+        stubSession();
+
+        TrainingType type1 = mock(TrainingType.class);
+        TrainingType type2 = mock(TrainingType.class);
+
+        when(session.createQuery(anyString(), eq(TrainingType.class))).thenReturn(query);
+        when(query.getResultList()).thenReturn(List.of(type1, type2));
+
+        List<TrainingType> result = trainingTypeDao.findAll();
+
+        assertThat(result).containsExactly(type1, type2);
+        verify(session).createQuery("FROM TrainingType", TrainingType.class);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void findAll_empty_returnsEmptyList() {
+        stubSession();
+
+        when(session.createQuery(anyString(), eq(TrainingType.class))).thenReturn(query);
+        when(query.getResultList()).thenReturn(List.of());
+
+        List<TrainingType> result = trainingTypeDao.findAll();
+
+        assertThat(result).isEmpty();
     }
 }

@@ -13,21 +13,16 @@ spring:
       ddl-auto: validate
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
+        dialect: org.hibernate.dialect.MySQLDialect
 
   liquibase:
-    changelog:
-      master: classpath:db/migration/master.xml
+    change-log: classpath:db/migration/master.xml
 
-  storage:
-    data:
-      trainees: src/main/resources/data/trainees.csv
-      trainers: src/main/resources/data/trainers.csv
-      trainings: src/main/resources/data/trainings.csv
-
-server:
-  servlet:
-    context-path: /gym-crm
+db:
+  driver: com.mysql.cj.jdbc.Driver
+  url: ${DB_URL}
+  username: ${DB_USERNAME}
+  password: ${DB_PASSWORD}
 
 app:
   api:

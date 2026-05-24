@@ -3,6 +3,7 @@ package org.gym.crm.service.impl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.gym.crm.config.TransactionManager;
 import org.gym.crm.dao.TraineeDao;
 import org.gym.crm.dao.TrainerDao;
 import org.gym.crm.dto.PasswordChangeRequest;
@@ -42,6 +43,7 @@ public class UserProfileServiceImpl implements UserProfileService {
     private final CoreValidator validator;
     private final UserInputValidator userInputValidator;
     private final PasswordEncoder passwordEncoder;
+    private final TransactionManager transactionManager;
 
     @Override
     public String generateUsername(String firstName, String lastName) {
@@ -91,22 +93,18 @@ public class UserProfileServiceImpl implements UserProfileService {
         validator.validate(request, "Password change request");
 
         String username = request.getUsername();
-
         log.info("Changing password for user: username={}", username);
 
-        User user = traineeDao.findByUsername(username)
-                .<User>map(Trainee::getUser)
-                .or(() -> trainerDao.findByUsername(username).map(Trainer::getUser))
-                .orElseThrow(() ->
-                        new EntityNotFoundException(format(USER_NOT_FOUND_BY_USERNAME, username)));
+        transactionManager.performWithinTx(session -> {
+            User user = traineeDao.findByUsername(username).<User>map(Trainee::getUser).or(() -> trainerDao.findByUsername(username).map(Trainer::getUser))
+                    .orElseThrow(() -> new EntityNotFoundException(format(USER_NOT_FOUND_BY_USERNAME, username)));
 
-        if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
-            throw new BadCredentialsException("Old password is incorrect");
-        }
+            if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+                throw new BadCredentialsException("Old password is incorrect");
+            }
 
-        String encodedPassword = passwordEncoder.encode(request.getNewPassword());
-
-        updatePassword(username, encodedPassword);
+            updatePassword(username, passwordEncoder.encode(request.getNewPassword()));
+        });
 
         log.info("Changed password for user: username={}", username);
     }
@@ -138,31 +136,25 @@ public class UserProfileServiceImpl implements UserProfileService {
 
         String username = request.getUsername();
 
-        if (isTrainee(username)) {
-            Trainee trainee = traineeDao.findByUsername(username)
-                    .orElseThrow(() -> new EntityNotFoundException(format(USER_NOT_FOUND_BY_USERNAME, username)));
+        transactionManager.performWithinTx(session -> {
+            if (isTrainee(username)) {
+                Trainee trainee = traineeDao.findByUsername(username).orElseThrow(() -> new EntityNotFoundException(format(USER_NOT_FOUND_BY_USERNAME, username)));
 
-            boolean currentStatus = trainee.getUser().getIsActive();
-            traineeDao.update(trainee.toBuilder()
-                    .user(trainee.getUser().toBuilder().isActive(!currentStatus).build())
-                    .build());
+                boolean currentStatus = trainee.getUser().getIsActive();
+                traineeDao.update(trainee.toBuilder().user(trainee.getUser().toBuilder().isActive(!currentStatus).build()).build());
 
-            log.info("Trainee {}: username={}", currentStatus ? "deactivated" : "activated", username);
+                log.info("Trainee {}: username={}", currentStatus ? "deactivated" : "activated", username);
+            } else if (isTrainer(username)) {
+                Trainer trainer = trainerDao.findByUsername(username).orElseThrow(() -> new EntityNotFoundException(format(USER_NOT_FOUND_BY_USERNAME, username)));
 
-        } else if (isTrainer(username)) {
-            Trainer trainer = trainerDao.findByUsername(username)
-                    .orElseThrow(() -> new EntityNotFoundException(format(USER_NOT_FOUND_BY_USERNAME, username)));
+                boolean currentStatus = trainer.getUser().getIsActive();
+                trainerDao.update(trainer.toBuilder().user(trainer.getUser().toBuilder().isActive(!currentStatus).build()).build());
 
-            boolean currentStatus = trainer.getUser().getIsActive();
-            trainerDao.update(trainer.toBuilder()
-                    .user(trainer.getUser().toBuilder().isActive(!currentStatus).build())
-                    .build());
-
-            log.info("Trainer {}: username={}", currentStatus ? "deactivated" : "activated", username);
-
-        } else {
-            throw new EntityNotFoundException(format(USER_NOT_FOUND_BY_USERNAME, username));
-        }
+                log.info("Trainer {}: username={}", currentStatus ? "deactivated" : "activated", username);
+            } else {
+                throw new EntityNotFoundException(format(USER_NOT_FOUND_BY_USERNAME, username));
+            }
+        });
     }
 
     private void updatePassword(String username, String encodedPassword) {
@@ -174,35 +166,27 @@ public class UserProfileServiceImpl implements UserProfileService {
     }
 
     private void updateTraineePassword(String username, String encodedPassword) {
-        Trainee trainee = traineeDao.findByUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException(format(USER_NOT_FOUND_BY_USERNAME, username)));
+        Trainee trainee = traineeDao.findByUsername(username).orElseThrow(() -> new EntityNotFoundException(format(USER_NOT_FOUND_BY_USERNAME, username)));
 
         traineeDao.update(withNewPassword(trainee, encodedPassword));
     }
 
     private void updateTrainerPassword(String username, String encodedPassword) {
-        Trainer trainer = trainerDao.findByUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException(format(USER_NOT_FOUND_BY_USERNAME, username)));
+        Trainer trainer = trainerDao.findByUsername(username).orElseThrow(() -> new EntityNotFoundException(format(USER_NOT_FOUND_BY_USERNAME, username)));
 
         trainerDao.update(withNewPassword(trainer, encodedPassword));
     }
 
     private Trainee withNewPassword(Trainee trainee, String encodedPassword) {
-        return trainee.toBuilder()
-                .user(buildUserWithNewPassword(trainee.getUser(), encodedPassword))
-                .build();
+        return trainee.toBuilder().user(buildUserWithNewPassword(trainee.getUser(), encodedPassword)).build();
     }
 
     private Trainer withNewPassword(Trainer trainer, String encodedPassword) {
-        return trainer.toBuilder()
-                .user(buildUserWithNewPassword(trainer.getUser(), encodedPassword))
-                .build();
+        return trainer.toBuilder().user(buildUserWithNewPassword(trainer.getUser(), encodedPassword)).build();
     }
 
     private User buildUserWithNewPassword(User user, String encodedPassword) {
-        return user.toBuilder()
-                .password(encodedPassword)
-                .build();
+        return user.toBuilder().password(encodedPassword).build();
     }
 
     private boolean isUsernameTaken(String username) {

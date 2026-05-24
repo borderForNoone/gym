@@ -1,5 +1,8 @@
 package org.gym.crm.config;
 
+import jakarta.servlet.FilterRegistration;
+import jakarta.servlet.ServletContext;
+import org.gym.crm.filter.TransactionLoggingFilter;
 import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
 
 public class AppInitializer extends AbstractAnnotationConfigDispatcherServletInitializer {
@@ -16,5 +19,13 @@ public class AppInitializer extends AbstractAnnotationConfigDispatcherServletIni
     @Override
     protected String[] getServletMappings() {
         return new String[]{"/"};
+    }
+
+    @Override
+    protected void registerContextLoaderListener(ServletContext servletContext) {
+        super.registerContextLoaderListener(servletContext);
+
+        FilterRegistration.Dynamic loggingFilter = servletContext.addFilter("transactionLoggingFilter", new TransactionLoggingFilter());
+        loggingFilter.addMappingForUrlPatterns(null, false, "/*");
     }
 }

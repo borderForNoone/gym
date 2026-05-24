@@ -1,5 +1,7 @@
 package org.gym.crm.config;
 
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -11,7 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
 @ComponentScan(
-        basePackages = "com.gym.crm",
+        basePackages = "org.gym.crm",
         excludeFilters = @ComponentScan.Filter(
                 type = FilterType.ASSIGNABLE_TYPE,
                 classes = WebConfig.class
@@ -27,5 +29,10 @@ public class AppConfig {
     @Bean
     public static PropertySourcesPlaceholderConfigurer propertyConfigurer() {
         return new PropertySourcesPlaceholderConfigurer();
+    }
+
+    @Bean
+    public Validator validator() {
+        return Validation.buildDefaultValidatorFactory().getValidator();
     }
 }
