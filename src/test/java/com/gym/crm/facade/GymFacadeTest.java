@@ -413,7 +413,7 @@ public class GymFacadeTest {
     void changePassword_shouldDelegateToUserProfileService() {
         LoginChangeRequest request = new LoginChangeRequest(USERNAME, OLD_PASSWORD, NEW_PASSWORD);
 
-        facade.changePassword(request, USERNAME);
+        facade.changePassword(request);
 
         verify(userProfileService).changePassword(PasswordChangeRequest.builder().username(USERNAME).oldPassword(OLD_PASSWORD).newPassword(NEW_PASSWORD).build());
     }
@@ -423,7 +423,7 @@ public class GymFacadeTest {
         LoginChangeRequest request = new LoginChangeRequest(USERNAME, OLD_PASSWORD, NEW_PASSWORD);
         InOrder inOrder = inOrder(userProfileService);
 
-        facade.changePassword(request, USERNAME);
+        facade.changePassword(request);
 
         inOrder.verify(userProfileService).changePassword(any(PasswordChangeRequest.class));
     }

@@ -67,7 +67,7 @@ public class AuthController {
     })
     @PutMapping("/password")
     public ResponseEntity<Void> changePassword(@RequestBody LoginChangeRequest request) {
-        facade.changePassword(request, request.getUsername());
+        facade.changePassword(request);
 
         return ResponseEntity.ok().build();
     }
