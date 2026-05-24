@@ -1,5 +1,6 @@
 package com.gym.crm.controller;
 
+import com.gym.crm.facade.GymFacade;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -7,10 +8,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import com.gym.crm.dto.TrainingRequestDTO;
-import com.gym.crm.facade.GymFacade;
 import org.gym.crm.rest.ErrorResponse;
 import org.gym.crm.rest.TrainingCreateRequest;
 import org.gym.crm.rest.TrainingTypeResponse;

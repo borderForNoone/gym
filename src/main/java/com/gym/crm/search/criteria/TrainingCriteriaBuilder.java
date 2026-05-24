@@ -70,12 +70,4 @@ public abstract class TrainingCriteriaBuilder {
 
         predicates.add(criteriaBuilder.equal(concatenated, fullName.trim().toLowerCase()));
     }
-
-    private Optional<Predicate> likePredicate(CriteriaBuilder criteriaBuilder, Expression<String> field, String value) {
-        if (value == null || value.isBlank()) {
-            return Optional.empty();
-        }
-
-        return Optional.of(criteriaBuilder.like(criteriaBuilder.lower(field), "%" + value.toLowerCase() + "%"));
-    }
 }
