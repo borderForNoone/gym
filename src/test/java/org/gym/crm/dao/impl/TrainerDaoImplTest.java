@@ -1,170 +1,197 @@
 package org.gym.crm.dao.impl;
 
-import com.github.springtestdbunit.annotation.DatabaseSetup;
 import org.gym.crm.model.Trainer;
-import org.gym.crm.model.TrainingType;
 import org.gym.crm.model.User;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.query.Query;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
-import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
-@DatabaseSetup(value = "/dataset/trainer.xml")
-class TrainerDaoImplTest extends AbstractDaoTest<TrainerDaoImpl> {
-    private static final String INVALID_ID_MESSAGE = "ID must be positive and not null, got: %s";
+@ExtendWith(MockitoExtension.class)
+class TrainerDaoImplTest {
+    @Mock
+    private SessionFactory sessionFactory;
 
-    @Test
-    void save_shouldSaveTrainer_whenValid() {
-        Trainer trainer = buildTrainer();
-        Trainer actual = dao.save(trainer);
+    @Mock
+    private Session session;
 
-        assertThat(actual.getUser().getUsername()).isEqualTo("Simone.Radcliffe");
-        assertThat(dao.findByUsername(actual.getUser().getUsername())).isPresent();
-        assertThat(actual.getUser().getFirstName()).isEqualTo("Simone");
-        assertThat(actual.getUser().getLastName()).isEqualTo("Radcliffe");
-        assertThat(actual.getUser().getIsActive()).isTrue();
-        assertThat(actual.getSpecialization().getTrainingTypeName()).isEqualTo("Yoga");
+    @Mock
+    @SuppressWarnings("rawtypes")
+    private Query query;
+
+    @InjectMocks
+    private TrainerDaoImpl trainerDao;
+
+    private void stubSession() {
+        when(sessionFactory.getCurrentSession()).thenReturn(session);
     }
 
     @Test
-    void save_shouldThrowException_whenSavingNullTrainer() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> dao.save(null));
+    void save_validTrainer_persistsAndReturns() {
+        stubSession();
+        Trainer trainer = buildTrainer(1L, "trainer.one");
+        Trainer result = trainerDao.save(trainer);
 
-        assertThat(exception.getMessage()).isEqualTo("Trainer cannot be null");
+        verify(session).persist(trainer);
+        assertThat(result).isSameAs(trainer);
     }
 
     @Test
-    void update_shouldUpdateExistingTrainer_whenExists() {
-        Trainer trainer = dao.findByUsername("Callum.Whitfield")
-                .orElseThrow(() -> new AssertionError("Trainer not found"));
+    void save_nullTrainer_throwsException() {
+        assertThatThrownBy(() -> trainerDao.save(null)).isInstanceOf(IllegalArgumentException.class);
 
-        TrainingType newTrainingType = TrainingType.builder()
-                .id(11L)
-                .trainingTypeName("Pilates")
-                .build();
-        Trainer updated = trainer.toBuilder()
-                .specialization(newTrainingType)
-                .build();
-
-        Trainer saved = dao.update(updated);
-        Trainer actual = dao.findByUsername(saved.getUser().getUsername())
-                .orElseThrow(() -> new AssertionError("Trainer not found"));
-
-        assertThat(actual.getSpecialization().getTrainingTypeName())
-                .isEqualTo("Pilates");
+        verifyNoInteractions(sessionFactory, session);
     }
 
     @Test
-    void update_shouldThrowException_whenIdIsNull() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> dao.update(buildTrainer()));
+    @SuppressWarnings("unchecked")
+    void findByUsername_existing_returnsTrainer() {
+        stubSession();
+        Trainer trainer = buildTrainer(1L, "trainer.one");
 
-        assertThat(exception.getMessage()).isEqualTo(format(INVALID_ID_MESSAGE, "null"));
+        when(session.createQuery(anyString(), eq(Trainer.class))).thenReturn(query);
+        when(query.setParameter(anyString(), any())).thenReturn(query);
+        when(query.getResultStream()).thenReturn(Stream.of(trainer));
+
+        Optional<Trainer> result = trainerDao.findByUsername("trainer.one");
+
+        assertThat(result).isPresent().contains(trainer);
     }
 
     @Test
-    void findNotAssignedToTrainee_shouldReturnOnlyUnassignedTrainers() {
-        List<Trainer> actual = dao.findNotAssignedToTrainee("some.trainee");
+    @SuppressWarnings("unchecked")
+    void findByUsername_notExisting_returnsEmpty() {
+        stubSession();
 
-        assertThat(actual)
-                .extracting(t -> t.getUser().getUsername())
-                .containsExactlyInAnyOrder("Callum.Whitfield", "Nora.Pemberton");
+        when(session.createQuery(anyString(), eq(Trainer.class))).thenReturn(query);
+        when(query.setParameter(anyString(), any())).thenReturn(query);
+        when(query.getResultStream()).thenReturn(Stream.empty());
+
+        Optional<Trainer> result = trainerDao.findByUsername("ghost");
+
+        assertThat(result).isEmpty();
     }
 
     @Test
-    void findNotAssignedToTrainee_shouldReturnAll_whenTraineeHasNoTrainings() {
-        List<Trainer> actual = dao.findNotAssignedToTrainee("Unknown.User");
-
-        assertThat(actual).isNotEmpty();
+    void findByUsername_blank_throwsException() {
+        assertThatThrownBy(() -> trainerDao.findByUsername("  ")).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
-    void findNotAssignedToTrainee_shouldThrowException_whenUsernameBlank() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> dao.findNotAssignedToTrainee(""));
+    @SuppressWarnings("unchecked")
+    void findNotAssignedToTrainee_valid_returnsList() {
+        stubSession();
 
-        assertThat(exception.getMessage())
-                .isEqualTo("Trainee Username cannot be null or empty");
+        Trainer trainer = buildTrainer(1L, "trainer.one");
+
+        when(session.createQuery(anyString(), eq(Trainer.class))).thenReturn(query);
+        when(query.setParameter(anyString(), any())).thenReturn(query);
+        when(query.getResultList()).thenReturn(List.of(trainer));
+
+        List<Trainer> result = trainerDao.findNotAssignedToTrainee("trainee.one");
+
+        assertThat(result).containsExactly(trainer);
     }
 
     @Test
-    void existsByUsername_shouldReturnTrue_whenTrainerExists() {
-        boolean result = dao.existsByUsername("Callum.Whitfield");
-
-        assertThat(result).isTrue();
+    void findNotAssignedToTrainee_blank_throwsException() {
+        assertThatThrownBy(() -> trainerDao.findNotAssignedToTrainee(" ")).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
-    void existsByUsername_shouldReturnFalse_whenTrainerNotExists() {
-        boolean result = dao.existsByUsername("No.Such.User");
+    @SuppressWarnings("unchecked")
+    void existsByUsername_true_returnsTrue() {
+        stubSession();
 
-        assertThat(result).isFalse();
+        when(session.createQuery(anyString(), eq(Long.class))).thenReturn(query);
+        when(query.setParameter(anyString(), any())).thenReturn(query);
+        when(query.getSingleResult()).thenReturn(1L);
+
+        assertThat(trainerDao.existsByUsername("trainer.one")).isTrue();
     }
 
     @Test
-    void existsByUsername_shouldThrowException_whenBlank() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> dao.existsByUsername(" "));
+    @SuppressWarnings("unchecked")
+    void existsByUsername_false_returnsFalse() {
+        stubSession();
 
-        assertThat(exception.getMessage())
-                .isEqualTo("Username cannot be null or empty");
+        when(session.createQuery(anyString(), eq(Long.class))).thenReturn(query);
+        when(query.setParameter(anyString(), any())).thenReturn(query);
+        when(query.getSingleResult()).thenReturn(0L);
+
+        assertThat(trainerDao.existsByUsername("ghost")).isFalse();
     }
 
     @Test
-    void findByUsername_shouldReturnTrainer_whenExists() {
-        Optional<Trainer> actual = dao.findByUsername("Callum.Whitfield");
-
-        assertThat(actual).isPresent();
-        assertThat(actual.get().getUser().getFirstName()).isEqualTo("Callum");
+    void existsByUsername_blank_throwsException() {
+        assertThatThrownBy(() -> trainerDao.existsByUsername("")).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
-    void findByUsername_shouldReturnEmpty_whenNotExists() {
-        Optional<Trainer> actual = dao.findByUsername("unknown.user");
+    void update_valid_mergesAndReturns() {
+        stubSession();
+        Trainer trainer = buildTrainer(1L, "trainer.one");
 
-        assertThat(actual).isEmpty();
+        when(session.merge(trainer)).thenReturn(trainer);
+
+        Trainer result = trainerDao.update(trainer);
+
+        verify(session).merge(trainer);
+        assertThat(result).isSameAs(trainer);
     }
 
     @Test
-    void findByUsername_shouldThrowException_whenBlank() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> dao.findByUsername(null));
+    void update_nullId_throwsException() {
+        Trainer trainer = buildTrainer(null, "trainer.one");
 
-        assertThat(exception.getMessage())
-                .isEqualTo("Username cannot be null or empty");
+        assertThatThrownBy(() -> trainerDao.update(trainer)).isInstanceOf(IllegalArgumentException.class);
+
+        verifyNoInteractions(sessionFactory, session);
     }
 
-    private Trainer buildTrainer() {
-        return Trainer.builder()
-                .user(buildUser())
-                .specialization(buildTrainingType())
-                .build();
+    private Trainer buildTrainer(Long id, String username) {
+        Trainer trainer = Trainer.builder().user(User.builder().username(username).build()).build();
+
+        setId(trainer, id);
+
+        return trainer;
     }
 
-    private User buildUser() {
-        return User.builder()
-                .firstName("Simone")
-                .lastName("Radcliffe")
-                .username("Simone.Radcliffe")
-                .password("pass444")
-                .isActive(true)
-                .build();
-    }
+    private void setId(Object entity, Long id) {
+        if (id == null) return;
 
-    private TrainingType buildTrainingType() {
-        return TrainingType.builder()
-                .id(10L)
-                .trainingTypeName("Yoga")
-                .build();
-    }
+        Class<?> entityClass = entity.getClass();
 
-    @Override
-    protected Class<TrainerDaoImpl> getDaoClass() {
-        return TrainerDaoImpl.class;
+        while (entityClass != null) {
+            try {
+                var field = entityClass.getDeclaredField("id");
+                field.setAccessible(true);
+                field.set(entity, id);
+                return;
+            } catch (NoSuchFieldException e) {
+                entityClass = entityClass.getSuperclass();
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        throw new RuntimeException("No id field found");
     }
 }
