@@ -101,14 +101,7 @@ public class TraineeServiceImplTest {
     void setUp() {
         trainee = buildTrainee();
 
-        savedTrainee = trainee.toBuilder()
-                .id(VALID_ID)
-                .user(trainee.getUser().toBuilder()
-                        .id(VALID_ID)
-                        .username(USERNAME)
-                        .password(ENCODED_PASSWORD)
-                        .isActive(true)
-                        .build())
+        savedTrainee = trainee.toBuilder().id(VALID_ID).user(trainee.getUser().toBuilder().id(VALID_ID).username(USERNAME).password(ENCODED_PASSWORD).isActive(true).build())
                 .build();
 
         Logger logger = (Logger) LoggerFactory.getLogger(TraineeServiceImpl.class);
@@ -224,9 +217,7 @@ public class TraineeServiceImplTest {
 
     @Test
     void updateTrainee_shouldUpdateTrainee_whenTraineeExists() {
-        Trainee updatedData = savedTrainee.toBuilder()
-                .address("new address")
-                .build();
+        Trainee updatedData = savedTrainee.toBuilder().address("new address").build();
 
         when(dao.findByUsername(USERNAME)).thenReturn(Optional.of(savedTrainee));
         when(dao.save(any(Trainee.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -239,9 +230,7 @@ public class TraineeServiceImplTest {
 
     @Test
     void updateTrainee_shouldThrowException_whenTraineeNotFound() {
-        Trainee updatedData = savedTrainee.toBuilder()
-                .address("new address")
-                .build();
+        Trainee updatedData = savedTrainee.toBuilder().address("new address").build();
 
         when(dao.findByUsername(USERNAME)).thenReturn(Optional.empty());
 

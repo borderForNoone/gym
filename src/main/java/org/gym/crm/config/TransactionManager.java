@@ -18,15 +18,12 @@ public class TransactionManager {
         Transaction transaction = null;
 
         try (Session session = sessionFactory.openSession()) {
-
             transaction = session.beginTransaction();
 
             action.accept(session);
 
             transaction.commit();
-
         } catch (Exception e) {
-
             if (transaction != null) {
                 transaction.rollback();
             }
@@ -39,7 +36,6 @@ public class TransactionManager {
         Transaction transaction = null;
 
         try (Session session = sessionFactory.openSession()) {
-
             transaction = session.beginTransaction();
 
             T result = action.apply(session);
@@ -47,9 +43,7 @@ public class TransactionManager {
             transaction.commit();
 
             return result;
-
         } catch (Exception e) {
-
             if (transaction != null) {
                 transaction.rollback();
             }

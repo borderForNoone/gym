@@ -143,11 +143,7 @@ public class GymFacadeTest {
 
     @Test
     void createTrainee_shouldSaveAndReturnResponseDTO() {
-        Trainee saved = trainee.toBuilder()
-                .id(VALID_ID)
-                .user(trainee.getUser().toBuilder()
-                        .id(VALID_ID).username(USERNAME).password(PASSWORD).isActive(true).build())
-                .build();
+        Trainee saved = trainee.toBuilder().id(VALID_ID).user(trainee.getUser().toBuilder().id(VALID_ID).username(USERNAME).password(PASSWORD).isActive(true).build()).build();
 
         when(traineeMapper.toEntity(traineeRequestDTO)).thenReturn(trainee);
         when(traineeService.create(trainee)).thenReturn(saved);

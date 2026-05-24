@@ -157,7 +157,6 @@
             <version>2.3.0</version>
         </dependency>
 
-
         <!-- Aspectj -->
         <dependency>
             <groupId>org.aspectj</groupId>
@@ -390,7 +389,6 @@
                 <artifactId>sonar-maven-plugin</artifactId>
                 <version>3.11.0.3922</version>
             </plugin>
-
             <plugin>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-maven-plugin</artifactId>

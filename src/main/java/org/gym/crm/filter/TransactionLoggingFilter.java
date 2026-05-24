@@ -13,6 +13,7 @@ import org.springframework.web.util.ContentCachingRequestWrapper;
 import org.springframework.web.util.ContentCachingResponseWrapper;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.UUID;
 
 @Slf4j
@@ -25,12 +26,8 @@ public class TransactionLoggingFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        String transactionId = request.getHeader(TRANSACTION_ID_HEADER);
-        if (transactionId == null || transactionId.isBlank()) {
-            transactionId = UUID.randomUUID().toString();
-        }
+        String transactionId = resolveTransactionId(request, response);
         MDC.put(MDC_TRANSACTION_ID_KEY, transactionId);
-        response.setHeader(TRANSACTION_ID_HEADER, transactionId);
 
         ContentCachingRequestWrapper wrappedRequest = new ContentCachingRequestWrapper(request, MAX_PAYLOAD_SIZE);
         ContentCachingResponseWrapper wrappedResponse = new ContentCachingResponseWrapper(response);
@@ -38,27 +35,41 @@ public class TransactionLoggingFilter extends OncePerRequestFilter {
         long startTime = System.currentTimeMillis();
 
         try {
-            String authHeader = request.getHeader("Authorization");
-            log.info(">>> [{} {}] ip={} auth={} txId={}", request.getMethod(), request.getRequestURI(), request.getRemoteAddr(),
-                    SensitiveDataMasker.maskAuthHeader(authHeader),
-                    transactionId);
-
+            logIncomingRequest(request, transactionId);
             filterChain.doFilter(wrappedRequest, wrappedResponse);
-
-            long duration = System.currentTimeMillis() - startTime;
-            int status = wrappedResponse.getStatus();
-
-            if (status >= 400) {
-                String rawBody = new String(
-                        wrappedResponse.getContentAsByteArray(),
-                        wrappedResponse.getCharacterEncoding());
-                log.warn("<<< [{} {}] status={} duration={}ms body={}", request.getMethod(), request.getRequestURI(), status, duration, SensitiveDataMasker.maskBody(rawBody));
-            } else {
-                log.info("<<< [{} {}] status={} duration={}ms", request.getMethod(), request.getRequestURI(), status, duration);
-            }
+            logOutgoingResponse(request, wrappedResponse, System.currentTimeMillis() - startTime);
         } finally {
             wrappedResponse.copyBodyToResponse();
             MDC.remove(MDC_TRANSACTION_ID_KEY);
+        }
+    }
+
+    private String resolveTransactionId(HttpServletRequest request, HttpServletResponse response) {
+        String transactionId = request.getHeader(TRANSACTION_ID_HEADER);
+        if (transactionId == null || transactionId.isBlank()) {
+            transactionId = UUID.randomUUID().toString();
+        }
+
+        response.setHeader(TRANSACTION_ID_HEADER, transactionId);
+
+        return transactionId;
+    }
+
+    private void logIncomingRequest(HttpServletRequest request, String transactionId) {
+        String authHeader = request.getHeader("Authorization");
+        log.info(">>> [{} {}] ip={} auth={} txId={}", request.getMethod(), request.getRequestURI(), request.getRemoteAddr(),
+                SensitiveDataMasker.maskAuthHeader(authHeader),
+                transactionId);
+    }
+
+    private void logOutgoingResponse(HttpServletRequest request, ContentCachingResponseWrapper wrappedResponse, long duration) {
+        int status = wrappedResponse.getStatus();
+
+        if (status >= 400) {
+            String rawBody = new String(wrappedResponse.getContentAsByteArray(), Charset.forName(wrappedResponse.getCharacterEncoding()));
+            log.warn("<<< [{} {}] status={} duration={}ms body={}", request.getMethod(), request.getRequestURI(), status, duration, SensitiveDataMasker.maskBody(rawBody));
+        } else {
+            log.info("<<< [{} {}] status={} duration={}ms", request.getMethod(), request.getRequestURI(), status, duration);
         }
     }
 }

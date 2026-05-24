@@ -21,12 +21,10 @@ public class HibernateConfig {
     @Bean
     public LocalSessionFactoryBean sessionFactory(DataSource dataSource) {
         LocalSessionFactoryBean factory = new LocalSessionFactoryBean();
-
         factory.setDataSource(dataSource);
         factory.setPackagesToScan("org.gym.crm.model");
 
         Properties props = new Properties();
-
         props.put("hibernate.dialect", dialect);
         props.put("hibernate.show_sql", true);
         props.put("hibernate.format_sql", true);

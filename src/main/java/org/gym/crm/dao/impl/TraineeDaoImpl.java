@@ -55,6 +55,7 @@ public class TraineeDaoImpl implements TraineeDao {
         Validator.validateNotNull(trainee, TRAINEE_LABEL);
 
         session().persist(trainee);
+
         return trainee;
     }
 
@@ -141,7 +142,7 @@ public class TraineeDaoImpl implements TraineeDao {
                 .orElseThrow(() -> new IllegalArgumentException("Trainee not found: " + username));
 
         List<Trainer> managedTrainers = trainers.stream()
-                .map(tr -> session.find(Trainer.class, tr.getId()))
+                .map(trainer -> session.find(Trainer.class, trainer.getId()))
                 .filter(Objects::nonNull)
                 .toList();
 
