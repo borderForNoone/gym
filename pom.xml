@@ -5,7 +5,7 @@
     <version>0.0.1-SNAPSHOT</version>
     <packaging>war</packaging>
 
-    <groupId>org.gym.crm</groupId>
+    <groupId>com.gym.crm</groupId>
     <artifactId>gym-crm</artifactId>
 
     <properties>
@@ -20,7 +20,7 @@
         <slf4j.version>2.0.16</slf4j.version>
         <sonar.coverage.exclusions>**/config/**</sonar.coverage.exclusions>
         <sonar.exclusions>**/config/**</sonar.exclusions>
-        <junit.version>6.0.3</junit.version>
+        <junit.version>5.10.1</junit.version>
         <lombok.version>1.18.30</lombok.version>
     </properties>
 
