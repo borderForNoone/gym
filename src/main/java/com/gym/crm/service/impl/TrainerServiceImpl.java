@@ -1,13 +1,6 @@
 package com.gym.crm.service.impl;
 
 import com.gym.crm.dto.CreatedTrainer;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import com.gym.crm.config.TransactionManager;
-import com.gym.crm.dao.TrainerDao;
-import com.gym.crm.dao.TrainingTypeDao;
 import com.gym.crm.dto.TrainerInfoDTO;
 import com.gym.crm.dto.TrainerRequestDTO;
 import com.gym.crm.dto.TrainerResponseDTO;
@@ -19,20 +12,30 @@ import com.gym.crm.model.Trainer;
 import com.gym.crm.model.Training;
 import com.gym.crm.model.TrainingType;
 import com.gym.crm.model.User;
+import com.gym.crm.repository.TraineeRepository;
+import com.gym.crm.repository.TrainerRepository;
+import com.gym.crm.repository.TrainingTypeRepository;
 import com.gym.crm.search.criteria.TrainerTrainingCriteriaBuilder;
 import com.gym.crm.search.filter.TrainerTrainingFilter;
 import com.gym.crm.service.TrainerService;
 import com.gym.crm.service.UserProfileService;
 import com.gym.crm.service.common.UserInputValidator;
 import com.gym.crm.util.CoreValidator;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.naming.AuthenticationException;
 import java.util.List;
 
-import static java.lang.String.format;
 import static com.gym.crm.model.FieldName.TRAINER;
+import static java.lang.String.format;
 
 @Slf4j
 @Service
@@ -46,149 +49,133 @@ public class TrainerServiceImpl implements TrainerService {
     private static final String TRAINING_TYPE_NOT_FOUND_BY_NAME = "Training type not found by name: %s";
     private static final String TRAINER_NOT_FOUND_BY_USERNAME = "Trainer not found by username: %s";
 
-    private final TrainerDao trainerDao;
-    private final TrainingTypeDao trainingTypeDAO;
+    private final TraineeRepository traineeRepository;
+    private final TrainerRepository trainerRepository;
     private final UserProfileService userProfileService;
     private final TrainerTrainingCriteriaBuilder criteriaBuilder;
     private final CoreValidator validator;
     private final UserInputValidator userInputValidator;
     private final PasswordEncoder passwordEncoder;
     private final TrainerMapper mapper;
-    private final TransactionManager transactionManager;
+    private final TrainingTypeRepository trainingTypeRepository;
 
+    @PersistenceContext
+    private EntityManager entityManager;
+
+
+    @Transactional
     @Override
     public CreatedTrainer createTrainer(TrainerRequestDTO request) {
         userInputValidator.validate(request, TRAINER.name());
+
         log.info("Creating trainer: firstName={} lastName={}", request.getFirstName(), request.getLastName());
 
-        return transactionManager.performReturningWithinTx(session -> {
-            Trainer trainer = mapper.toEntity(request);
-            String username = userProfileService.generateUsername(request.getFirstName(), request.getLastName());
-            String rawPassword = userProfileService.generatePassword();
+        Trainer trainer = mapper.toEntity(request);
 
-            TrainingType trainingType = trainingTypeDAO.findByTrainingTypeName(request.getSpecialization())
-                    .orElseThrow(() -> new EntityNotFoundException(String.format(TRAINING_TYPE_NOT_FOUND_BY_NAME, request.getSpecialization())));
+        String username = userProfileService.generateUsername(request.getFirstName(), request.getLastName());
+        String rawPassword = userProfileService.generatePassword();
 
-            User user = trainer.getUser().toBuilder().username(username).password(passwordEncoder.encode(rawPassword)).isActive(true).build();
-            Trainer withCredentials = trainer.toBuilder().user(user).specialization(trainingType).build();
-            Trainer saved = trainerDao.save(withCredentials);
+        TrainingType trainingType = trainingTypeRepository.findByTrainingTypeName(request.getSpecialization())
+                .orElseThrow(() -> new EntityNotFoundException(String.format(TRAINING_TYPE_NOT_FOUND_BY_NAME, request.getSpecialization())));
 
-            log.info("Trainer created successfully: username={}", saved.getUser().getUsername());
-            return new CreatedTrainer(saved, rawPassword);
-        });
+        User user = trainer.getUser().toBuilder().username(username).password(passwordEncoder.encode(rawPassword)).isActive(true).build();
+
+        Trainer saved = trainerRepository.save(trainer.toBuilder().user(user).specialization(trainingType).build());
+
+        return new CreatedTrainer(saved, rawPassword);
     }
 
+    @Transactional
     @Override
     public TrainerResponseDTO updateTrainer(@Valid TrainerUpdateDTO request) {
         userInputValidator.validate(request, TRAINER.name());
 
-        return transactionManager.performReturningWithinTx(session -> {
-            log.info("Updating trainer: username={}", request.getUsername());
+        Trainer existing = trainerRepository.findByUser_Username(request.getUsername())
+                .orElseThrow(() -> new EntityNotFoundException(String.format(TRAINER_NOT_FOUND_BY_USERNAME, request.getUsername())));
+        TrainingType trainingType = trainingTypeRepository.findByTrainingTypeName(request.getSpecialization())
+                .orElseThrow(() -> new EntityNotFoundException(String.format(TRAINING_TYPE_NOT_FOUND_BY_NAME, request.getSpecialization())));
 
-            Trainer existing = trainerDao.findByUsername(request.getUsername())
-                    .orElseThrow(() -> new EntityNotFoundException(String.format(TRAINER_NOT_FOUND_BY_USERNAME, request.getUsername())));
-            TrainingType trainingType = trainingTypeDAO.findByTrainingTypeName(request.getSpecialization())
-                    .orElseThrow(() -> new EntityNotFoundException(String.format(TRAINING_TYPE_NOT_FOUND_BY_NAME, request.getSpecialization())));
+        User user = existing.getUser().toBuilder().firstName(request.getFirstName()).lastName(request.getLastName()).isActive(request.getIsActive()).build();
+        Trainer updated = existing.toBuilder().user(user).specialization(trainingType).build();
 
-            User user = existing.getUser().toBuilder().firstName(request.getFirstName()).lastName(request.getLastName()).isActive(request.getIsActive()).build();
-            Trainer updated = existing.toBuilder().user(user).specialization(trainingType).build();
-
-            Trainer saved = trainerDao.update(updated);
-            log.info("Trainer updated successfully: username={}", saved.getUser().getUsername());
-
-            return mapper.toDto(saved);
-        });
+        return mapper.toDto(trainerRepository.save(updated));
     }
 
     @Override
     public TrainerInfoDTO getTrainerByUsername(String username) {
-        log.info("Getting trainer by username: username={}", username);
         userInputValidator.validateUsername(username);
 
-        Trainer trainer = trainerDao.findByUsername(username).orElseThrow(() -> new EntityNotFoundException(String.format(TRAINER_NOT_FOUND_BY_USERNAME, username)));
+        Trainer trainer = trainerRepository.findByUser_Username(username).orElseThrow(() -> new EntityNotFoundException(String.format(TRAINER_NOT_FOUND_BY_USERNAME, username)));
 
         return mapper.toInfoDto(trainer);
     }
 
+    @Transactional
     @Override
     public void changePassword(String username, String oldPassword, String newPassword) throws AuthenticationException {
-        validator.validateNotBlank(username, USERNAME_LABEL);
-        validator.validateNotBlank(oldPassword, OLD_PASSWORD_LABEL);
-        validator.validateNotBlank(newPassword, NEW_PASSWORD_LABEL);
+        Trainer trainer = trainerRepository.findByUser_Username(username).orElseThrow(() -> new EntityNotFoundException(String.format(TRAINER_NOT_FOUND, username)));
+        User currentUser = trainer.getUser();
 
-        transactionManager.performWithinTx(session -> {
-            Trainer trainer = trainerDao.findByUsername(username).orElseThrow(() -> new EntityNotFoundException(format(TRAINER_NOT_FOUND, username)));
-            User currentUser = trainer.getUser();
+        if (!passwordEncoder.matches(oldPassword, currentUser.getPassword())) {
+            throw new InvalidPasswordException("Current password is incorrect");
+        }
 
-            if (!passwordEncoder.matches(oldPassword, currentUser.getPassword())) {
-                throw new InvalidPasswordException("Current password is incorrect");
-            }
+        User updatedUser = currentUser.toBuilder().password(passwordEncoder.encode(newPassword)).build();
 
-            User updatedUser = currentUser.toBuilder().password(passwordEncoder.encode(newPassword)).build();
-            trainerDao.save(trainer.toBuilder().user(updatedUser).build());
-        });
+        trainerRepository.save(trainer.toBuilder().user(updatedUser).build());
     }
 
+    @Transactional
     @Override
     public Trainer updateProfile(String username, Trainer updatedData) {
-        validator.validateNotBlank(username, USERNAME_LABEL);
-        validator.validateTrainer(updatedData);
+        Trainer trainer = trainerRepository.findByUser_Username(username).orElseThrow(() -> new EntityNotFoundException(String.format(TRAINER_NOT_FOUND, username)));
 
-        return transactionManager.performReturningWithinTx(session -> {
-            Trainer trainer = trainerDao.findByUsername(username).orElseThrow(() -> new EntityNotFoundException(format(TRAINER_NOT_FOUND, username)));
+        User updatedUser = updatedData.getUser();
+        Trainer.TrainerBuilder<?, ?> builder = trainer.toBuilder();
 
-            User updatedUser = updatedData.getUser();
-            Trainer.TrainerBuilder<?, ?> builder = trainer.toBuilder();
+        if (updatedUser != null) {
+            User rebuiltUser = trainer.getUser().toBuilder().firstName(updatedUser.getFirstName()).lastName(updatedUser.getLastName()).build();
+            builder.user(rebuiltUser);
+        }
 
-            if (updatedUser != null) {
-                User rebuiltUser = trainer.getUser().toBuilder().firstName(updatedUser.getFirstName()).lastName(updatedUser.getLastName()).build();
-                builder.user(rebuiltUser);
-            }
+        if (updatedData.getSpecialization() != null) {
+            builder.specialization(updatedData.getSpecialization());
+        }
 
-            if (updatedData.getSpecialization() != null) {
-                builder.specialization(updatedData.getSpecialization());
-            }
-
-            return trainerDao.update(builder.build());
-        });
+        return trainerRepository.save(builder.build());
     }
 
+    @Transactional
     @Override
     public void setActive(String username, boolean active) {
         validator.validateNotBlank(username, USERNAME_LABEL);
 
-        transactionManager.performWithinTx(session -> {
-            Trainer trainer = trainerDao.findByUsername(username).orElseThrow(() -> new EntityNotFoundException(format(TRAINER_NOT_FOUND, username)));
-            User currentUser = trainer.getUser();
+        Trainer trainer = trainerRepository.findByUser_Username(username).orElseThrow(() -> new EntityNotFoundException(format(TRAINER_NOT_FOUND, username)));
+        User currentUser = trainer.getUser();
 
-            boolean isActive = currentUser.getIsActive() != null && currentUser.getIsActive();
-            if (isActive == active) {
-                throw new IllegalStateException(format("Trainer '%s' is already %s. No action taken.", username, active ? "active" : "inactive"));
-            }
+        boolean isActive = currentUser.getIsActive() != null && currentUser.getIsActive();
+        if (isActive == active) {
+            throw new IllegalStateException(format("Trainer '%s' is already %s. No action taken.", username, active ? "active" : "inactive"));
+        }
 
-            User updatedUser = currentUser.toBuilder().isActive(active).build();
-            trainerDao.save(trainer.toBuilder().user(updatedUser).build());
-        });
+        User updatedUser = currentUser.toBuilder().isActive(active).build();
+        trainerRepository.save(trainer.toBuilder().user(updatedUser).build());
     }
 
+    @Transactional(readOnly = true)
     @Override
     public List<Training> getTrainings(TrainerTrainingFilter filter) {
         validator.validateNotNull(filter, FILTER_LABEL);
 
-        return transactionManager.performReturningWithinTx(session -> {
-            CriteriaQuery<Training> searchQuery = criteriaBuilder.build(session.getCriteriaBuilder(), filter);
+        CriteriaQuery<Training> searchQuery = criteriaBuilder.build(entityManager.getCriteriaBuilder(), filter);
 
-            return session.createQuery(searchQuery).getResultList();
-        });
+        return entityManager.createQuery(searchQuery).getResultList();
     }
 
     @Override
     public List<TrainerInfoDTO> getNotAssignedToTrainee(String traineeUsername) {
-        userInputValidator.validateUsername(traineeUsername);
-
-        log.info("Getting all trainers not assigned to trainee: username={}", traineeUsername);
-
-        return trainerDao.findNotAssignedToTrainee(traineeUsername).stream()
+        return trainerRepository.findAll().stream()
+                .filter(t -> t.getTrainees().stream().noneMatch(tr -> tr.getUser().getUsername().equals(traineeUsername)))
                 .map(mapper::toInfoDto)
                 .toList();
     }

@@ -225,6 +225,7 @@ public class GymFacade {
 
     public void login(LoginRequest request) {
         User user = userProfileService.login(request);
+
         sessionContext.setAuthenticatedUser(user);
     }
 

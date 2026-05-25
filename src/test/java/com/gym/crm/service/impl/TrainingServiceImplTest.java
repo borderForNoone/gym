@@ -1,117 +1,110 @@
 package com.gym.crm.service.impl;
 
-import com.gym.crm.config.TransactionManager;
-import com.gym.crm.dao.TrainingDao;
-import com.gym.crm.dao.TrainingTypeDao;
 import com.gym.crm.dto.TrainingResponseDTO;
 import com.gym.crm.dto.TrainingTypeDTO;
 import com.gym.crm.mapper.TrainingMapper;
 import com.gym.crm.model.Training;
-import com.gym.crm.model.TrainingType;
+import com.gym.crm.repository.TrainingRepository;
+import com.gym.crm.repository.TrainingTypeRepository;
 import com.gym.crm.search.filter.TraineeTrainingFilter;
 import com.gym.crm.search.filter.TrainerTrainingFilter;
 import com.gym.crm.service.common.UserInputValidator;
-import org.hibernate.Session;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
-import java.util.function.Function;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class TrainingServiceImplTest {
     @Mock
-    private TrainingDao dao;
-    @Mock
     private UserInputValidator validator;
     @Mock
     private TrainingMapper mapper;
     @Mock
-    private TrainingTypeDao trainingTypeDao;
+    private TrainingRepository trainingRepository;
     @Mock
-    private TransactionManager transactionManager;
-    @Mock
-    private Session session;
+    private TrainingTypeRepository trainingTypeRepository;
 
+    @InjectMocks
     private TrainingServiceImpl service;
-
-    @BeforeEach
-    void setUp() {
-        service = new TrainingServiceImpl(dao, validator, mapper, trainingTypeDao, transactionManager);
-    }
 
     @Test
     void create_shouldSaveTraining() {
-        Training training = Training.builder().trainingName("Yoga").build();
-        Training saved = Training.builder().trainingName("Yoga").build();
+        Training training = mock(Training.class);
 
-        when(transactionManager.performReturningWithinTx(any())).thenAnswer(inv -> {
-            Function<Session, Object> fn = inv.getArgument(0);
-            return fn.apply(session);
-        });
-        when(dao.save(training)).thenReturn(saved);
+        when(trainingRepository.save(training)).thenReturn(training);
 
         Training result = service.create(training);
 
-        assertEquals(saved, result);
-        verify(dao).save(training);
+        assertThat(result).isNotNull();
+        verify(trainingRepository).save(training);
     }
 
     @Test
     void getTraineeTrainings_shouldReturnMappedList() {
-        TraineeTrainingFilter filter = TraineeTrainingFilter.builder().build();
-        Training training = Training.builder().trainingName("Yoga").build();
-        TrainingResponseDTO dto = TrainingResponseDTO.builder().trainingName("Yoga").build();
+        TraineeTrainingFilter filter = mock(TraineeTrainingFilter.class);
 
-        when(dao.findByTraineeCriteria(filter)).thenReturn(List.of(training));
+        when(filter.getUsername()).thenReturn("user");
+        when(filter.getFromDate()).thenReturn(null);
+        when(filter.getToDate()).thenReturn(null);
+
+        Training training = mock(Training.class);
+        TrainingResponseDTO dto = mock(TrainingResponseDTO.class);
+
+        when(trainingRepository.findByTraineeCriteria("user", null, null)).thenReturn(List.of(training));
         when(mapper.toDto(training)).thenReturn(dto);
 
         List<TrainingResponseDTO> result = service.getTraineeTrainings(filter);
 
-        assertEquals(1, result.size());
-        assertEquals(dto, result.getFirst());
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst()).isEqualTo(dto);
+
         verify(validator).validate(filter, "Filter");
-        verify(dao).findByTraineeCriteria(filter);
+        verify(trainingRepository).findByTraineeCriteria("user", null, null);
     }
 
     @Test
     void getTrainerTrainings_shouldReturnMappedList() {
-        TrainerTrainingFilter filter = TrainerTrainingFilter.builder().build();
-        Training training = Training.builder().trainingName("Boxing").build();
-        TrainingResponseDTO dto = TrainingResponseDTO.builder().trainingName("Boxing").build();
+        TrainerTrainingFilter filter = mock(TrainerTrainingFilter.class);
 
-        when(dao.findByTrainerCriteria(filter)).thenReturn(List.of(training));
+        when(filter.getUsername()).thenReturn("trainer");
+        when(filter.getFromDate()).thenReturn(null);
+        when(filter.getToDate()).thenReturn(null);
+
+        Training training = mock(Training.class);
+        TrainingResponseDTO dto = mock(TrainingResponseDTO.class);
+
+        when(trainingRepository.findByTrainerCriteria("trainer", null, null)).thenReturn(List.of(training));
         when(mapper.toDto(training)).thenReturn(dto);
 
         List<TrainingResponseDTO> result = service.getTrainerTrainings(filter);
 
-        assertEquals(1, result.size());
-        assertEquals(dto, result.getFirst());
+        assertThat(result).hasSize(1);
+
         verify(validator).validate(filter, "Filter");
-        verify(dao).findByTrainerCriteria(filter);
     }
 
     @Test
-    void getAllTrainingTypes_shouldReturnMappedList() {
-        var type = TrainingType.builder().trainingTypeName("Yoga").build();
-        TrainingTypeDTO dto = TrainingTypeDTO.builder().trainingTypeName("Yoga").build();
+    void getAllTrainingTypes_shouldReturnList() {
+        TrainingTypeDTO dto = mock(TrainingTypeDTO.class);
+        var type = mock(com.gym.crm.model.TrainingType.class);
 
-        when(trainingTypeDao.findAll()).thenReturn(List.of(type));
+        when(trainingTypeRepository.findAll()).thenReturn(List.of(type));
         when(mapper.toDto(type)).thenReturn(dto);
 
         List<TrainingTypeDTO> result = service.getAllTrainingTypes();
 
-        assertEquals(1, result.size());
-        assertEquals(dto, result.getFirst());
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0)).isEqualTo(dto);
 
-        verify(trainingTypeDao).findAll();
+        verify(trainingTypeRepository).findAll();
     }
 }

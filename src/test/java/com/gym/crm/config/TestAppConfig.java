@@ -19,13 +19,10 @@ import javax.sql.DataSource;
         excludeFilters = {
                 @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = AppConfig.class),
                 @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = LiquibaseConfig.class),
-                @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = DataSourceConfig.class),
-                @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = WebConfig.class)
         }
 )
 @PropertySource(value = "classpath:application-test.yml", factory = YamlPropertySourceFactory.class)
 public class TestAppConfig {
-
     @Value("${liquibase.changelog.master}")
     private String changeLog;
 
