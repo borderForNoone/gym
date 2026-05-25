@@ -14,6 +14,7 @@ import com.gym.crm.model.Training;
 import com.gym.crm.model.User;
 import com.gym.crm.repository.TraineeRepository;
 import com.gym.crm.repository.TrainerRepository;
+import com.gym.crm.repository.TrainingRepository;
 import com.gym.crm.search.filter.TraineeTrainingFilter;
 import com.gym.crm.service.TraineeService;
 import com.gym.crm.service.UserProfileService;
@@ -34,6 +35,7 @@ import java.util.List;
 public class TraineeServiceImpl implements TraineeService {
     private final TraineeRepository traineeRepository;
     private final TrainerRepository trainerRepository;
+    private final TrainingRepository trainingRepository;
     private final UserProfileService userCredentialGenerator;
     private final PasswordEncoder passwordEncoder;
     private final TraineeMapper mapper;
@@ -118,7 +120,11 @@ public class TraineeServiceImpl implements TraineeService {
 
     @Override
     public List<Training> getTrainings(TraineeTrainingFilter filter) {
-        return List.of();
+        return trainingRepository.findTraineeTrainings(
+                filter.getUsername(),
+                filter.getFromDate(),
+                filter.getToDate()
+        );
     }
 
     @Override

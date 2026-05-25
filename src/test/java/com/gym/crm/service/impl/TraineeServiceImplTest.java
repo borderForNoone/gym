@@ -10,9 +10,12 @@ import com.gym.crm.mapper.TraineeMapper;
 import com.gym.crm.mapper.TrainerMapper;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.model.Trainer;
+import com.gym.crm.model.Training;
 import com.gym.crm.model.User;
 import com.gym.crm.repository.TraineeRepository;
 import com.gym.crm.repository.TrainerRepository;
+import com.gym.crm.repository.TrainingRepository;
+import com.gym.crm.search.filter.TraineeTrainingFilter;
 import com.gym.crm.service.UserProfileService;
 import com.gym.crm.service.common.UserInputValidator;
 import com.gym.crm.util.CoreValidator;
@@ -43,6 +46,8 @@ class TraineeServiceImplTest {
     private TraineeRepository traineeRepository;
     @Mock
     private TrainerRepository trainerRepository;
+    @Mock
+    private TrainingRepository trainingRepository;
     @Mock
     private UserProfileService userCredentialGenerator;
     @Mock
@@ -212,5 +217,24 @@ class TraineeServiceImplTest {
         assertThat(result).isNotNull();
         verify(traineeRepository).findByUser_Username("user");
         verify(traineeRepository).save(any());
+    }
+
+    @Test
+    void getTrainings_shouldReturnFilteredTrainings() {
+        TraineeTrainingFilter filter = mock(TraineeTrainingFilter.class);
+        Training training1 = mock(Training.class);
+        Training training2 = mock(Training.class);
+        List<Training> trainings = List.of(training1, training2);
+
+        when(filter.getUsername()).thenReturn("user");
+        when(filter.getFromDate()).thenReturn(null);
+        when(filter.getToDate()).thenReturn(null);
+        when(trainingRepository.findTraineeTrainings("user", null, null)).thenReturn(trainings);
+
+        List<Training> result = service.getTrainings(filter);
+
+        assertThat(result).isNotNull().hasSize(2).containsExactlyElementsOf(trainings);
+
+        verify(trainingRepository).findTraineeTrainings("user", null, null);
     }
 }
