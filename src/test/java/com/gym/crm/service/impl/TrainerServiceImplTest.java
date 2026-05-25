@@ -203,4 +203,81 @@ class TrainerServiceImplTest {
 
         assertThat(result).isNotNull();
     }
+
+    @Test
+    void updateProfile_shouldUpdateUserFieldsOnly() {
+        User existingUser = User.builder().username("trainer1").firstName("Old").lastName("Name").isActive(true).build();
+        Trainer trainer = Trainer.builder().user(existingUser).specialization(TrainingType.builder().trainingTypeName("FITNESS").build()).build();
+        User incomingUser = User.builder().firstName("New").lastName("Surname").build();
+        Trainer updatedData = Trainer.builder().user(incomingUser).build();
+
+        when(trainerRepository.findByUser_Username("trainer1")).thenReturn(Optional.of(trainer));
+        when(trainerRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        Trainer result = service.updateProfile("trainer1", updatedData);
+
+        assertThat(result.getUser().getFirstName()).isEqualTo("New");
+        assertThat(result.getUser().getLastName()).isEqualTo("Surname");
+        assertThat(result.getSpecialization().getTrainingTypeName()).isEqualTo("FITNESS");
+        verify(trainerRepository).save(any());
+    }
+
+    @Test
+    void updateProfile_shouldUpdateSpecializationOnly() {
+        User existingUser = User.builder().username("trainer1").firstName("Old").lastName("Name").isActive(true).build();
+        Trainer trainer = Trainer.builder().user(existingUser).specialization(TrainingType.builder().trainingTypeName("FITNESS").build()).build();
+        Trainer updatedData = Trainer.builder().specialization(TrainingType.builder().trainingTypeName("CROSSFIT").build()).build();
+
+        when(trainerRepository.findByUser_Username("trainer1")).thenReturn(Optional.of(trainer));
+        when(trainerRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        Trainer result = service.updateProfile("trainer1", updatedData);
+
+        assertThat(result.getSpecialization().getTrainingTypeName()).isEqualTo("CROSSFIT");
+        assertThat(result.getUser().getFirstName()).isEqualTo("Old");
+        assertThat(result.getUser().getLastName()).isEqualTo("Name");
+        verify(trainerRepository).save(any());
+    }
+
+    @Test
+    void updateProfile_shouldNotChangeUser_whenUserIsNull() {
+        User existingUser = User.builder().username("trainer1").firstName("Old").lastName("Name").isActive(true).build();
+        Trainer trainer = Trainer.builder().user(existingUser).specialization(TrainingType.builder().trainingTypeName("FITNESS").build()).build();
+        Trainer updatedData = Trainer.builder().specialization(TrainingType.builder().trainingTypeName("CROSSFIT").build()).build();
+
+        when(trainerRepository.findByUser_Username("trainer1")).thenReturn(Optional.of(trainer));
+        when(trainerRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        Trainer result = service.updateProfile("trainer1", updatedData);
+
+        assertThat(result.getUser().getFirstName()).isEqualTo("Old");
+        assertThat(result.getUser().getLastName()).isEqualTo("Name");
+        assertThat(result.getSpecialization().getTrainingTypeName()).isEqualTo("CROSSFIT");
+
+        verify(trainerRepository).save(any());
+    }
+
+    @Test
+    void setActive_shouldThrow_whenAlreadyActive() {
+        User user = User.builder().username("trainer1").isActive(true).build();
+        Trainer trainer = Trainer.builder().user(user).build();
+
+        when(trainerRepository.findByUser_Username("trainer1")).thenReturn(Optional.of(trainer));
+
+        assertThatThrownBy(() -> service.setActive("trainer1", true)).isInstanceOf(IllegalStateException.class)
+                .hasMessage("Trainer 'trainer1' is already active. No action taken.");
+        verify(trainerRepository).findByUser_Username("trainer1");
+    }
+
+    @Test
+    void setActive_shouldThrow_whenAlreadyInactive() {
+        User user = User.builder().username("trainer1").isActive(false).build();
+        Trainer trainer = Trainer.builder().user(user).build();
+
+        when(trainerRepository.findByUser_Username("trainer1")).thenReturn(Optional.of(trainer));
+        assertThatThrownBy(() -> service.setActive("trainer1", false)).isInstanceOf(IllegalStateException.class)
+                .hasMessage("Trainer 'trainer1' is already inactive. No action taken.");
+
+        verify(trainerRepository).findByUser_Username("trainer1");
+    }
 }

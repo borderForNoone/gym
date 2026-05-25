@@ -237,4 +237,32 @@ class TraineeServiceImplTest {
 
         verify(trainingRepository).findTraineeTrainings("user", null, null);
     }
+
+    @Test
+    void setActive_shouldChangeStatusSuccessfully() {
+        User user = User.builder().username("user").firstName("John").lastName("Doe").isActive(false).build();
+        Trainee trainee = Trainee.builder().user(user).build();
+
+        when(traineeRepository.findByUser_Username("user")).thenReturn(Optional.of(trainee));
+        when(traineeRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        Trainee result = service.setActive("user", true);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getUser().getIsActive()).isTrue();
+        verify(traineeRepository).findByUser_Username("user");
+        verify(traineeRepository).save(any());
+    }
+
+    @Test
+    void setActive_shouldThrowException_whenAlreadyInSameState() {
+        User user = User.builder().username("user").firstName("John").lastName("Doe").isActive(true).build();
+
+        Trainee trainee = Trainee.builder().user(user).build();
+
+        when(traineeRepository.findByUser_Username("user")).thenReturn(Optional.of(trainee));
+
+        assertThatThrownBy(() -> service.setActive("user", true)).isInstanceOf(IllegalStateException.class).hasMessage("Already in this state");
+        verify(traineeRepository).findByUser_Username("user");
+    }
 }
