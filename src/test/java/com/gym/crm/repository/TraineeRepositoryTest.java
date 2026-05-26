@@ -80,6 +80,6 @@ class TraineeRepositoryTest extends BaseRepositoryTest {
     private Trainee buildTrainee(String username, String firstName, String lastName) {
         User user = User.builder().username(username).firstName(firstName).lastName(lastName).password("pass").isActive(true).build();
 
-        return Trainee.builder().user(user).dateOfBirth(LocalDate.of(1995, 5, 20)).address("123 Main St").build();
+        return Trainee.builder().user(user).dateOfBirth(LocalDate.of(1995, 5, 20)).address("123 Sheep St").build();
     }
 }
