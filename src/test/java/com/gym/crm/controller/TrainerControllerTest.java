@@ -62,10 +62,8 @@ class TrainerControllerTest {
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(trainerController)
-                .setControllerAdvice(new ApiExceptionHandler())
-                .addPlaceholderValue("app.api.base-path", "/api/v1")
-                .build();
+        mockMvc = MockMvcBuilders.standaloneSetup(trainerController).setControllerAdvice(new ApiExceptionHandler())
+                .addPlaceholderValue("app.api.base-path", "/api/v1").build();
         objectMapper = new ObjectMapper();
         objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
     }
@@ -153,10 +151,7 @@ class TrainerControllerTest {
         doThrow(new UserAuthenticationException("No user authenticated")).when(facade).updateTrainer(any(TrainerUpdateRequest.class), eq(USERNAME));
 
         String content = mockMvc.perform(put(BASE_PATH + "/" + USERNAME).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isUnauthorized())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
+                .andExpect(status().isUnauthorized()).andReturn().getResponse().getContentAsString();
 
         ErrorResponse errorResponse = objectMapper.readValue(content, ErrorResponse.class);
         assertThat(errorResponse.getErrorCode()).isEqualTo(ApiError.AUTHENTICATION_ERROR.getCode());
@@ -174,10 +169,7 @@ class TrainerControllerTest {
         doThrow(new PersistenceException()).when(facade).updateTrainer(any(TrainerUpdateRequest.class), eq(USERNAME));
 
         String content = mockMvc.perform(put(BASE_PATH + "/" + USERNAME).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isInternalServerError())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
+                .andExpect(status().isInternalServerError()).andReturn().getResponse().getContentAsString();
 
         ErrorResponse errorResponse = objectMapper.readValue(content, ErrorResponse.class);
         assertThat(errorResponse.getErrorCode()).isEqualTo(ApiError.DATABASE_ERROR.getCode());
@@ -195,10 +187,7 @@ class TrainerControllerTest {
         doThrow(new RuntimeException()).when(facade).updateTrainer(any(TrainerUpdateRequest.class), eq(USERNAME));
 
         String content = mockMvc.perform(put(BASE_PATH + "/" + USERNAME).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isInternalServerError())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
+                .andExpect(status().isInternalServerError()).andReturn().getResponse().getContentAsString();
 
         ErrorResponse errorResponse = objectMapper.readValue(content, ErrorResponse.class);
         assertThat(errorResponse.getErrorCode()).isEqualTo(ApiError.SERVICE_ERROR.getCode());
@@ -217,16 +206,12 @@ class TrainerControllerTest {
                 }
                 """;
 
-        TrainerCreateResponse response = new TrainerCreateResponse()
-                .username("tom.tomas")
-                .password("secret");
+        TrainerCreateResponse response = new TrainerCreateResponse().username("tom.tomas").password("secret");
 
         when(facade.createTrainer(any(TrainerCreateRequest.class))).thenReturn(response);
 
-        mockMvc.perform(post(BASE_PATH + "/register").contentType(MediaType.APPLICATION_JSON).content(requestJson))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username").value("tom.tomas"))
-                .andExpect(jsonPath("$.password").value("secret"));
+        mockMvc.perform(post(BASE_PATH + "/register").contentType(MediaType.APPLICATION_JSON).content(requestJson)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value("tom.tomas")).andExpect(jsonPath("$.password").value("secret"));
 
         verify(facade).createTrainer(any(TrainerCreateRequest.class));
     }
@@ -246,11 +231,8 @@ class TrainerControllerTest {
 
         when(facade.getTrainerByUsername("tom.tomas")).thenReturn(response);
 
-        mockMvc.perform(get(BASE_PATH + "/tom.tomas"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.firstName").value("Tom"))
-                .andExpect(jsonPath("$.lastName").value("Tomas"))
-                .andExpect(jsonPath("$.specialization").value("Yoga"))
+        mockMvc.perform(get(BASE_PATH + "/tom.tomas")).andExpect(status().isOk()).andExpect(jsonPath("$.firstName").value("Tom"))
+                .andExpect(jsonPath("$.lastName").value("Tomas")).andExpect(jsonPath("$.specialization").value("Yoga"))
                 .andExpect(jsonPath("$.isActive").value(true));
     }
 
@@ -325,8 +307,7 @@ class TrainerControllerTest {
         when(facade.getTrainerTrainingsByFilter(any(TrainerTrainingFilter.class))).thenReturn(List.of());
 
         mockMvc.perform(get(BASE_PATH + "/tom.tomas/trainings")
-                        .param("fromDate", "2024-01-01")
-                        .param("toDate", "2024-06-30")
+                        .param("fromDate", "2024-01-01").param("toDate", "2024-06-30")
                         .param("traineeName", "Alice"))
                 .andExpect(status().isOk());
 

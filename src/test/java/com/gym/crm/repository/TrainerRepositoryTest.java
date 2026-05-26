@@ -93,6 +93,8 @@ class TrainerRepositoryTest extends BaseRepositoryTest {
     void findByIdNotIn_excludesGivenIds() {
         List<Trainer> result = trainerRepository.findByIdNotIn(List.of(trainerAlpha.getId()));
 
+        assertThat(result).isNotEmpty();
+
         assertThat(result).extracting(Trainer::getId).doesNotContain(trainerAlpha.getId());
     }
 

@@ -29,7 +29,6 @@ import static org.mockito.Mockito.verify;
 class TransactionLoggingFilterTest {
     @Mock
     private FilterChain filterChain;
-
     @InjectMocks
     private TransactionLoggingFilter filter;
 

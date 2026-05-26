@@ -125,16 +125,7 @@ public class GymFacadeTest {
 
     @BeforeEach
     void setUp() {
-        facade = new GymFacade(
-                traineeService,
-                trainerService,
-                trainingService,
-                userProfileService,
-                traineeRestMapper,
-                trainerRestMapper,
-                trainingRestMapper,
-                sessionContext
-        );
+        facade = new GymFacade(traineeService, trainerService, trainingService, userProfileService, traineeRestMapper, trainerRestMapper, trainingRestMapper, sessionContext);
         facade.setTraineeMapper(traineeMapper);
         facade.setTrainerMapper(trainerMapper);
         facade.setTrainingMapper(trainingMapper);
@@ -156,8 +147,7 @@ public class GymFacadeTest {
 
         TraineeRequestDTO dto = buildTraineeRequestDTO();
 
-        Trainee saved = trainee.toBuilder().id(VALID_ID)
-                .user(trainee.getUser().toBuilder().id(VALID_ID).username(USERNAME).password(PASSWORD).isActive(true).build())
+        Trainee saved = trainee.toBuilder().id(VALID_ID).user(trainee.getUser().toBuilder().id(VALID_ID).username(USERNAME).password(PASSWORD).isActive(true).build())
                 .build();
         CreatedTrainee createdTrainee = new CreatedTrainee(saved, PASSWORD);
         TraineeCreateResponse expectedResponse = new TraineeCreateResponse(USERNAME, PASSWORD);
