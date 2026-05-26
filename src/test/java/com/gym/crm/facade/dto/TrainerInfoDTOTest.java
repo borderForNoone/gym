@@ -35,7 +35,7 @@ class TrainerInfoDTOTest {
         TrainerInfoDTO dto2 = TrainerInfoDTO.builder().username("tom").firstName("Tom").lastName("Tomas").isActive(true).specialization("Yoga").build();
 
         assertThat(dto1).isEqualTo(dto2);
-        assertThat(dto1.hashCode()).isEqualTo(dto2.hashCode());
+        assertThat(dto1).hasSameHashCodeAs(dto2);
     }
 
     @Test
