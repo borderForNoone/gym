@@ -61,7 +61,6 @@ class TraineeRepositoryTest extends BaseRepositoryTest {
     @Test
     void save_persistsTrainee_andAssignsId() {
         String username = "user_" + System.currentTimeMillis();
-
         Trainee trainee = buildTrainee(username, "Fernando", "Torres");
 
         Trainee persisted = traineeRepository.save(trainee);
