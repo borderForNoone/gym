@@ -23,18 +23,18 @@ public interface TrainerRepository extends JpaRepository<Trainer, Long> {
     List<Trainer> findByIdNotIn(List<Long> ids);
 
     @Query("""
-                select new com.gym.crm.dto.TrainerInfoDTO(
-                    t.user.username,
-                    t.user.firstName,
-                    t.user.lastName,
-                    t.specialization
-                )
-                from Trainer t
-                where not exists (
-                    select 1
-                    from t.trainees tr
-                    where tr.user.username = :traineeUsername
-                )
+            select new com.gym.crm.facade.dto.TrainerInfoDTO(
+                t.user.username,
+                t.user.firstName,
+                t.user.lastName,
+                t.specialization
+            )
+            from Trainer t
+            where not exists (
+                select 1
+                from t.trainees tr
+                where tr.user.username = :traineeUsername
+            )
             """)
     List<TrainerInfoDTO> findAllNotAssignedToTrainee(@Param("traineeUsername") String traineeUsername);
 }
