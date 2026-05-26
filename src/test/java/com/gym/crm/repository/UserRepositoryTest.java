@@ -42,12 +42,12 @@ class UserRepositoryTest extends BaseRepositoryTest {
         userRepository.delete(savedUser);
         entityManager.flush();
 
-        assertThat(userRepository.findByUsername("john.doe")).isEmpty();
+        assertThat(userRepository.findByUsername("tom.tomas")).isEmpty();
     }
 
     @Test
     void save_persistsNewUser_andAssignsId() {
-        User newUser = buildUser("jane.doe", "Jane", "Doe");
+        User newUser = buildUser("julia.tomas", "Julia", "Tomas");
 
         User persisted = userRepository.save(newUser);
 
@@ -58,7 +58,7 @@ class UserRepositoryTest extends BaseRepositoryTest {
     @Test
     void save_updatesExistingUser() {
         User user = userRepository.findById(savedUser.getId()).orElseThrow();
-        User updatedUser = user.toBuilder().firstName("Jonathan").build();
+        User updatedUser = user.toBuilder().firstName("Tomas").build();
 
         userRepository.save(updatedUser);
 
@@ -67,7 +67,7 @@ class UserRepositoryTest extends BaseRepositoryTest {
 
         User reloaded = userRepository.findById(savedUser.getId()).orElseThrow();
 
-        assertThat(reloaded.getFirstName()).isEqualTo("Jonathan");
+        assertThat(reloaded.getFirstName()).isEqualTo("Tomas");
     }
 
     @Test
@@ -82,7 +82,7 @@ class UserRepositoryTest extends BaseRepositoryTest {
         userRepository.deleteById(savedUser.getId());
         entityManager.flush();
 
-        assertThat(userRepository.findByUsername("john.doe")).isEmpty();
+        assertThat(userRepository.findByUsername("tom.tomas")).isEmpty();
     }
 
     private User buildUser(String username, String firstName, String lastName) {

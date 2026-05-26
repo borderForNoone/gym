@@ -98,12 +98,12 @@ class CoreValidatorTest {
 
     @Test
     void validateNotBlank_shouldPass_whenValid() {
-        assertDoesNotThrow(() -> CoreValidator.validateNotBlank("john", "username"));
+        assertDoesNotThrow(() -> CoreValidator.validateNotBlank("tom", "username"));
     }
 
     @Test
     void validateTextFieldSize_shouldPass_whenValidLength() {
-        assertDoesNotThrow(() -> coreValidator.validateTextFieldSize("John", FieldName.FIRST_NAME, 10));
+        assertDoesNotThrow(() -> coreValidator.validateTextFieldSize("Tom", FieldName.FIRST_NAME, 10));
     }
 
     @Test
