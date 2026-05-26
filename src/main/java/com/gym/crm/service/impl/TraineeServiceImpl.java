@@ -1,11 +1,11 @@
 package com.gym.crm.service.impl;
 
-import com.gym.crm.dto.CreatedTrainee;
-import com.gym.crm.dto.TraineeInfoDTO;
-import com.gym.crm.dto.TraineeResponseDTO;
-import com.gym.crm.dto.TraineeUpdateDTO;
-import com.gym.crm.dto.TrainerAssignmentUpdateDTO;
-import com.gym.crm.dto.TrainerInfoDTO;
+import com.gym.crm.facade.dto.CreatedTrainee;
+import com.gym.crm.facade.dto.TraineeInfoDTO;
+import com.gym.crm.facade.dto.TraineeResponseDTO;
+import com.gym.crm.facade.dto.TraineeUpdateDTO;
+import com.gym.crm.facade.dto.TrainerAssignmentUpdateDTO;
+import com.gym.crm.facade.dto.TrainerInfoDTO;
 import com.gym.crm.mapper.TraineeMapper;
 import com.gym.crm.mapper.TrainerMapper;
 import com.gym.crm.model.Trainee;
@@ -18,8 +18,8 @@ import com.gym.crm.repository.TrainingRepository;
 import com.gym.crm.search.filter.TraineeTrainingFilter;
 import com.gym.crm.service.TraineeService;
 import com.gym.crm.service.UserProfileService;
+import com.gym.crm.service.common.CoreValidator;
 import com.gym.crm.service.common.UserInputValidator;
-import com.gym.crm.util.CoreValidator;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -118,6 +118,7 @@ public class TraineeServiceImpl implements TraineeService {
         traineeRepository.delete(trainee);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public List<Training> getTrainings(TraineeTrainingFilter filter) {
         return trainingRepository.findTraineeTrainings(
@@ -127,6 +128,7 @@ public class TraineeServiceImpl implements TraineeService {
         );
     }
 
+    @Transactional(readOnly = true)
     @Override
     public List<Trainer> getUnassignedTrainers(String username) {
 
@@ -153,6 +155,7 @@ public class TraineeServiceImpl implements TraineeService {
                 .toList();
     }
 
+    @Transactional()
     @Override
     public Trainee updateProfile(String username, Trainee updatedData) {
         Trainee trainee = traineeRepository.findByUser_Username(username).orElseThrow();

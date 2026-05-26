@@ -1,11 +1,11 @@
 package com.gym.crm.service.impl;
 
-import com.gym.crm.dto.CreatedTrainee;
-import com.gym.crm.dto.TraineeInfoDTO;
-import com.gym.crm.dto.TraineeResponseDTO;
-import com.gym.crm.dto.TraineeUpdateDTO;
-import com.gym.crm.dto.TrainerAssignmentUpdateDTO;
-import com.gym.crm.dto.TrainerInfoDTO;
+import com.gym.crm.facade.dto.CreatedTrainee;
+import com.gym.crm.facade.dto.TraineeInfoDTO;
+import com.gym.crm.facade.dto.TraineeResponseDTO;
+import com.gym.crm.facade.dto.TraineeUpdateDTO;
+import com.gym.crm.facade.dto.TrainerAssignmentUpdateDTO;
+import com.gym.crm.facade.dto.TrainerInfoDTO;
 import com.gym.crm.mapper.TraineeMapper;
 import com.gym.crm.mapper.TrainerMapper;
 import com.gym.crm.model.Trainee;
@@ -17,8 +17,8 @@ import com.gym.crm.repository.TrainerRepository;
 import com.gym.crm.repository.TrainingRepository;
 import com.gym.crm.search.filter.TraineeTrainingFilter;
 import com.gym.crm.service.UserProfileService;
+import com.gym.crm.service.common.CoreValidator;
 import com.gym.crm.service.common.UserInputValidator;
-import com.gym.crm.util.CoreValidator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -65,10 +65,10 @@ class TraineeServiceImplTest {
 
     @Test
     void create_shouldReturnCreatedTrainee() {
-        User user = User.builder().firstName("John").lastName("Doe").build();
+        User user = User.builder().firstName("Tom").lastName("Tomas").build();
         Trainee trainee = Trainee.builder().user(user).build();
 
-        when(userCredentialGenerator.generateUsername("John", "Doe")).thenReturn("john.doe");
+        when(userCredentialGenerator.generateUsername("Tom", "Tomas")).thenReturn("tom.tomas");
         when(userCredentialGenerator.generatePassword()).thenReturn("rawPass");
         when(passwordEncoder.encode("rawPass")).thenReturn("encoded");
         when(traineeRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -240,7 +240,7 @@ class TraineeServiceImplTest {
 
     @Test
     void setActive_shouldChangeStatusSuccessfully() {
-        User user = User.builder().username("user").firstName("John").lastName("Doe").isActive(false).build();
+        User user = User.builder().username("user").firstName("Tom").lastName("Tomas").isActive(false).build();
         Trainee trainee = Trainee.builder().user(user).build();
 
         when(traineeRepository.findByUser_Username("user")).thenReturn(Optional.of(trainee));
@@ -256,7 +256,7 @@ class TraineeServiceImplTest {
 
     @Test
     void setActive_shouldThrowException_whenAlreadyInSameState() {
-        User user = User.builder().username("user").firstName("John").lastName("Doe").isActive(true).build();
+        User user = User.builder().username("user").firstName("Tom").lastName("Tomas").isActive(true).build();
 
         Trainee trainee = Trainee.builder().user(user).build();
 

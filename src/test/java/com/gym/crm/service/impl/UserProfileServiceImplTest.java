@@ -1,14 +1,14 @@
 package com.gym.crm.service.impl;
 
-import com.gym.crm.dto.PasswordChangeRequest;
-import com.gym.crm.dto.ToggleActiveRequestDTO;
+import com.gym.crm.facade.dto.PasswordChangeRequest;
+import com.gym.crm.facade.dto.ToggleActiveRequestDTO;
 import com.gym.crm.exception.BadCredentialsException;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.model.User;
 import com.gym.crm.repository.TraineeRepository;
 import com.gym.crm.repository.TrainerRepository;
 import com.gym.crm.service.common.UserInputValidator;
-import com.gym.crm.util.CoreValidator;
+import com.gym.crm.service.common.CoreValidator;
 import org.gym.crm.rest.LoginRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -145,12 +145,12 @@ class UserProfileServiceImplTest {
 
     @Test
     void generateUsername_shouldReturnBase_whenFree() {
-        when(traineeRepository.existsByUser_Username("john.doe")).thenReturn(false);
-        when(trainerRepository.existsByUser_Username("john.doe")).thenReturn(false);
+        when(traineeRepository.existsByUser_Username("tom.tomas")).thenReturn(false);
+        when(trainerRepository.existsByUser_Username("tom.tomas")).thenReturn(false);
 
-        String result = service.generateUsername("john", "doe");
+        String result = service.generateUsername("tom", "tomas");
 
-        assertThat(result).isEqualTo("john.doe");
+        assertThat(result).isEqualTo("tom.tomas");
     }
 
     @Test

@@ -1,10 +1,10 @@
 package com.gym.crm.service.impl;
 
-import com.gym.crm.dto.CreatedTrainer;
-import com.gym.crm.dto.TrainerInfoDTO;
-import com.gym.crm.dto.TrainerRequestDTO;
-import com.gym.crm.dto.TrainerResponseDTO;
-import com.gym.crm.dto.TrainerUpdateDTO;
+import com.gym.crm.facade.dto.CreatedTrainer;
+import com.gym.crm.facade.dto.TrainerInfoDTO;
+import com.gym.crm.facade.dto.TrainerRequestDTO;
+import com.gym.crm.facade.dto.TrainerResponseDTO;
+import com.gym.crm.facade.dto.TrainerUpdateDTO;
 import com.gym.crm.exception.InvalidPasswordException;
 import com.gym.crm.mapper.TrainerMapper;
 import com.gym.crm.model.Trainer;
@@ -17,7 +17,7 @@ import com.gym.crm.search.criteria.TrainerTrainingCriteriaBuilder;
 import com.gym.crm.search.filter.TrainerTrainingFilter;
 import com.gym.crm.service.UserProfileService;
 import com.gym.crm.service.common.UserInputValidator;
-import com.gym.crm.util.CoreValidator;
+import com.gym.crm.service.common.CoreValidator;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -34,7 +34,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 import javax.naming.AuthenticationException;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -83,14 +82,14 @@ class TrainerServiceImplTest {
     void createTrainer_shouldReturnCreatedTrainer() {
         TrainerRequestDTO request = mock(TrainerRequestDTO.class);
         TrainingType type = mock(TrainingType.class);
-        User user = User.builder().username("john.doe").password("encoded").isActive(true).build();
+        User user = User.builder().username("tom.tomas").password("encoded").isActive(true).build();
         Trainer trainer = Trainer.builder().user(user).build();
 
-        when(request.getFirstName()).thenReturn("John");
-        when(request.getLastName()).thenReturn("Doe");
+        when(request.getFirstName()).thenReturn("Tom");
+        when(request.getLastName()).thenReturn("Tomas");
         when(request.getSpecialization()).thenReturn("FITNESS");
         doNothing().when(userInputValidator).validate(request, "TRAINER");
-        when(userProfileService.generateUsername("John", "Doe")).thenReturn("john.doe");
+        when(userProfileService.generateUsername("Tom", "Tomas")).thenReturn("tom.tomas");
         when(userProfileService.generatePassword()).thenReturn("pass");
         when(trainingTypeRepository.findByTrainingTypeName("FITNESS")).thenReturn(Optional.of(type));
         when(passwordEncoder.encode("pass")).thenReturn("encoded");
@@ -193,15 +192,14 @@ class TrainerServiceImplTest {
 
     @Test
     void getNotAssignedToTrainee_shouldReturnList() {
-        User user = User.builder().username("other").isActive(true).build();
-        Trainer trainer = Trainer.builder().user(user).trainees(Set.of()).build();
+        TrainerInfoDTO dto = mock(TrainerInfoDTO.class);
 
-        when(trainerRepository.findAll()).thenReturn(List.of(trainer));
-        when(mapper.toInfoDto(trainer)).thenReturn(mock(TrainerInfoDTO.class));
+        when(trainerRepository.findAllNotAssignedToTrainee("user")).thenReturn(List.of(dto));
 
         List<TrainerInfoDTO> result = service.getNotAssignedToTrainee("user");
 
         assertThat(result).isNotNull();
+        assertThat(result).hasSize(1);
     }
 
     @Test

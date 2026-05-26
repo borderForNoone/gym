@@ -1,7 +1,7 @@
 package com.gym.crm.service.impl;
 
-import com.gym.crm.dto.TrainingResponseDTO;
-import com.gym.crm.dto.TrainingTypeDTO;
+import com.gym.crm.facade.dto.TrainingResponseDTO;
+import com.gym.crm.facade.dto.TrainingTypeDTO;
 import com.gym.crm.mapper.TrainingMapper;
 import com.gym.crm.model.Training;
 import com.gym.crm.repository.TrainingRepository;

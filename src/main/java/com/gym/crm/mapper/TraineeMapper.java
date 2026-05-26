@@ -1,9 +1,9 @@
 package com.gym.crm.mapper;
 
-import com.gym.crm.dto.TraineeInfoDTO;
-import com.gym.crm.dto.TraineeRequestDTO;
-import com.gym.crm.dto.TraineeResponseDTO;
-import com.gym.crm.dto.TraineeUpdateDTO;
+import com.gym.crm.facade.dto.TraineeInfoDTO;
+import com.gym.crm.facade.dto.TraineeRequestDTO;
+import com.gym.crm.facade.dto.TraineeResponseDTO;
+import com.gym.crm.facade.dto.TraineeUpdateDTO;
 import com.gym.crm.model.Trainee;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

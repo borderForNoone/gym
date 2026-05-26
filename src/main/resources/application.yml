@@ -17,12 +17,7 @@ spring:
 
   liquibase:
     change-log: classpath:db/migration/master.xml
-
-db:
-  driver: com.mysql.cj.jdbc.Driver
-  url: ${DB_URL}
-  username: ${DB_USERNAME}
-  password: ${DB_PASSWORD}
+    enabled: true
 
 app:
   api:

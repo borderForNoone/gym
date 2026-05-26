@@ -1,7 +1,7 @@
 package com.gym.crm.mapper;
 
-import com.gym.crm.dto.TrainingRequestDTO;
-import com.gym.crm.dto.TrainingResponseDTO;
+import com.gym.crm.facade.dto.TrainingRequestDTO;
+import com.gym.crm.facade.dto.TrainingResponseDTO;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.Training;
@@ -65,6 +65,6 @@ class TrainingMapperTest {
         Trainer trainer = Trainer.builder().id(TRAINER_ID).user(trainerUser).specialization(TrainingType.builder().trainingTypeName(TRAINING_TYPE_NAME).build()).build();
 
         return Training.builder().id(VALID_ID).trainee(trainee).trainer(trainer).trainingName(TRAINING_NAME).trainingType(TrainingType.builder()
-                                .trainingTypeName(TRAINING_TYPE_NAME).build()).trainingDate(TRAINING_DATE).trainingDuration(TRAINING_DURATION).build();
+                .trainingTypeName(TRAINING_TYPE_NAME).build()).trainingDate(TRAINING_DATE).trainingDuration(TRAINING_DURATION).build();
     }
 }

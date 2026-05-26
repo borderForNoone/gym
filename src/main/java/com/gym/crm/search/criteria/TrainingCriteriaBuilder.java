@@ -2,7 +2,7 @@ package com.gym.crm.search.criteria;
 
 import com.gym.crm.model.Training;
 import com.gym.crm.search.filter.TrainingFilter;
-import com.gym.crm.util.Validator;
+import com.gym.crm.service.common.CoreValidator;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Expression;
@@ -53,7 +53,7 @@ public abstract class TrainingCriteriaBuilder {
 
     private void addUsernamePredicate(CriteriaBuilder criteriaBuilder, Join<?, ?> join, TrainingFilter filter, List<Predicate> predicates) {
         String username = filter.getUsername();
-        Validator.validateNotBlank(username, "Username");
+        CoreValidator.validateNotBlank(username, "Username");
 
         predicates.add(criteriaBuilder.equal(join.get("username"), username));
     }

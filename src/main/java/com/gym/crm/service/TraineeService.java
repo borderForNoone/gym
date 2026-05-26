@@ -1,11 +1,11 @@
 package com.gym.crm.service;
 
-import com.gym.crm.dto.CreatedTrainee;
-import com.gym.crm.dto.TraineeInfoDTO;
-import com.gym.crm.dto.TraineeResponseDTO;
-import com.gym.crm.dto.TraineeUpdateDTO;
-import com.gym.crm.dto.TrainerAssignmentUpdateDTO;
-import com.gym.crm.dto.TrainerInfoDTO;
+import com.gym.crm.facade.dto.CreatedTrainee;
+import com.gym.crm.facade.dto.TraineeInfoDTO;
+import com.gym.crm.facade.dto.TraineeResponseDTO;
+import com.gym.crm.facade.dto.TraineeUpdateDTO;
+import com.gym.crm.facade.dto.TrainerAssignmentUpdateDTO;
+import com.gym.crm.facade.dto.TrainerInfoDTO;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.Training;

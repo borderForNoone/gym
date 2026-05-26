@@ -1,8 +1,8 @@
 package com.gym.crm.mapper;
 
-import com.gym.crm.dto.TrainingRequestDTO;
-import com.gym.crm.dto.TrainingResponseDTO;
-import com.gym.crm.dto.TrainingTypeDTO;
+import com.gym.crm.facade.dto.TrainingRequestDTO;
+import com.gym.crm.facade.dto.TrainingResponseDTO;
+import com.gym.crm.facade.dto.TrainingTypeDTO;
 import com.gym.crm.model.Training;
 import com.gym.crm.model.TrainingType;
 import org.mapstruct.Mapper;

@@ -1,9 +1,9 @@
 package com.gym.crm.service.impl;
 
-import com.gym.crm.dto.PasswordChangeRequest;
-import com.gym.crm.dto.ToggleActiveRequestDTO;
 import com.gym.crm.exception.BadCredentialsException;
 import com.gym.crm.exception.EntityNotFoundException;
+import com.gym.crm.facade.dto.PasswordChangeRequest;
+import com.gym.crm.facade.dto.ToggleActiveRequestDTO;
 import com.gym.crm.model.FieldName;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.model.Trainer;
@@ -11,8 +11,8 @@ import com.gym.crm.model.User;
 import com.gym.crm.repository.TraineeRepository;
 import com.gym.crm.repository.TrainerRepository;
 import com.gym.crm.service.UserProfileService;
+import com.gym.crm.service.common.CoreValidator;
 import com.gym.crm.service.common.UserInputValidator;
-import com.gym.crm.util.CoreValidator;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +44,7 @@ public class UserProfileServiceImpl implements UserProfileService {
     private final UserInputValidator userInputValidator;
     private final PasswordEncoder passwordEncoder;
 
+    @Transactional
     @Override
     public String generateUsername(String firstName, String lastName) {
         validator.validateNotBlank(firstName, "First name");
@@ -68,6 +69,7 @@ public class UserProfileServiceImpl implements UserProfileService {
         return candidate;
     }
 
+    @Transactional()
     @Override
     public String generatePassword() {
         return IntStream.range(0, PASSWORD_LENGTH)
@@ -75,6 +77,7 @@ public class UserProfileServiceImpl implements UserProfileService {
                 .collect(Collectors.joining());
     }
 
+    @Transactional()
     @Override
     public Boolean authenticate(String username, String password) {
         validator.validateNotBlank(username, USERNAME_LABEL);
@@ -115,6 +118,7 @@ public class UserProfileServiceImpl implements UserProfileService {
         log.info("Changed password for user: username={}", username);
     }
 
+    @Transactional()
     @Override
     public User login(LoginRequest request) {
         validator.validateNotBlank(request.getUsername(), USERNAME_LABEL);

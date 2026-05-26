@@ -1,7 +1,7 @@
 package com.gym.crm.service.impl;
 
-import com.gym.crm.dto.TrainingResponseDTO;
-import com.gym.crm.dto.TrainingTypeDTO;
+import com.gym.crm.facade.dto.TrainingResponseDTO;
+import com.gym.crm.facade.dto.TrainingTypeDTO;
 import com.gym.crm.mapper.TrainingMapper;
 import com.gym.crm.model.Training;
 import com.gym.crm.repository.TrainingRepository;
@@ -35,6 +35,7 @@ public class TrainingServiceImpl implements TrainingService {
         return trainingRepository.save(training);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public List<TrainingResponseDTO> getTraineeTrainings(@Valid TraineeTrainingFilter filter) {
         validator.validate(filter, "Filter");
@@ -45,6 +46,7 @@ public class TrainingServiceImpl implements TrainingService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     @Override
     public List<TrainingResponseDTO> getTrainerTrainings(@Valid TrainerTrainingFilter filter) {
         validator.validate(filter, "Filter");
@@ -55,6 +57,7 @@ public class TrainingServiceImpl implements TrainingService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     @Override
     public List<TrainingTypeDTO> getAllTrainingTypes() {
         return trainingTypeRepository.findAll().stream()

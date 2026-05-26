@@ -1,26 +1,25 @@
 package com.gym.crm.service.impl;
 
-import com.gym.crm.dto.CreatedTrainer;
-import com.gym.crm.dto.TrainerInfoDTO;
-import com.gym.crm.dto.TrainerRequestDTO;
-import com.gym.crm.dto.TrainerResponseDTO;
-import com.gym.crm.dto.TrainerUpdateDTO;
 import com.gym.crm.exception.EntityNotFoundException;
 import com.gym.crm.exception.InvalidPasswordException;
+import com.gym.crm.facade.dto.CreatedTrainer;
+import com.gym.crm.facade.dto.TrainerInfoDTO;
+import com.gym.crm.facade.dto.TrainerRequestDTO;
+import com.gym.crm.facade.dto.TrainerResponseDTO;
+import com.gym.crm.facade.dto.TrainerUpdateDTO;
 import com.gym.crm.mapper.TrainerMapper;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.Training;
 import com.gym.crm.model.TrainingType;
 import com.gym.crm.model.User;
-import com.gym.crm.repository.TraineeRepository;
 import com.gym.crm.repository.TrainerRepository;
 import com.gym.crm.repository.TrainingTypeRepository;
 import com.gym.crm.search.criteria.TrainerTrainingCriteriaBuilder;
 import com.gym.crm.search.filter.TrainerTrainingFilter;
 import com.gym.crm.service.TrainerService;
 import com.gym.crm.service.UserProfileService;
+import com.gym.crm.service.common.CoreValidator;
 import com.gym.crm.service.common.UserInputValidator;
-import com.gym.crm.util.CoreValidator;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -42,14 +41,11 @@ import static java.lang.String.format;
 @RequiredArgsConstructor
 public class TrainerServiceImpl implements TrainerService {
     private static final String USERNAME_LABEL = "Username";
-    private static final String OLD_PASSWORD_LABEL = "Old password";
-    private static final String NEW_PASSWORD_LABEL = "New password";
     private static final String FILTER_LABEL = "Filter";
     private static final String TRAINER_NOT_FOUND = "Trainer not found: %s";
     private static final String TRAINING_TYPE_NOT_FOUND_BY_NAME = "Training type not found by name: %s";
     private static final String TRAINER_NOT_FOUND_BY_USERNAME = "Trainer not found by username: %s";
 
-    private final TraineeRepository traineeRepository;
     private final TrainerRepository trainerRepository;
     private final UserProfileService userProfileService;
     private final TrainerTrainingCriteriaBuilder criteriaBuilder;
@@ -101,6 +97,7 @@ public class TrainerServiceImpl implements TrainerService {
         return mapper.toDto(trainerRepository.save(updated));
     }
 
+    @Transactional(readOnly = true)
     @Override
     public TrainerInfoDTO getTrainerByUsername(String username) {
         userInputValidator.validateUsername(username);
@@ -172,11 +169,9 @@ public class TrainerServiceImpl implements TrainerService {
         return entityManager.createQuery(searchQuery).getResultList();
     }
 
+    @Transactional(readOnly = true)
     @Override
     public List<TrainerInfoDTO> getNotAssignedToTrainee(String traineeUsername) {
-        return trainerRepository.findAll().stream()
-                .filter(t -> t.getTrainees().stream().noneMatch(tr -> tr.getUser().getUsername().equals(traineeUsername)))
-                .map(mapper::toInfoDto)
-                .toList();
+        return trainerRepository.findAllNotAssignedToTrainee(traineeUsername);
     }
 }
