@@ -198,8 +198,7 @@ class TrainerServiceImplTest {
 
         List<TrainerInfoDTO> result = service.getNotAssignedToTrainee("user");
 
-        assertThat(result).isNotNull();
-        assertThat(result).hasSize(1);
+        assertThat(result).isNotNull().hasSize(1);
     }
 
     @Test

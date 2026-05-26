@@ -47,8 +47,8 @@ public class UserProfileServiceImpl implements UserProfileService {
     @Transactional
     @Override
     public String generateUsername(String firstName, String lastName) {
-        validator.validateNotBlank(firstName, "First name");
-        validator.validateNotBlank(lastName, "Last name");
+        CoreValidator.validateNotBlank(firstName, "First name");
+        CoreValidator.validateNotBlank(lastName, "Last name");
 
         String baseUsername = firstName.trim() + "." + lastName.trim();
         validator.validateTextFieldSize(baseUsername, FieldName.USERNAME, 110);
@@ -80,8 +80,8 @@ public class UserProfileServiceImpl implements UserProfileService {
     @Transactional()
     @Override
     public Boolean authenticate(String username, String password) {
-        validator.validateNotBlank(username, USERNAME_LABEL);
-        validator.validateNotBlank(password, PASSWORD_LABEL);
+        CoreValidator.validateNotBlank(username, USERNAME_LABEL);
+        CoreValidator.validateNotBlank(password, PASSWORD_LABEL);
 
         return traineeRepository.findByUser_Username(username)
                 .map(Trainee::getUser).or(() -> trainerRepository.findByUser_Username(username).map(Trainer::getUser))
@@ -121,8 +121,8 @@ public class UserProfileServiceImpl implements UserProfileService {
     @Transactional()
     @Override
     public User login(LoginRequest request) {
-        validator.validateNotBlank(request.getUsername(), USERNAME_LABEL);
-        validator.validateNotBlank(request.getPassword(), PASSWORD_LABEL);
+        CoreValidator.validateNotBlank(request.getUsername(), USERNAME_LABEL);
+        CoreValidator.validateNotBlank(request.getPassword(), PASSWORD_LABEL);
 
         String username = request.getUsername();
 

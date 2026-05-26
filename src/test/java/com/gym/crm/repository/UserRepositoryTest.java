@@ -12,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class UserRepositoryTest extends BaseRepositoryTest {
     @Autowired
-    private TestEntityManager em;
+    private TestEntityManager entityManager;
     @Autowired
     private UserRepository userRepository;
 
@@ -20,16 +20,16 @@ class UserRepositoryTest extends BaseRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        savedUser = em.persistFlushFind(buildUser("john.doe", "John", "Doe"));
+        savedUser = entityManager.persistFlushFind(buildUser("tom.tomas", "Tom", "Tomas"));
     }
 
     @Test
     void findByUsername_returnsUser_whenExists() {
-        Optional<User> result = userRepository.findByUsername("john.doe");
+        Optional<User> result = userRepository.findByUsername("tom.tomas");
 
         assertThat(result).isPresent();
-        assertThat(result.get().getFirstName()).isEqualTo("John");
-        assertThat(result.get().getLastName()).isEqualTo("Doe");
+        assertThat(result.get().getFirstName()).isEqualTo("Tom");
+        assertThat(result.get().getLastName()).isEqualTo("Tomas");
     }
 
     @Test
@@ -40,7 +40,7 @@ class UserRepositoryTest extends BaseRepositoryTest {
     @Test
     void findByUsername_returnsEmpty_afterUserDeleted() {
         userRepository.delete(savedUser);
-        em.flush();
+        entityManager.flush();
 
         assertThat(userRepository.findByUsername("john.doe")).isEmpty();
     }
@@ -57,18 +57,22 @@ class UserRepositoryTest extends BaseRepositoryTest {
 
     @Test
     void save_updatesExistingUser() {
-        User updated = savedUser.toBuilder().firstName("Jonathan").build();
-        userRepository.save(updated);
-        em.flush();
-        em.clear();
+        User user = userRepository.findById(savedUser.getId()).orElseThrow();
+        User updatedUser = user.toBuilder().firstName("Jonathan").build();
 
-        User reloaded = userRepository.findByUsername("john.doe").orElseThrow();
+        userRepository.save(updatedUser);
+
+        entityManager.flush();
+        entityManager.clear();
+
+        User reloaded = userRepository.findById(savedUser.getId()).orElseThrow();
+
         assertThat(reloaded.getFirstName()).isEqualTo("Jonathan");
     }
 
     @Test
     void findAll_returnsAllPersistedUsers() {
-        em.persistAndFlush(buildUser("second.user", "Second", "User"));
+        entityManager.persistAndFlush(buildUser("second.user", "Second", "User"));
 
         assertThat(userRepository.findAll()).hasSizeGreaterThanOrEqualTo(2);
     }
@@ -76,7 +80,7 @@ class UserRepositoryTest extends BaseRepositoryTest {
     @Test
     void deleteById_removesUser() {
         userRepository.deleteById(savedUser.getId());
-        em.flush();
+        entityManager.flush();
 
         assertThat(userRepository.findByUsername("john.doe")).isEmpty();
     }

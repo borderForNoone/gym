@@ -52,7 +52,9 @@ class TrainingCriteriaBuilderTest {
     void build_shouldThrowException_whenUsernameIsBlank() {
         TestTrainingFilter filter = TestTrainingFilter.builder().username("").build();
 
-        assertThrows(RuntimeException.class, () -> builder.build(criteriaBuilder(), filter));
+        var criteriaBuilder = criteriaBuilder();
+
+        assertThrows(RuntimeException.class, () -> builder.build(criteriaBuilder, filter));
     }
 
     @Test

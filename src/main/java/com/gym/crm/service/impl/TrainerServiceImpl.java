@@ -145,7 +145,7 @@ public class TrainerServiceImpl implements TrainerService {
     @Transactional
     @Override
     public void setActive(String username, boolean active) {
-        validator.validateNotBlank(username, USERNAME_LABEL);
+        CoreValidator.validateNotBlank(username, USERNAME_LABEL);
 
         Trainer trainer = trainerRepository.findByUser_Username(username).orElseThrow(() -> new EntityNotFoundException(format(TRAINER_NOT_FOUND, username)));
         User currentUser = trainer.getUser();
