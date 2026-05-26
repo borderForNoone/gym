@@ -2,6 +2,7 @@ package com.gym.crm.service.common;
 
 import com.gym.crm.exception.CoreValidationException;
 import com.gym.crm.facade.dto.PasswordChangeRequest;
+import com.gym.crm.model.FieldName;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -98,6 +99,25 @@ class CoreValidatorTest {
     @Test
     void validateNotBlank_shouldPass_whenValid() {
         assertDoesNotThrow(() -> CoreValidator.validateNotBlank("john", "username"));
+    }
+
+    @Test
+    void validateTextFieldSize_shouldPass_whenValidLength() {
+        assertDoesNotThrow(() -> coreValidator.validateTextFieldSize("John", FieldName.FIRST_NAME, 10));
+    }
+
+    @Test
+    void validateTextFieldSize_shouldThrow_whenBlank() {
+        assertThatThrownBy(() -> coreValidator.validateTextFieldSize("   ", FieldName.FIRST_NAME, 10)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("First name");
+    }
+
+    @Test
+    void validateTextFieldSize_shouldThrow_whenTooLong() {
+        assertThatThrownBy(() -> coreValidator.validateTextFieldSize("VeryLongNameExceedingLimit", FieldName.FIRST_NAME, 5))
+                .isInstanceOf(CoreValidationException.class)
+                .hasMessageContaining("cannot exceed")
+                .hasMessageContaining("First name");
     }
 
     private PasswordChangeRequest validRequest() {

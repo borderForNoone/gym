@@ -1,16 +1,15 @@
 package com.gym.crm.service.impl;
 
+import com.gym.crm.exception.BadCredentialsException;
 import com.gym.crm.facade.dto.PasswordChangeRequest;
 import com.gym.crm.facade.dto.ToggleActiveRequestDTO;
-import com.gym.crm.exception.BadCredentialsException;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.User;
 import com.gym.crm.repository.TraineeRepository;
 import com.gym.crm.repository.TrainerRepository;
-import com.gym.crm.service.common.UserInputValidator;
 import com.gym.crm.service.common.CoreValidator;
-import jakarta.persistence.EntityNotFoundException;
+import com.gym.crm.service.common.UserInputValidator;
 import org.gym.crm.rest.LoginRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -206,8 +205,7 @@ class UserProfileServiceImplTest {
         when(traineeRepository.existsByUser_Username("unknown")).thenReturn(false);
         when(trainerRepository.existsByUser_Username("unknown")).thenReturn(false);
 
-        assertThatThrownBy(() -> service.toggleActive(request))
-                .isInstanceOf(com.gym.crm.exception.EntityNotFoundException.class)
+        assertThatThrownBy(() -> service.toggleActive(request)).isInstanceOf(com.gym.crm.exception.EntityNotFoundException.class)
                 .hasMessageContaining("User not found");
     }
 }
