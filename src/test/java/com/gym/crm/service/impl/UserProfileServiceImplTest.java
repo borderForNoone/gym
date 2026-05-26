@@ -4,11 +4,13 @@ import com.gym.crm.facade.dto.PasswordChangeRequest;
 import com.gym.crm.facade.dto.ToggleActiveRequestDTO;
 import com.gym.crm.exception.BadCredentialsException;
 import com.gym.crm.model.Trainee;
+import com.gym.crm.model.Trainer;
 import com.gym.crm.model.User;
 import com.gym.crm.repository.TraineeRepository;
 import com.gym.crm.repository.TrainerRepository;
 import com.gym.crm.service.common.UserInputValidator;
 import com.gym.crm.service.common.CoreValidator;
+import jakarta.persistence.EntityNotFoundException;
 import org.gym.crm.rest.LoginRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,6 +23,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -158,5 +161,53 @@ class UserProfileServiceImplTest {
         String result = service.generatePassword();
 
         assertThat(result).hasSize(10);
+    }
+
+    @Test
+    void generateUsername_shouldAddSuffix_whenUsernameTaken() {
+        when(traineeRepository.existsByUser_Username(anyString())).thenReturn(false);
+
+        when(trainerRepository.existsByUser_Username(anyString())).thenAnswer(invocation -> {
+            String username = invocation.getArgument(0);
+
+            return switch (username) {
+                case "tom.tomas" -> true;
+                case "tom.tomas1" -> false;
+                default -> false;
+            };
+        });
+
+        String result = service.generateUsername("tom", "tomas");
+
+        assertThat(result).isEqualTo("tom.tomas1");
+    }
+
+    @Test
+    void toggleActive_shouldToggleTrainer_whenExists() {
+        ToggleActiveRequestDTO request = mock(ToggleActiveRequestDTO.class);
+        User user = User.builder().username("trainer1").password("hash").isActive(true).build();
+        Trainer trainer = Trainer.builder().user(user).build();
+
+        when(request.getUsername()).thenReturn("trainer1");
+        when(traineeRepository.existsByUser_Username("trainer1")).thenReturn(false);
+        when(trainerRepository.existsByUser_Username("trainer1")).thenReturn(true);
+        when(trainerRepository.findByUser_Username("trainer1")).thenReturn(Optional.of(trainer));
+
+        service.toggleActive(request);
+
+        verify(trainerRepository).save(any(Trainer.class));
+    }
+
+    @Test
+    void toggleActive_shouldThrow_whenUserNotFound() {
+        ToggleActiveRequestDTO request = mock(ToggleActiveRequestDTO.class);
+
+        when(request.getUsername()).thenReturn("unknown");
+        when(traineeRepository.existsByUser_Username("unknown")).thenReturn(false);
+        when(trainerRepository.existsByUser_Username("unknown")).thenReturn(false);
+
+        assertThatThrownBy(() -> service.toggleActive(request))
+                .isInstanceOf(com.gym.crm.exception.EntityNotFoundException.class)
+                .hasMessageContaining("User not found");
     }
 }

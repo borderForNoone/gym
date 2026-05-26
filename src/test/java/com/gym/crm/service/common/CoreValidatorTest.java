@@ -83,6 +83,23 @@ class CoreValidatorTest {
                 .hasMessageContaining("newPassword");
     }
 
+    @Test
+    void validateNotBlank_shouldThrow_whenNull() {
+        assertThatThrownBy(() -> CoreValidator.validateNotBlank(null, "username")).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("username");
+    }
+
+    @Test
+    void validateNotBlank_shouldThrow_whenBlank() {
+        assertThatThrownBy(() -> CoreValidator.validateNotBlank("   ", "username")).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("username");
+    }
+
+    @Test
+    void validateNotBlank_shouldPass_whenValid() {
+        assertDoesNotThrow(() -> CoreValidator.validateNotBlank("john", "username"));
+    }
+
     private PasswordChangeRequest validRequest() {
         return PasswordChangeRequest.builder().username("Simone.Radcliffe").oldPassword("oldPassword").newPassword("newPassword").build();
     }
