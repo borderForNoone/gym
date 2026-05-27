@@ -1,10 +1,10 @@
 package com.gym.crm.service.common;
 
+import com.gym.crm.exception.ValidationFailedException;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 import jakarta.validation.constraints.NotNull;
-import com.gym.crm.exception.ValidationFailedException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

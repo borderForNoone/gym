@@ -10,17 +10,27 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @DatabaseSetup("/dataset/trainee-dataset.xml")
 class UserRepositoryTest extends BaseTestRepository<UserRepository> {
-    @Test
-    void findByUsername_returnsUser_whenExists() {
-        Optional<User> result = repository.findByUsername("Julia.Tomas");
+    private static final String USERNAME = "Julia.Tomas";
+    private static final String NOT_FOUND = "nobody";
 
-        assertThat(result).isPresent();
-        assertThat(result.get().getFirstName()).isEqualTo("Julia");
-        assertThat(result.get().getLastName()).isEqualTo("Tomas");
+    @Test
+    void findByUsername_shouldReturnUser_whenExists() {
+        Optional<User> actual = repository.findByUsername(USERNAME);
+
+        assertThat(actual).isPresent();
+
+        User user = actual.get();
+
+        assertThat(user.getFirstName()).isEqualTo("Julia");
+        assertThat(user.getLastName()).isEqualTo("Tomas");
+        assertThat(user.getUsername()).isEqualTo(USERNAME);
+        assertThat(user.getIsActive()).isTrue();
     }
 
     @Test
-    void findByUsername_returnsEmpty_whenNotFound() {
-        assertThat(repository.findByUsername("nobody")).isEmpty();
+    void findByUsername_shouldReturnEmptyOptional_whenNotFound() {
+        Optional<User> actual = repository.findByUsername(NOT_FOUND);
+
+        assertThat(actual).isEmpty();
     }
 }

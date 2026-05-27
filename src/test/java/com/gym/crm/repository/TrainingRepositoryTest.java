@@ -13,92 +13,220 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TrainingRepositoryTest extends BaseTestRepository<TrainingRepository> {
     @Test
     void findByTraineeCriteria_usernameOnly_returnsBothTrainings() {
-        assertThat(repository.findByTraineeCriteria("alice", null, null)).hasSize(2);
+        List<Training> result = repository.findByTraineeCriteria("alice", null, null);
+
+        assertThat(result).hasSize(2);
+
+        assertThat(result).anySatisfy(t -> {
+            assertThat(t.getTrainingName()).isEqualTo("Morning Yoga");
+            assertThat(t.getTrainingDate()).isEqualTo(LocalDate.of(2024, 3, 10));
+            assertThat(t.getTrainingDuration()).isEqualTo(60);
+            assertThat(t.getTrainee().getUser().getUsername()).isEqualTo("alice");
+            assertThat(t.getTrainer().getUser().getUsername()).isEqualTo("bob");
+            assertThat(t.getTrainingType().getTrainingTypeName()).isEqualTo("Yoga");
+        });
+
+        assertThat(result).anySatisfy(t -> {
+            assertThat(t.getTrainingName()).isEqualTo("Evening Yoga");
+            assertThat(t.getTrainingDate()).isEqualTo(LocalDate.of(2024, 9, 20));
+            assertThat(t.getTrainingDuration()).isEqualTo(60);
+            assertThat(t.getTrainee().getUser().getUsername()).isEqualTo("alice");
+            assertThat(t.getTrainer().getUser().getUsername()).isEqualTo("bob");
+            assertThat(t.getTrainingType().getTrainingTypeName()).isEqualTo("Yoga");
+        });
     }
 
     @Test
     void findByTraineeCriteria_withFromDate_returnsOnlyLaterTraining() {
-        List<Training> result = repository.findByTraineeCriteria("alice", LocalDate.of(2024, 6, 1), null);
+        LocalDate from = LocalDate.of(2024, 6, 1);
+
+        List<Training> result = repository.findByTraineeCriteria("alice", from, null);
 
         assertThat(result).hasSize(1);
-        assertThat(result.getFirst().getTrainingName()).isEqualTo("Evening Yoga");
+
+        Training training = result.getFirst();
+        assertThat(training.getTrainingName()).isEqualTo("Evening Yoga");
+        assertThat(training.getTrainingDate()).isEqualTo(LocalDate.of(2024, 9, 20));
+        assertThat(training.getTrainingDuration()).isEqualTo(60);
+        assertThat(training.getTrainee().getUser().getUsername()).isEqualTo("alice");
+        assertThat(training.getTrainer().getUser().getUsername()).isEqualTo("bob");
+        assertThat(training.getTrainingType().getTrainingTypeName()).isEqualTo("Yoga");
     }
 
     @Test
     void findByTraineeCriteria_withToDate_returnsOnlyEarlierTraining() {
-        List<Training> result = repository.findByTraineeCriteria("alice", null, LocalDate.of(2024, 6, 1));
+        LocalDate to = LocalDate.of(2024, 6, 1);
+
+        List<Training> result = repository.findByTraineeCriteria("alice", null, to);
 
         assertThat(result).hasSize(1);
-        assertThat(result.getFirst().getTrainingName()).isEqualTo("Morning Yoga");
+
+        Training training = result.getFirst();
+        assertThat(training.getTrainingName()).isEqualTo("Morning Yoga");
+        assertThat(training.getTrainingDate()).isEqualTo(LocalDate.of(2024, 3, 10));
+        assertThat(training.getTrainingDuration()).isEqualTo(60);
+        assertThat(training.getTrainee().getUser().getUsername()).isEqualTo("alice");
+        assertThat(training.getTrainer().getUser().getUsername()).isEqualTo("bob");
+        assertThat(training.getTrainingType().getTrainingTypeName()).isEqualTo("Yoga");
     }
 
     @Test
     void findByTraineeCriteria_withExactDateRange_returnsSingleMatch() {
-        List<Training> result = repository.findByTraineeCriteria("alice", LocalDate.of(2024, 3, 1),
-                LocalDate.of(2024, 4, 1));
+        LocalDate from = LocalDate.of(2024, 3, 1);
+        LocalDate to = LocalDate.of(2024, 4, 1);
+
+        List<Training> result = repository.findByTraineeCriteria("alice", from, to);
 
         assertThat(result).hasSize(1);
-        assertThat(result.getFirst().getTrainingName()).isEqualTo("Morning Yoga");
+
+        Training training = result.getFirst();
+        assertThat(training.getTrainingName()).isEqualTo("Morning Yoga");
+        assertThat(training.getTrainingDate()).isEqualTo(LocalDate.of(2024, 3, 10));
+        assertThat(training.getTrainingDuration()).isEqualTo(60);
+        assertThat(training.getTrainee().getUser().getUsername()).isEqualTo("alice");
+        assertThat(training.getTrainer().getUser().getUsername()).isEqualTo("bob");
+        assertThat(training.getTrainingType().getTrainingTypeName()).isEqualTo("Yoga");
     }
 
     @Test
-    void findByTraineeCriteria_nullUsername_returnsBothTrainings() {
-        assertThat(repository.findByTraineeCriteria(null, null, null)).hasSize(2);
+    void findByTraineeCriteria_nullUsername_returnsAllTrainings() {
+        List<Training> result = repository.findByTraineeCriteria(null, null, null);
+
+        assertThat(result).hasSize(2);
+
+        assertThat(result).anySatisfy(t -> {
+            assertThat(t.getTrainingName()).isEqualTo("Morning Yoga");
+            assertThat(t.getTrainingDate()).isEqualTo(LocalDate.of(2024, 3, 10));
+        });
+
+        assertThat(result).anySatisfy(t -> {
+            assertThat(t.getTrainingName()).isEqualTo("Evening Yoga");
+            assertThat(t.getTrainingDate()).isEqualTo(LocalDate.of(2024, 9, 20));
+        });
     }
 
     @Test
     void findByTraineeCriteria_unknownUsername_returnsEmpty() {
-        assertThat(repository.findByTraineeCriteria("ghost", null, null)).isEmpty();
+        List<Training> result = repository.findByTraineeCriteria("ghost", null, null);
+
+        assertThat(result).isEmpty();
     }
 
     @Test
     void findByTraineeCriteria_dateRangeExcludesAllRecords_returnsEmpty() {
-        assertThat(repository.findByTraineeCriteria("alice", LocalDate.of(2025, 1, 1),
-                LocalDate.of(2025, 12, 31))).isEmpty();
+        List<Training> result = repository.findByTraineeCriteria(
+                "alice", LocalDate.of(2025, 1, 1), LocalDate.of(2025, 12, 31)
+        );
+
+        assertThat(result).isEmpty();
     }
 
     @Test
     void findByTrainerCriteria_usernameOnly_returnsBothTrainings() {
-        assertThat(repository.findByTrainerCriteria("bob", null, null)).hasSize(2);
+        List<Training> result = repository.findByTrainerCriteria("bob", null, null);
+
+        assertThat(result).hasSize(2);
+
+        assertThat(result).anySatisfy(t -> {
+            assertThat(t.getTrainingName()).isEqualTo("Morning Yoga");
+            assertThat(t.getTrainingDate()).isEqualTo(LocalDate.of(2024, 3, 10));
+            assertThat(t.getTrainingDuration()).isEqualTo(60);
+            assertThat(t.getTrainer().getUser().getUsername()).isEqualTo("bob");
+            assertThat(t.getTrainingType().getTrainingTypeName()).isEqualTo("Yoga");
+        });
+
+        assertThat(result).anySatisfy(t -> {
+            assertThat(t.getTrainingName()).isEqualTo("Evening Yoga");
+            assertThat(t.getTrainingDate()).isEqualTo(LocalDate.of(2024, 9, 20));
+            assertThat(t.getTrainingDuration()).isEqualTo(60);
+            assertThat(t.getTrainer().getUser().getUsername()).isEqualTo("bob");
+            assertThat(t.getTrainingType().getTrainingTypeName()).isEqualTo("Yoga");
+        });
     }
 
     @Test
     void findByTrainerCriteria_withFromDate_returnsOnlyLaterTraining() {
-        List<Training> result = repository.findByTrainerCriteria("bob", LocalDate.of(2024, 6, 1), null);
+        LocalDate from = LocalDate.of(2024, 6, 1);
+
+        List<Training> result = repository.findByTrainerCriteria("bob", from, null);
 
         assertThat(result).hasSize(1);
-        assertThat(result.getFirst().getTrainingName()).isEqualTo("Evening Yoga");
+
+        Training training = result.getFirst();
+        assertThat(training.getTrainingName()).isEqualTo("Evening Yoga");
+        assertThat(training.getTrainingDate()).isEqualTo(LocalDate.of(2024, 9, 20));
+        assertThat(training.getTrainingDuration()).isEqualTo(60);
+        assertThat(training.getTrainer().getUser().getUsername()).isEqualTo("bob");
+        assertThat(training.getTrainingType().getTrainingTypeName()).isEqualTo("Yoga");
     }
 
     @Test
     void findByTrainerCriteria_withToDate_returnsOnlyEarlierTraining() {
-        List<Training> result = repository.findByTrainerCriteria("bob", null, LocalDate.of(2024, 6, 1));
+        LocalDate to = LocalDate.of(2024, 6, 1);
+
+        List<Training> result = repository.findByTrainerCriteria("bob", null, to);
 
         assertThat(result).hasSize(1);
-        assertThat(result.getFirst().getTrainingName()).isEqualTo("Morning Yoga");
+
+        Training training = result.getFirst();
+        assertThat(training.getTrainingName()).isEqualTo("Morning Yoga");
+        assertThat(training.getTrainingDate()).isEqualTo(LocalDate.of(2024, 3, 10));
+        assertThat(training.getTrainingDuration()).isEqualTo(60);
+        assertThat(training.getTrainer().getUser().getUsername()).isEqualTo("bob");
+        assertThat(training.getTrainingType().getTrainingTypeName()).isEqualTo("Yoga");
     }
 
     @Test
     void findByTrainerCriteria_unknownUsername_returnsEmpty() {
-        assertThat(repository.findByTrainerCriteria("nobody", null, null)).isEmpty();
+        List<Training> result = repository.findByTrainerCriteria("nobody", null, null);
+
+        assertThat(result).isEmpty();
     }
 
     @Test
     void findTraineeTrainings_usernameOnly_returnsAllForTrainee() {
-        assertThat(repository.findTraineeTrainings("alice", null, null)).hasSize(2);
+        List<Training> result = repository.findTraineeTrainings("alice", null, null);
+
+        assertThat(result).hasSize(2);
+
+        assertThat(result).anySatisfy(t -> {
+            assertThat(t.getTrainingName()).isEqualTo("Morning Yoga");
+            assertThat(t.getTrainingDate()).isEqualTo(LocalDate.of(2024, 3, 10));
+            assertThat(t.getTrainingDuration()).isEqualTo(60);
+            assertThat(t.getTrainee().getUser().getUsername()).isEqualTo("alice");
+            assertThat(t.getTrainingType().getTrainingTypeName()).isEqualTo("Yoga");
+        });
+
+        assertThat(result).anySatisfy(t -> {
+            assertThat(t.getTrainingName()).isEqualTo("Evening Yoga");
+            assertThat(t.getTrainingDate()).isEqualTo(LocalDate.of(2024, 9, 20));
+            assertThat(t.getTrainingDuration()).isEqualTo(60);
+            assertThat(t.getTrainee().getUser().getUsername()).isEqualTo("alice");
+            assertThat(t.getTrainingType().getTrainingTypeName()).isEqualTo("Yoga");
+        });
     }
 
     @Test
     void findTraineeTrainings_withDateRange_returnsSingleMatch() {
-        List<Training> result = repository.findTraineeTrainings("alice", LocalDate.of(2024, 9, 1),
-                LocalDate.of(2024, 9, 30));
+        LocalDate from = LocalDate.of(2024, 9, 1);
+        LocalDate to = LocalDate.of(2024, 9, 30);
+
+        List<Training> result = repository.findTraineeTrainings("alice", from, to);
 
         assertThat(result).hasSize(1);
-        assertThat(result.getFirst().getTrainingName()).isEqualTo("Evening Yoga");
+
+        Training training = result.getFirst();
+        assertThat(training.getTrainingName()).isEqualTo("Evening Yoga");
+        assertThat(training.getTrainingDate()).isEqualTo(LocalDate.of(2024, 9, 20));
+        assertThat(training.getTrainingDuration()).isEqualTo(60);
+        assertThat(training.getTrainee().getUser().getUsername()).isEqualTo("alice");
+        assertThat(training.getTrainingType().getTrainingTypeName()).isEqualTo("Yoga");
     }
 
     @Test
     void findTraineeTrainings_unknownUsername_returnsEmpty() {
-        assertThat(repository.findTraineeTrainings("ghost", null, null)).isEmpty();
+        List<Training> result = repository.findTraineeTrainings("ghost", null, null);
+
+        assertThat(result).isEmpty();
     }
 }

@@ -14,14 +14,10 @@ import com.gym.crm.model.User;
 import com.gym.crm.repository.TrainerRepository;
 import com.gym.crm.repository.TrainingRepository;
 import com.gym.crm.repository.TrainingTypeRepository;
-import com.gym.crm.search.criteria.TrainerTrainingCriteriaBuilder;
 import com.gym.crm.search.filter.TrainerTrainingFilter;
 import com.gym.crm.service.UserProfileService;
 import com.gym.crm.service.common.CoreValidator;
 import com.gym.crm.service.common.UserInputValidator;
-import jakarta.persistence.TypedQuery;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -53,8 +49,6 @@ class TrainerServiceImplTest {
     @Mock
     private UserProfileService userProfileService;
     @Mock
-    private TrainerTrainingCriteriaBuilder criteriaBuilder;
-    @Mock
     private CoreValidator validator;
     @Mock
     private UserInputValidator userInputValidator;
@@ -62,12 +56,6 @@ class TrainerServiceImplTest {
     private PasswordEncoder passwordEncoder;
     @Mock
     private TrainerMapper mapper;
-    @Mock
-    private CriteriaBuilder cb;
-    @Mock
-    private CriteriaQuery<Training> cq;
-    @Mock
-    private TypedQuery<Training> typedQuery;
 
     @InjectMocks
     private TrainerServiceImpl service;

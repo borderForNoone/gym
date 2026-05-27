@@ -577,11 +577,11 @@ public class GymFacadeTest {
 
     private Trainer buildTrainer() {
         return Trainer.builder().specialization(TrainingType.builder().trainingTypeName(TRAINING_TYPE_NAME).build()).user(User.builder()
-                .firstName(FIRST_NAME)
-                .lastName(LAST_NAME)
-                .username(USERNAME)
-                .password(PASSWORD)
-                .isActive(true).build())
+                        .firstName(FIRST_NAME)
+                        .lastName(LAST_NAME)
+                        .username(USERNAME)
+                        .password(PASSWORD)
+                        .isActive(true).build())
                 .build();
     }
 

@@ -10,16 +10,25 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @DatabaseSetup("/dataset/training-type.xml")
 class TrainingTypeRepositoryTest extends BaseTestRepository<TrainingTypeRepository> {
+    private static final String YOGA = "Yoga";
+    private static final String NOT_FOUND = "CrossFit";
+
     @Test
     void findByTrainingTypeName_returnsTrainingType_whenExists() {
-        Optional<TrainingType> result = repository.findByTrainingTypeName("Yoga");
+        Optional<TrainingType> result = repository.findByTrainingTypeName(YOGA);
 
         assertThat(result).isPresent();
-        assertThat(result.get().getTrainingTypeName()).isEqualTo("Yoga");
+
+        TrainingType trainingType = result.get();
+
+        assertThat(trainingType.getId()).isNotNull();
+        assertThat(trainingType.getTrainingTypeName()).isEqualTo(YOGA);
     }
 
     @Test
     void findByTrainingTypeName_returnsEmpty_whenNotExists() {
-        assertThat(repository.findByTrainingTypeName("CrossFit")).isEmpty();
+        Optional<TrainingType> result = repository.findByTrainingTypeName(NOT_FOUND);
+
+        assertThat(result).isEmpty();
     }
 }
