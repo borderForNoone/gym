@@ -114,9 +114,8 @@ class TrainingRepositoryTest extends BaseTestRepository<TrainingRepository> {
 
     @Test
     void findByTraineeCriteria_dateRangeExcludesAllRecords_returnsEmpty() {
-        List<Training> result = repository.findByTraineeCriteria(
-                "alice", LocalDate.of(2025, 1, 1), LocalDate.of(2025, 12, 31)
-        );
+        List<Training> result = repository.findByTraineeCriteria("alice", LocalDate.of(2025, 1, 1),
+                LocalDate.of(2025, 12, 31));
 
         assertThat(result).isEmpty();
     }
