@@ -1,37 +1,36 @@
 package com.gym.crm.service.impl;
 
+import com.gym.crm.exception.InvalidPasswordException;
 import com.gym.crm.facade.dto.CreatedTrainer;
 import com.gym.crm.facade.dto.TrainerInfoDTO;
 import com.gym.crm.facade.dto.TrainerRequestDTO;
 import com.gym.crm.facade.dto.TrainerResponseDTO;
 import com.gym.crm.facade.dto.TrainerUpdateDTO;
-import com.gym.crm.exception.InvalidPasswordException;
 import com.gym.crm.mapper.TrainerMapper;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.Training;
 import com.gym.crm.model.TrainingType;
 import com.gym.crm.model.User;
 import com.gym.crm.repository.TrainerRepository;
+import com.gym.crm.repository.TrainingRepository;
 import com.gym.crm.repository.TrainingTypeRepository;
 import com.gym.crm.search.criteria.TrainerTrainingCriteriaBuilder;
 import com.gym.crm.search.filter.TrainerTrainingFilter;
 import com.gym.crm.service.UserProfileService;
-import com.gym.crm.service.common.UserInputValidator;
 import com.gym.crm.service.common.CoreValidator;
-import jakarta.persistence.EntityManager;
+import com.gym.crm.service.common.UserInputValidator;
 import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import javax.naming.AuthenticationException;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -48,6 +47,8 @@ class TrainerServiceImplTest {
     @Mock
     private TrainerRepository trainerRepository;
     @Mock
+    private TrainingRepository trainingRepository;
+    @Mock
     private TrainingTypeRepository trainingTypeRepository;
     @Mock
     private UserProfileService userProfileService;
@@ -62,8 +63,6 @@ class TrainerServiceImplTest {
     @Mock
     private TrainerMapper mapper;
     @Mock
-    private EntityManager entityManager;
-    @Mock
     private CriteriaBuilder cb;
     @Mock
     private CriteriaQuery<Training> cq;
@@ -72,11 +71,6 @@ class TrainerServiceImplTest {
 
     @InjectMocks
     private TrainerServiceImpl service;
-
-    @BeforeEach
-    void setUp() {
-        ReflectionTestUtils.setField(service, "entityManager", entityManager);
-    }
 
     @Test
     void createTrainer_shouldReturnCreatedTrainer() {
@@ -107,7 +101,7 @@ class TrainerServiceImplTest {
         TrainerUpdateDTO request = mock(TrainerUpdateDTO.class);
         TrainingType type = mock(TrainingType.class);
         TrainerResponseDTO dto = mock(TrainerResponseDTO.class);
-        User user = User.builder().username("user1").firstName("Old").lastName("Name").isActive(false).build();
+        User user = User.builder().username("user1").firstName("Old").lastName("Name").build();
         Trainer trainer = Trainer.builder().user(user).build();
 
         when(request.getUsername()).thenReturn("user1");
@@ -178,16 +172,15 @@ class TrainerServiceImplTest {
 
     @Test
     void getTrainings_shouldReturnList() {
-        TrainerTrainingFilter filter = mock(TrainerTrainingFilter.class);
+        TrainerTrainingFilter filter = TrainerTrainingFilter.builder().username("Callum.Whitfield").fromDate(LocalDate.of(2024, 1, 1))
+                .toDate(LocalDate.of(2024, 12, 31)).build();
 
-        when(entityManager.getCriteriaBuilder()).thenReturn(cb);
-        when(criteriaBuilder.build(cb, filter)).thenReturn(cq);
-        when(entityManager.createQuery(cq)).thenReturn(typedQuery);
-        when(typedQuery.getResultList()).thenReturn(List.of());
+        when(trainingRepository.findByTrainerCriteria(filter.getUsername(), filter.getFromDate(), filter.getToDate())).thenReturn(List.of());
 
         List<Training> result = service.getTrainings(filter);
 
         assertThat(result).isEmpty();
+        verify(trainingRepository).findByTrainerCriteria(filter.getUsername(), filter.getFromDate(), filter.getToDate());
     }
 
     @Test
@@ -203,7 +196,11 @@ class TrainerServiceImplTest {
 
     @Test
     void updateProfile_shouldUpdateUserFieldsOnly() {
-        User existingUser = User.builder().username("trainer1").firstName("Old").lastName("Name").isActive(true).build();
+        User existingUser = User.builder()
+                .username("trainer1")
+                .firstName("Old")
+                .lastName("Name")
+                .isActive(true).build();
         Trainer trainer = Trainer.builder().user(existingUser).specialization(TrainingType.builder().trainingTypeName("FITNESS").build()).build();
         User incomingUser = User.builder().firstName("New").lastName("Surname").build();
         Trainer updatedData = Trainer.builder().user(incomingUser).build();
@@ -221,7 +218,12 @@ class TrainerServiceImplTest {
 
     @Test
     void updateProfile_shouldUpdateSpecializationOnly() {
-        User existingUser = User.builder().username("trainer1").firstName("Old").lastName("Name").isActive(true).build();
+        User existingUser = User.builder()
+                .username("trainer1")
+                .firstName("Old")
+                .lastName("Name")
+                .isActive(true)
+                .build();
         Trainer trainer = Trainer.builder().user(existingUser).specialization(TrainingType.builder().trainingTypeName("FITNESS").build()).build();
         Trainer updatedData = Trainer.builder().specialization(TrainingType.builder().trainingTypeName("CROSSFIT").build()).build();
 
@@ -238,7 +240,11 @@ class TrainerServiceImplTest {
 
     @Test
     void updateProfile_shouldNotChangeUser_whenUserIsNull() {
-        User existingUser = User.builder().username("trainer1").firstName("Old").lastName("Name").isActive(true).build();
+        User existingUser = User.builder()
+                .username("trainer1")
+                .firstName("Old")
+                .lastName("Name")
+                .isActive(true).build();
         Trainer trainer = Trainer.builder().user(existingUser).specialization(TrainingType.builder().trainingTypeName("FITNESS").build()).build();
         Trainer updatedData = Trainer.builder().specialization(TrainingType.builder().trainingTypeName("CROSSFIT").build()).build();
 

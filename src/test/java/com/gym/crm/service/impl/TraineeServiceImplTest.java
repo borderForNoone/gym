@@ -89,7 +89,12 @@ class TraineeServiceImplTest {
         when(dto.getLastName()).thenReturn("Name");
         when(dto.getIsActive()).thenReturn(true);
 
-        User user = User.builder().username("user1").firstName("Old").lastName("OldName").isActive(false).build();
+        User user = User.builder()
+                .username("user1")
+                .firstName("Old")
+                .lastName("OldName")
+                .isActive(false)
+                .build();
         Trainee trainee = Trainee.builder().user(user).build();
 
         TraineeResponseDTO responseDTO = mock(TraineeResponseDTO.class);
@@ -204,9 +209,18 @@ class TraineeServiceImplTest {
 
     @Test
     void updateProfile_shouldUpdateFields() {
-        User existingUser = User.builder().username("user").firstName("Old").lastName("Name").isActive(true).build();
+        User existingUser = User.builder()
+                .username("user")
+                .firstName("Old")
+                .lastName("Name")
+                .isActive(true)
+                .build();
         Trainee trainee = Trainee.builder().user(existingUser).build();
-        User incomingUser = User.builder().firstName("New").lastName("Name").isActive(true).build();
+        User incomingUser = User.builder()
+                .firstName("New")
+                .lastName("Name")
+                .isActive(true)
+                .build();
         Trainee updated = Trainee.builder().user(incomingUser).dateOfBirth(null).address(null).build();
 
         when(traineeRepository.findByUser_Username("user")).thenReturn(Optional.of(trainee));
@@ -240,7 +254,12 @@ class TraineeServiceImplTest {
 
     @Test
     void setActive_shouldChangeStatusSuccessfully() {
-        User user = User.builder().username("user").firstName("Tom").lastName("Tomas").isActive(false).build();
+        User user = User.builder()
+                .username("user")
+                .firstName("Tom")
+                .lastName("Tomas")
+                .isActive(false)
+                .build();
         Trainee trainee = Trainee.builder().user(user).build();
 
         when(traineeRepository.findByUser_Username("user")).thenReturn(Optional.of(trainee));
@@ -256,8 +275,12 @@ class TraineeServiceImplTest {
 
     @Test
     void setActive_shouldThrowException_whenAlreadyInSameState() {
-        User user = User.builder().username("user").firstName("Tom").lastName("Tomas").isActive(true).build();
-
+        User user = User.builder()
+                .username("user")
+                .firstName("Tom")
+                .lastName("Tomas")
+                .isActive(true)
+                .build();
         Trainee trainee = Trainee.builder().user(user).build();
 
         when(traineeRepository.findByUser_Username("user")).thenReturn(Optional.of(trainee));

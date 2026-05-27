@@ -70,6 +70,7 @@ public class TraineeServiceImpl implements TraineeService {
         return mapper.toDto(traineeRepository.save(updated));
     }
 
+    @Transactional(readOnly = true)
     @Override
     public TraineeInfoDTO getTraineeByUsername(String username) {
         userInputValidator.validateUsername(username);

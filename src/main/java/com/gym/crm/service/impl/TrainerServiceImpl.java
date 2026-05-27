@@ -13,6 +13,7 @@ import com.gym.crm.model.Training;
 import com.gym.crm.model.TrainingType;
 import com.gym.crm.model.User;
 import com.gym.crm.repository.TrainerRepository;
+import com.gym.crm.repository.TrainingRepository;
 import com.gym.crm.repository.TrainingTypeRepository;
 import com.gym.crm.search.criteria.TrainerTrainingCriteriaBuilder;
 import com.gym.crm.search.filter.TrainerTrainingFilter;
@@ -20,9 +21,6 @@ import com.gym.crm.service.TrainerService;
 import com.gym.crm.service.UserProfileService;
 import com.gym.crm.service.common.CoreValidator;
 import com.gym.crm.service.common.UserInputValidator;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,6 +45,7 @@ public class TrainerServiceImpl implements TrainerService {
     private static final String TRAINER_NOT_FOUND_BY_USERNAME = "Trainer not found by username: %s";
 
     private final TrainerRepository trainerRepository;
+    private final TrainingRepository trainingRepository;
     private final UserProfileService userProfileService;
     private final TrainerTrainingCriteriaBuilder criteriaBuilder;
     private final CoreValidator validator;
@@ -54,10 +53,6 @@ public class TrainerServiceImpl implements TrainerService {
     private final PasswordEncoder passwordEncoder;
     private final TrainerMapper mapper;
     private final TrainingTypeRepository trainingTypeRepository;
-
-    @PersistenceContext
-    private EntityManager entityManager;
-
 
     @Transactional
     @Override
@@ -164,9 +159,7 @@ public class TrainerServiceImpl implements TrainerService {
     public List<Training> getTrainings(TrainerTrainingFilter filter) {
         validator.validateNotNull(filter, FILTER_LABEL);
 
-        CriteriaQuery<Training> searchQuery = criteriaBuilder.build(entityManager.getCriteriaBuilder(), filter);
-
-        return entityManager.createQuery(searchQuery).getResultList();
+        return trainingRepository.findByTrainerCriteria(filter.getUsername(), filter.getFromDate(), filter.getToDate());
     }
 
     @Transactional(readOnly = true)

@@ -558,7 +558,13 @@ public class GymFacadeTest {
 
     private Trainee buildTrainee() {
         return Trainee.builder().dateOfBirth(LocalDate.of(1980, 1, 1)).address("123 Oak St")
-                .user(User.builder().firstName(FIRST_NAME).lastName(LAST_NAME).username(USERNAME).password(PASSWORD).isActive(true).build()).build();
+                .user(User.builder()
+                        .firstName(FIRST_NAME)
+                        .lastName(LAST_NAME)
+                        .username(USERNAME)
+                        .password(PASSWORD)
+                        .isActive(true).build())
+                .build();
     }
 
     private TraineeRequestDTO buildTraineeRequestDTO() {
@@ -571,7 +577,12 @@ public class GymFacadeTest {
 
     private Trainer buildTrainer() {
         return Trainer.builder().specialization(TrainingType.builder().trainingTypeName(TRAINING_TYPE_NAME).build()).user(User.builder()
-                .firstName(FIRST_NAME).lastName(LAST_NAME).username(USERNAME).password(PASSWORD).isActive(true).build()).build();
+                .firstName(FIRST_NAME)
+                .lastName(LAST_NAME)
+                .username(USERNAME)
+                .password(PASSWORD)
+                .isActive(true).build())
+                .build();
     }
 
     private TrainerResponseDTO buildTrainerResponseDTO() {

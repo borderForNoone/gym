@@ -52,7 +52,12 @@ class TraineeMapperTest {
 
     @Test
     void toResponseDto_shouldMapAllFields() {
-        Trainee trainee = Trainee.builder().id(ID).user(User.builder().id(ID).firstName(FIRST_NAME).lastName(LAST_NAME).username(USERNAME).isActive(true).build())
+        Trainee trainee = Trainee.builder().id(ID).user(User.builder()
+                        .id(ID)
+                        .firstName(FIRST_NAME)
+                        .lastName(LAST_NAME)
+                        .username(USERNAME)
+                        .isActive(true).build())
                 .dateOfBirth(DATE_OF_BIRTH)
                 .address(ADDRESS)
                 .build();
@@ -70,7 +75,12 @@ class TraineeMapperTest {
 
     @Test
     void toResponseDto_shouldHandleNullDateOfBirth() {
-        User user = User.builder().firstName(FIRST_NAME).lastName(LAST_NAME).username(USERNAME).isActive(true).build();
+        User user = User.builder()
+                .firstName(FIRST_NAME)
+                .lastName(LAST_NAME)
+                .username(USERNAME)
+                .isActive(true)
+                .build();
         Trainee trainee = Trainee.builder().user(user).dateOfBirth(null).build();
 
         TraineeResponseDTO actual = traineeMapper.toDto(trainee);

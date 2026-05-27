@@ -62,7 +62,13 @@ class TrainerMapperTest {
     @Test
     void toResponseDto_shouldMapAllFields() {
         TrainingType specialization = TrainingType.builder().id(1L).trainingTypeName("fitness").build();
-        User user = User.builder().id(ID).firstName(FIRST_NAME).lastName(LAST_NAME).username(TRAINER_USERNAME).isActive(true).build();
+        User user = User.builder()
+                .id(ID)
+                .firstName(FIRST_NAME)
+                .lastName(LAST_NAME)
+                .username(TRAINER_USERNAME)
+                .isActive(true)
+                .build();
         Trainer trainer = Trainer.builder().id(ID).user(user).specialization(specialization).build();
 
         TrainerResponseDTO actual = trainerMapper.toDto(trainer);
@@ -116,7 +122,12 @@ class TrainerMapperTest {
 
     @Test
     void toDto_shouldHandleNullSpecialization() {
-        User user = User.builder().firstName(FIRST_NAME).lastName(LAST_NAME).username(TRAINER_USERNAME).isActive(true).build();
+        User user = User.builder()
+                .firstName(FIRST_NAME)
+                .lastName(LAST_NAME)
+                .username(TRAINER_USERNAME)
+                .isActive(true)
+                .build();
         Trainer trainer = Trainer.builder().user(user).specialization(null).build();
 
         TrainerResponseDTO actual = trainerMapper.toDto(trainer);
