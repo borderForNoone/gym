@@ -31,11 +31,25 @@ class TrainerInfoDTOTest {
 
     @Test
     void equals_andHashCode_workCorrectly() {
-        TrainerInfoDTO dto1 = TrainerInfoDTO.builder().username("tom").firstName("Tom").lastName("Tomas").isActive(true).specialization("Yoga").build();
-        TrainerInfoDTO dto2 = TrainerInfoDTO.builder().username("tom").firstName("Tom").lastName("Tomas").isActive(true).specialization("Yoga").build();
+        TrainerInfoDTO dto1 = TrainerInfoDTO.builder()
+                .username("tom")
+                .firstName("Tom")
+                .lastName("Tomas")
+                .isActive(true)
+                .specialization("Yoga")
+                .build();
+        TrainerInfoDTO dto2 = TrainerInfoDTO.builder()
+                .username("tom")
+                .firstName("Tom")
+                .lastName("Tomas")
+                .isActive(true)
+                .specialization("Yoga")
+                .build();
 
-        assertThat(dto1).isEqualTo(dto2);
-        assertThat(dto1).hasSameHashCodeAs(dto2);
+        assertThat(dto1).satisfies(trainerInfoDTO -> {
+                    assertThat(trainerInfoDTO).isEqualTo(dto2);
+                    assertThat(trainerInfoDTO).hasSameHashCodeAs(dto2);
+        });
     }
 
     @Test
