@@ -15,25 +15,24 @@ class TrainingRepositoryTest extends BaseTestRepository<TrainingRepository> {
     void findByTraineeCriteria_usernameOnly_returnsBothTrainings() {
         List<Training> result = repository.findByTraineeCriteria("alice", null, null);
 
-        assertThat(result).hasSize(2);
-
-        assertThat(result).anySatisfy(t -> {
-            assertThat(t.getTrainingName()).isEqualTo("Morning Yoga");
-            assertThat(t.getTrainingDate()).isEqualTo(LocalDate.of(2024, 3, 10));
-            assertThat(t.getTrainingDuration()).isEqualTo(60);
-            assertThat(t.getTrainee().getUser().getUsername()).isEqualTo("alice");
-            assertThat(t.getTrainer().getUser().getUsername()).isEqualTo("bob");
-            assertThat(t.getTrainingType().getTrainingTypeName()).isEqualTo("Yoga");
-        });
-
-        assertThat(result).anySatisfy(t -> {
-            assertThat(t.getTrainingName()).isEqualTo("Evening Yoga");
-            assertThat(t.getTrainingDate()).isEqualTo(LocalDate.of(2024, 9, 20));
-            assertThat(t.getTrainingDuration()).isEqualTo(60);
-            assertThat(t.getTrainee().getUser().getUsername()).isEqualTo("alice");
-            assertThat(t.getTrainer().getUser().getUsername()).isEqualTo("bob");
-            assertThat(t.getTrainingType().getTrainingTypeName()).isEqualTo("Yoga");
-        });
+        assertThat(result)
+                .hasSize(2)
+                .satisfiesExactlyInAnyOrder(training -> {
+                            assertThat(training.getTrainingName()).isEqualTo("Morning Yoga");
+                            assertThat(training.getTrainingDate()).isEqualTo(LocalDate.of(2024, 3, 10));
+                            assertThat(training.getTrainingDuration()).isEqualTo(60);
+                            assertThat(training.getTrainee().getUser().getUsername()).isEqualTo("alice");
+                            assertThat(training.getTrainer().getUser().getUsername()).isEqualTo("bob");
+                            assertThat(training.getTrainingType().getTrainingTypeName()).isEqualTo("Yoga");
+                        }, training -> {
+                            assertThat(training.getTrainingName()).isEqualTo("Evening Yoga");
+                            assertThat(training.getTrainingDate()).isEqualTo(LocalDate.of(2024, 9, 20));
+                            assertThat(training.getTrainingDuration()).isEqualTo(60);
+                            assertThat(training.getTrainee().getUser().getUsername()).isEqualTo("alice");
+                            assertThat(training.getTrainer().getUser().getUsername()).isEqualTo("bob");
+                            assertThat(training.getTrainingType().getTrainingTypeName()).isEqualTo("Yoga");
+                        }
+                );
     }
 
     @Test
@@ -92,17 +91,16 @@ class TrainingRepositoryTest extends BaseTestRepository<TrainingRepository> {
     void findByTraineeCriteria_nullUsername_returnsAllTrainings() {
         List<Training> result = repository.findByTraineeCriteria(null, null, null);
 
-        assertThat(result).hasSize(2);
-
-        assertThat(result).anySatisfy(t -> {
-            assertThat(t.getTrainingName()).isEqualTo("Morning Yoga");
-            assertThat(t.getTrainingDate()).isEqualTo(LocalDate.of(2024, 3, 10));
-        });
-
-        assertThat(result).anySatisfy(t -> {
-            assertThat(t.getTrainingName()).isEqualTo("Evening Yoga");
-            assertThat(t.getTrainingDate()).isEqualTo(LocalDate.of(2024, 9, 20));
-        });
+        assertThat(result)
+                .hasSize(2)
+                .satisfiesExactlyInAnyOrder(training -> {
+                            assertThat(training.getTrainingName()).isEqualTo("Morning Yoga");
+                            assertThat(training.getTrainingDate()).isEqualTo(LocalDate.of(2024, 3, 10));
+                        }, training -> {
+                            assertThat(training.getTrainingName()).isEqualTo("Evening Yoga");
+                            assertThat(training.getTrainingDate()).isEqualTo(LocalDate.of(2024, 9, 20));
+                        }
+                );
     }
 
     @Test
@@ -124,23 +122,24 @@ class TrainingRepositoryTest extends BaseTestRepository<TrainingRepository> {
     void findByTrainerCriteria_usernameOnly_returnsBothTrainings() {
         List<Training> result = repository.findByTrainerCriteria("bob", null, null);
 
-        assertThat(result).hasSize(2);
-
-        assertThat(result).anySatisfy(t -> {
-            assertThat(t.getTrainingName()).isEqualTo("Morning Yoga");
-            assertThat(t.getTrainingDate()).isEqualTo(LocalDate.of(2024, 3, 10));
-            assertThat(t.getTrainingDuration()).isEqualTo(60);
-            assertThat(t.getTrainer().getUser().getUsername()).isEqualTo("bob");
-            assertThat(t.getTrainingType().getTrainingTypeName()).isEqualTo("Yoga");
-        });
-
-        assertThat(result).anySatisfy(t -> {
-            assertThat(t.getTrainingName()).isEqualTo("Evening Yoga");
-            assertThat(t.getTrainingDate()).isEqualTo(LocalDate.of(2024, 9, 20));
-            assertThat(t.getTrainingDuration()).isEqualTo(60);
-            assertThat(t.getTrainer().getUser().getUsername()).isEqualTo("bob");
-            assertThat(t.getTrainingType().getTrainingTypeName()).isEqualTo("Yoga");
-        });
+        assertThat(result)
+                .hasSize(2)
+                .satisfiesExactlyInAnyOrder(
+                        training -> {
+                            assertThat(training.getTrainingName()).isEqualTo("Morning Yoga");
+                            assertThat(training.getTrainingDate()).isEqualTo(LocalDate.of(2024, 3, 10));
+                            assertThat(training.getTrainingDuration()).isEqualTo(60);
+                            assertThat(training.getTrainer().getUser().getUsername()).isEqualTo("bob");
+                            assertThat(training.getTrainingType().getTrainingTypeName()).isEqualTo("Yoga");
+                        },
+                        training -> {
+                            assertThat(training.getTrainingName()).isEqualTo("Evening Yoga");
+                            assertThat(training.getTrainingDate()).isEqualTo(LocalDate.of(2024, 9, 20));
+                            assertThat(training.getTrainingDuration()).isEqualTo(60);
+                            assertThat(training.getTrainer().getUser().getUsername()).isEqualTo("bob");
+                            assertThat(training.getTrainingType().getTrainingTypeName()).isEqualTo("Yoga");
+                        }
+                );
     }
 
     @Test
@@ -186,23 +185,23 @@ class TrainingRepositoryTest extends BaseTestRepository<TrainingRepository> {
     void findTraineeTrainings_usernameOnly_returnsAllForTrainee() {
         List<Training> result = repository.findTraineeTrainings("alice", null, null);
 
-        assertThat(result).hasSize(2);
-
-        assertThat(result).anySatisfy(t -> {
-            assertThat(t.getTrainingName()).isEqualTo("Morning Yoga");
-            assertThat(t.getTrainingDate()).isEqualTo(LocalDate.of(2024, 3, 10));
-            assertThat(t.getTrainingDuration()).isEqualTo(60);
-            assertThat(t.getTrainee().getUser().getUsername()).isEqualTo("alice");
-            assertThat(t.getTrainingType().getTrainingTypeName()).isEqualTo("Yoga");
-        });
-
-        assertThat(result).anySatisfy(t -> {
-            assertThat(t.getTrainingName()).isEqualTo("Evening Yoga");
-            assertThat(t.getTrainingDate()).isEqualTo(LocalDate.of(2024, 9, 20));
-            assertThat(t.getTrainingDuration()).isEqualTo(60);
-            assertThat(t.getTrainee().getUser().getUsername()).isEqualTo("alice");
-            assertThat(t.getTrainingType().getTrainingTypeName()).isEqualTo("Yoga");
-        });
+        assertThat(result)
+                .hasSize(2)
+                .satisfiesExactlyInAnyOrder(
+                        training -> {
+                            assertThat(training.getTrainingName()).isEqualTo("Morning Yoga");
+                            assertThat(training.getTrainingDate()).isEqualTo(LocalDate.of(2024, 3, 10));
+                            assertThat(training.getTrainingDuration()).isEqualTo(60);
+                            assertThat(training.getTrainee().getUser().getUsername()).isEqualTo("alice");
+                            assertThat(training.getTrainingType().getTrainingTypeName()).isEqualTo("Yoga");
+                        }, training -> {
+                            assertThat(training.getTrainingName()).isEqualTo("Evening Yoga");
+                            assertThat(training.getTrainingDate()).isEqualTo(LocalDate.of(2024, 9, 20));
+                            assertThat(training.getTrainingDuration()).isEqualTo(60);
+                            assertThat(training.getTrainee().getUser().getUsername()).isEqualTo("alice");
+                            assertThat(training.getTrainingType().getTrainingTypeName()).isEqualTo("Yoga");
+                        }
+                );
     }
 
     @Test

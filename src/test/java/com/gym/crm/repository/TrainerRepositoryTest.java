@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.tuple;
 
 @DatabaseSetup("/dataset/trainer.xml")
 class TrainerRepositoryTest extends BaseTestRepository<TrainerRepository> {
@@ -72,39 +73,27 @@ class TrainerRepositoryTest extends BaseTestRepository<TrainerRepository> {
     void findByUser_UsernameNotIn_returnsAll_whenNoUsernameMatches() {
         List<Trainer> result = repository.findByUser_UsernameNotIn(List.of("nonexistent.user"));
 
-        assertThat(result).hasSize(2);
-
-        assertThat(result).anySatisfy(trainer -> {
-            assertThat(trainer.getUser().getUsername()).isEqualTo("Callum.Whitfield");
-            assertThat(trainer.getUser().getFirstName()).isEqualTo("Callum");
-            assertThat(trainer.getUser().getLastName()).isEqualTo("Whitfield");
-            assertThat(trainer.getSpecialization().getTrainingTypeName()).isEqualTo("Yoga");
-        });
-
-        assertThat(result).anySatisfy(trainer -> {
-            assertThat(trainer.getUser().getUsername()).isEqualTo("Nora.Pemberton");
-            assertThat(trainer.getUser().getFirstName()).isEqualTo("Nora");
-            assertThat(trainer.getUser().getLastName()).isEqualTo("Pemberton");
-            assertThat(trainer.getSpecialization().getTrainingTypeName()).isEqualTo("Pilates");
-        });
+        assertThat(result)
+                .hasSize(2)
+                .extracting(trainer -> trainer.getUser().getUsername(), trainer -> trainer.getUser().getFirstName(),
+                        trainer -> trainer.getUser().getLastName(), trainer -> trainer.getSpecialization().getTrainingTypeName())
+                .containsExactlyInAnyOrder(tuple("Callum.Whitfield", "Callum", "Whitfield", "Yoga"), tuple("Nora.Pemberton", "Nora", "Pemberton", "Pilates"));
     }
 
     @Test
     void findByUser_UsernameIn_returnsMatchingTrainers() {
         List<Trainer> result = repository.findByUser_UsernameIn(List.of(USERNAME, SECOND_USERNAME));
 
-        assertThat(result).hasSize(2);
-
-        assertThat(result).anySatisfy(trainer -> {
-            assertThat(trainer.getUser().getUsername()).isEqualTo("Callum.Whitfield");
-            assertThat(trainer.getUser().getFirstName()).isEqualTo("Callum");
-            assertThat(trainer.getSpecialization().getTrainingTypeName()).isEqualTo("Yoga");
-        });
-        assertThat(result).anySatisfy(trainer -> {
-            assertThat(trainer.getUser().getUsername()).isEqualTo("Nora.Pemberton");
-            assertThat(trainer.getUser().getFirstName()).isEqualTo("Nora");
-            assertThat(trainer.getSpecialization().getTrainingTypeName()).isEqualTo("Pilates");
-        });
+        assertThat(result).hasSize(2).satisfiesExactlyInAnyOrder(trainer -> {
+                            assertThat(trainer.getUser().getUsername()).isEqualTo("Callum.Whitfield");
+                            assertThat(trainer.getUser().getFirstName()).isEqualTo("Callum");
+                            assertThat(trainer.getSpecialization().getTrainingTypeName()).isEqualTo("Yoga");
+                        }, trainer -> {
+                            assertThat(trainer.getUser().getUsername()).isEqualTo("Nora.Pemberton");
+                            assertThat(trainer.getUser().getFirstName()).isEqualTo("Nora");
+                            assertThat(trainer.getSpecialization().getTrainingTypeName()).isEqualTo("Pilates");
+                        }
+                );
     }
 
     @Test
@@ -133,15 +122,15 @@ class TrainerRepositoryTest extends BaseTestRepository<TrainerRepository> {
     void findByIdNotIn_returnsAll_whenNoIdMatches() {
         List<Trainer> result = repository.findByIdNotIn(List.of(-1L));
 
-        assertThat(result).hasSize(2);
-
-        assertThat(result).anySatisfy(trainer -> {
-            assertThat(trainer.getUser().getUsername()).isEqualTo("Callum.Whitfield");
-            assertThat(trainer.getSpecialization().getTrainingTypeName()).isEqualTo("Yoga");
-        });
-        assertThat(result).anySatisfy(trainer -> {
-            assertThat(trainer.getUser().getUsername()).isEqualTo("Nora.Pemberton");
-            assertThat(trainer.getSpecialization().getTrainingTypeName()).isEqualTo("Pilates");
-        });
+        assertThat(result)
+                .hasSize(2)
+                .satisfiesExactlyInAnyOrder(trainer -> {
+                            assertThat(trainer.getUser().getUsername()).isEqualTo("Callum.Whitfield");
+                            assertThat(trainer.getSpecialization().getTrainingTypeName()).isEqualTo("Yoga");
+                        }, trainer -> {
+                            assertThat(trainer.getUser().getUsername()).isEqualTo("Nora.Pemberton");
+                            assertThat(trainer.getSpecialization().getTrainingTypeName()).isEqualTo("Pilates");
+                        }
+                );
     }
 }
