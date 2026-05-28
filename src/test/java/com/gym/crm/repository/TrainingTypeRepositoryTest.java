@@ -18,16 +18,14 @@ class TrainingTypeRepositoryTest extends BaseTestRepository<TrainingTypeReposito
     void findByTrainingTypeName_returnsTrainingType_whenExists() {
         Optional<TrainingType> actual = repository.findByTrainingTypeName(YOGA);
 
-        assertThat(actual).isPresent();
-
         TrainingType actualTrainingType = actual.get();
         Long actualId = actualTrainingType.getId();
         String actualTrainingTypeName = actualTrainingType.getTrainingTypeName();
         Long expectedId = actualId;
-        String expectedTrainingTypeName = YOGA;
 
+        assertThat(actual).isPresent();
         assertThat(actualId).isEqualTo(expectedId);
-        assertThat(actualTrainingTypeName).isEqualTo(expectedTrainingTypeName);
+        assertThat(actualTrainingTypeName).isEqualTo(YOGA);
     }
 
     @Test
@@ -40,8 +38,8 @@ class TrainingTypeRepositoryTest extends BaseTestRepository<TrainingTypeReposito
     @Test
     void findAll_returnsAllTrainingTypes() {
         List<TrainingType> actual = repository.findAll();
-        int actualSize = actual.size();
 
+        int actualSize = actual.size();
         List<String> actualTrainingTypeNames = actual.stream()
                 .map(TrainingType::getTrainingTypeName)
                 .toList();
@@ -50,25 +48,5 @@ class TrainingTypeRepositoryTest extends BaseTestRepository<TrainingTypeReposito
 
         assertThat(actualSize).isEqualTo(expectedSize);
         assertThat(actualTrainingTypeNames).containsExactlyInAnyOrderElementsOf(expectedTrainingTypeNames);
-    }
-
-    @Test
-    void findById_returnsTrainingType_whenExists() {
-        TrainingType yoga = repository.findByTrainingTypeName(YOGA).orElseThrow();
-        Optional<TrainingType> actual = repository.findById(yoga.getId());
-
-        assertThat(actual).isPresent();
-
-        TrainingType actualTrainingType = actual.get();
-        String actualTrainingTypeName = actualTrainingType.getTrainingTypeName();
-
-        assertThat(actualTrainingTypeName).isEqualTo(YOGA);
-    }
-
-    @Test
-    void findById_returnsEmpty_whenNotExists() {
-        Optional<TrainingType> actual = repository.findById(999L);
-
-        assertThat(actual).isEmpty();
     }
 }

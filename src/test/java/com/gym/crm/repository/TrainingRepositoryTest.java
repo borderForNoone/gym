@@ -143,16 +143,15 @@ class TrainingRepositoryTest extends BaseTestRepository<TrainingRepository> {
     @Test
     void findByTraineeCriteria_usernameOnly_returnsBothTrainings() {
         List<Training> actual = repository.findByTraineeCriteria("alice", null, null);
+
         int actualSize = actual.size();
         int expectedSize = 2;
-
-        assertThat(actualSize).isEqualTo(expectedSize);
-
         Training firstTraining = actual.get(0);
         Training secondTraining = actual.get(1);
         List<String> actualTrainingNames = List.of(firstTraining.getTrainingName(), secondTraining.getTrainingName());
         List<String> expectedTrainingNames = List.of("Morning Yoga", "Evening Yoga");
 
+        assertThat(actualSize).isEqualTo(expectedSize);
         assertThat(actualTrainingNames).containsExactlyInAnyOrderElementsOf(expectedTrainingNames);
     }
 
@@ -161,17 +160,16 @@ class TrainingRepositoryTest extends BaseTestRepository<TrainingRepository> {
     void findByTraineeCriteria_withFromDate_returnsOnlyLaterTraining() {
         LocalDate from = LocalDate.of(2024, 6, 1);
         List<Training> actual = repository.findByTraineeCriteria("alice", from, null);
+
         int actualSize = actual.size();
         int expectedSize = 1;
-
-        assertThat(actualSize).isEqualTo(expectedSize);
-
         Training actualTraining = actual.getFirst();
         String actualTrainingName = actualTraining.getTrainingName();
         LocalDate actualTrainingDate = actualTraining.getTrainingDate();
         String expectedTrainingName = "Evening Yoga";
         LocalDate expectedTrainingDate = LocalDate.of(2024, 9, 20);
 
+        assertThat(actualSize).isEqualTo(expectedSize);
         assertThat(actualTrainingName).isEqualTo(expectedTrainingName);
         assertThat(actualTrainingDate).isEqualTo(expectedTrainingDate);
     }
@@ -180,17 +178,16 @@ class TrainingRepositoryTest extends BaseTestRepository<TrainingRepository> {
     void findByTraineeCriteria_withToDate_returnsOnlyEarlierTraining() {
         LocalDate to = LocalDate.of(2024, 6, 1);
         List<Training> actual = repository.findByTraineeCriteria("alice", null, to);
+
         int actualSize = actual.size();
         int expectedSize = 1;
-
-        assertThat(actualSize).isEqualTo(expectedSize);
-
         Training actualTraining = actual.getFirst();
         String actualTrainingName = actualTraining.getTrainingName();
         LocalDate actualTrainingDate = actualTraining.getTrainingDate();
         String expectedTrainingName = "Morning Yoga";
         LocalDate expectedTrainingDate = LocalDate.of(2024, 3, 10);
 
+        assertThat(actualSize).isEqualTo(expectedSize);
         assertThat(actualTrainingName).isEqualTo(expectedTrainingName);
         assertThat(actualTrainingDate).isEqualTo(expectedTrainingDate);
     }
@@ -200,17 +197,16 @@ class TrainingRepositoryTest extends BaseTestRepository<TrainingRepository> {
         LocalDate from = LocalDate.of(2024, 3, 1);
         LocalDate to = LocalDate.of(2024, 4, 1);
         List<Training> actual = repository.findByTraineeCriteria("alice", from, to);
+
         int actualSize = actual.size();
         int expectedSize = 1;
-
-        assertThat(actualSize).isEqualTo(expectedSize);
-
         Training actualTraining = actual.getFirst();
         String actualTrainingName = actualTraining.getTrainingName();
         LocalDate actualTrainingDate = actualTraining.getTrainingDate();
         String expectedTrainingName = "Morning Yoga";
         LocalDate expectedTrainingDate = LocalDate.of(2024, 3, 10);
 
+        assertThat(actualSize).isEqualTo(expectedSize);
         assertThat(actualTrainingName).isEqualTo(expectedTrainingName);
         assertThat(actualTrainingDate).isEqualTo(expectedTrainingDate);
     }
@@ -234,8 +230,10 @@ class TrainingRepositoryTest extends BaseTestRepository<TrainingRepository> {
 
     @Test
     void findByTraineeCriteria_dateRangeExcludesAllRecords_returnsEmpty() {
-        List<Training> actual = repository.findByTraineeCriteria("alice", LocalDate.of(2025, 1, 1),
-                LocalDate.of(2025, 12, 31));
+        LocalDate from = LocalDate.of(2025, 1, 1);
+        LocalDate to = LocalDate.of(2025, 12, 31);
+
+        List<Training> actual = repository.findByTraineeCriteria("alice", from, to);
 
         assertThat(actual).isEmpty();
     }
@@ -243,6 +241,7 @@ class TrainingRepositoryTest extends BaseTestRepository<TrainingRepository> {
     @Test
     void findByTrainerCriteria_usernameOnly_returnsBothTrainings() {
         List<Training> actual = repository.findByTrainerCriteria("bob", null, null);
+
         int actualSize = actual.size();
         int expectedSize = 2;
 
@@ -253,15 +252,14 @@ class TrainingRepositoryTest extends BaseTestRepository<TrainingRepository> {
     void findByTrainerCriteria_withFromDate_returnsOnlyLaterTraining() {
         LocalDate from = LocalDate.of(2024, 6, 1);
         List<Training> actual = repository.findByTrainerCriteria("bob", from, null);
+
         int actualSize = actual.size();
         int expectedSize = 1;
-
-        assertThat(actualSize).isEqualTo(expectedSize);
-
         Training actualTraining = actual.getFirst();
         String actualTrainingName = actualTraining.getTrainingName();
         String expectedTrainingName = "Evening Yoga";
 
+        assertThat(actualSize).isEqualTo(expectedSize);
         assertThat(actualTrainingName).isEqualTo(expectedTrainingName);
     }
 
@@ -269,15 +267,14 @@ class TrainingRepositoryTest extends BaseTestRepository<TrainingRepository> {
     void findByTrainerCriteria_withToDate_returnsOnlyEarlierTraining() {
         LocalDate to = LocalDate.of(2024, 6, 1);
         List<Training> actual = repository.findByTrainerCriteria("bob", null, to);
+
         int actualSize = actual.size();
         int expectedSize = 1;
-
-        assertThat(actualSize).isEqualTo(expectedSize);
-
         Training actualTraining = actual.getFirst();
         String actualTrainingName = actualTraining.getTrainingName();
         String expectedTrainingName = "Morning Yoga";
 
+        assertThat(actualSize).isEqualTo(expectedSize);
         assertThat(actualTrainingName).isEqualTo(expectedTrainingName);
     }
 
@@ -291,6 +288,7 @@ class TrainingRepositoryTest extends BaseTestRepository<TrainingRepository> {
     @Test
     void findTraineeTrainings_usernameOnly_returnsAllForTrainee() {
         List<Training> actual = repository.findTraineeTrainings("alice", null, null);
+
         int actualSize = actual.size();
         int expectedSize = 2;
 
@@ -302,17 +300,16 @@ class TrainingRepositoryTest extends BaseTestRepository<TrainingRepository> {
         LocalDate from = LocalDate.of(2024, 9, 1);
         LocalDate to = LocalDate.of(2024, 9, 30);
         List<Training> actual = repository.findTraineeTrainings("alice", from, to);
+
         int actualSize = actual.size();
         int expectedSize = 1;
-
-        assertThat(actualSize).isEqualTo(expectedSize);
-
         Training actualTraining = actual.getFirst();
         String actualTrainingName = actualTraining.getTrainingName();
         LocalDate actualTrainingDate = actualTraining.getTrainingDate();
         String expectedTrainingName = "Evening Yoga";
         LocalDate expectedTrainingDate = LocalDate.of(2024, 9, 20);
 
+        assertThat(actualSize).isEqualTo(expectedSize);
         assertThat(actualTrainingName).isEqualTo(expectedTrainingName);
         assertThat(actualTrainingDate).isEqualTo(expectedTrainingDate);
     }

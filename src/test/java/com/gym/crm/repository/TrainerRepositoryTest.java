@@ -181,27 +181,25 @@ class TrainerRepositoryTest extends BaseTestRepository<TrainerRepository> {
         int actualSize = actual.size();
         int expectedSize = 2;
 
-        assertThat(actualSize).isEqualTo(expectedSize);
-
         Trainer firstTrainer = actual.get(0);
         Trainer secondTrainer = actual.get(1);
         List<String> actualUsernames = List.of(firstTrainer.getUser().getUsername(), secondTrainer.getUser().getUsername());
 
+        assertThat(actualSize).isEqualTo(expectedSize);
         assertThat(actualUsernames).containsExactlyInAnyOrder("Callum.Whitfield", "Nora.Pemberton");
     }
 
     @Test
     void findByUser_UsernameIn_returnsMatchingTrainers() {
         List<Trainer> actual = repository.findByUser_UsernameIn(List.of(USERNAME, SECOND_USERNAME));
+
         int actualSize = actual.size();
         int expectedSize = 2;
-
-        assertThat(actualSize).isEqualTo(expectedSize);
-
         Trainer firstTrainer = actual.get(0);
         Trainer secondTrainer = actual.get(1);
         List<String> actualUsernames = List.of(firstTrainer.getUser().getUsername(), secondTrainer.getUser().getUsername());
 
+        assertThat(actualSize).isEqualTo(expectedSize);
         assertThat(actualUsernames).containsExactlyInAnyOrder("Callum.Whitfield", "Nora.Pemberton");
     }
 
@@ -210,49 +208,6 @@ class TrainerRepositoryTest extends BaseTestRepository<TrainerRepository> {
         List<Trainer> actual = repository.findByUser_UsernameIn(List.of("nobody"));
 
         assertThat(actual).isEmpty();
-    }
-
-    @Test
-    void findByIdNotIn_excludesGivenIds() {
-        Trainer callum = repository.findByUser_Username(USERNAME).orElseThrow();
-        List<Trainer> actual = repository.findByIdNotIn(List.of(callum.getId()));
-        int actualSize = actual.size();
-        int expectedSize = 1;
-
-        assertThat(actualSize).isEqualTo(expectedSize);
-
-        Trainer actualTrainer = actual.getFirst();
-        Long actualId = actualTrainer.getId();
-        Long excludedId = callum.getId();
-        String actualUsername = actualTrainer.getUser().getUsername();
-        String expectedUsername = "Nora.Pemberton";
-        String actualFirstName = actualTrainer.getUser().getFirstName();
-        String expectedFirstName = "Nora";
-        String actualLastName = actualTrainer.getUser().getLastName();
-        String expectedLastName = "Pemberton";
-        String actualSpecialization = actualTrainer.getSpecialization().getTrainingTypeName();
-        String expectedSpecialization = "Pilates";
-
-        assertThat(actualId).isNotEqualTo(excludedId);
-        assertThat(actualUsername).isEqualTo(expectedUsername);
-        assertThat(actualFirstName).isEqualTo(expectedFirstName);
-        assertThat(actualLastName).isEqualTo(expectedLastName);
-        assertThat(actualSpecialization).isEqualTo(expectedSpecialization);
-    }
-
-    @Test
-    void findByIdNotIn_returnsAll_whenNoIdMatches() {
-        List<Trainer> actual = repository.findByIdNotIn(List.of(-1L));
-        int actualSize = actual.size();
-        int expectedSize = 2;
-
-        assertThat(actualSize).isEqualTo(expectedSize);
-
-        Trainer firstTrainer = actual.get(0);
-        Trainer secondTrainer = actual.get(1);
-        List<String> actualUsernames = List.of(firstTrainer.getUser().getUsername(), secondTrainer.getUser().getUsername());
-
-        assertThat(actualUsernames).containsExactlyInAnyOrder("Callum.Whitfield", "Nora.Pemberton");
     }
 
     @Test

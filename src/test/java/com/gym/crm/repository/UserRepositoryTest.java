@@ -48,11 +48,10 @@ class UserRepositoryTest extends BaseTestRepository<UserRepository> {
         User julia = repository.findByUsername(USERNAME).orElseThrow();
         Optional<User> actual = repository.findById(julia.getId());
 
-        assertThat(actual).isPresent();
-
         User actualUser = actual.get();
         String actualUsername = actualUser.getUsername();
 
+        assertThat(actual).isPresent();
         assertThat(actualUsername).isEqualTo(USERNAME);
     }
 
@@ -66,16 +65,15 @@ class UserRepositoryTest extends BaseTestRepository<UserRepository> {
     @Test
     void findAll_shouldReturnAllUsers() {
         List<User> actual = repository.findAll();
+
         int actualSize = actual.size();
         int expectedSize = 5;
-
-        assertThat(actualSize).isEqualTo(expectedSize);
-
         List<String> actualUsernames = actual.stream()
                 .map(User::getUsername)
                 .toList();
         List<String> expectedUsernames = List.of("Callum.Whitfield", "Julia.Tomas", "Ellis.Hargrove", "Tom.Trainer", "Simone.Radcliffe");
 
+        assertThat(actualSize).isEqualTo(expectedSize);
         assertThat(actualUsernames).containsExactlyInAnyOrderElementsOf(expectedUsernames);
     }
 
