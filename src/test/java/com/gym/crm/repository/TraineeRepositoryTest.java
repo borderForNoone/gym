@@ -208,10 +208,17 @@ class TraineeRepositoryTest extends BaseTestRepository<TraineeRepository> {
     void delete_shouldRemoveFromJoinTable_whenTraineeDeleted() {
         String username = "Julia.Tomas";
         Trainee trainee = repository.findByUser_Username(username).orElseThrow();
+        Long traineeId = trainee.getId();
 
         repository.delete(trainee);
 
-        assertThat(repository.findByUser_Username(username)).isEmpty();
+        Long count = (Long) entityManager.createNativeQuery("""
+                SELECT COUNT(*)
+                FROM trainees_trainers
+                WHERE trainee_id = :traineeId
+                """).setParameter("traineeId", traineeId).getSingleResult();
+
+        assertThat(count).isZero();
     }
 
     @Test
