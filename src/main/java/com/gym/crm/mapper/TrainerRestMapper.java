@@ -1,9 +1,9 @@
 package com.gym.crm.mapper;
 
-import com.gym.crm.dto.TrainerInfoDTO;
-import com.gym.crm.dto.TrainerRequestDTO;
-import com.gym.crm.dto.TrainerResponseDTO;
-import com.gym.crm.dto.TrainerUpdateDTO;
+import com.gym.crm.facade.dto.TrainerInfoDTO;
+import com.gym.crm.facade.dto.TrainerRequestDTO;
+import com.gym.crm.facade.dto.TrainerResponseDTO;
+import com.gym.crm.facade.dto.TrainerUpdateDTO;
 import org.gym.crm.rest.AssignedTrainerResponse;
 import org.gym.crm.rest.TrainerCreateRequest;
 import org.gym.crm.rest.TrainerCreateResponse;

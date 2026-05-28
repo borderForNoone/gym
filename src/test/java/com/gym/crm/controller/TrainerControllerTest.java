@@ -1,9 +1,7 @@
 package com.gym.crm.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.gym.crm.exception.ApiError;
-import com.gym.crm.exception.ApiExceptionHandler;
 import com.gym.crm.exception.EntityNotFoundException;
 import com.gym.crm.exception.UserAuthenticationException;
 import com.gym.crm.exception.ValidationFailedException;
@@ -18,17 +16,14 @@ import org.gym.crm.rest.TrainerCreateResponse;
 import org.gym.crm.rest.TrainerGetResponse;
 import org.gym.crm.rest.TrainerUpdateRequest;
 import org.gym.crm.rest.TrainerUpdateResponse;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -47,28 +42,18 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@ExtendWith(MockitoExtension.class)
+@WebMvcTest(TrainerController.class)
 @DisplayName("TrainerController unit tests")
 class TrainerControllerTest {
     private static final String BASE_PATH = "/api/v1/trainers";
 
-    @Mock
-    private GymFacade facade;
-    @InjectMocks
-    private TrainerController trainerController;
-
+    @Autowired
     private MockMvc mockMvc;
+    @Autowired
     private ObjectMapper objectMapper;
 
-    @BeforeEach
-    void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(trainerController)
-                .setControllerAdvice(new ApiExceptionHandler())
-                .addPlaceholderValue("app.api.base-path", "/api/v1")
-                .build();
-        objectMapper = new ObjectMapper();
-        objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-    }
+    @MockitoBean
+    private GymFacade facade;
 
     @Test
     void register_shouldReturnNotValid_whenFirstNameMissing() throws Exception {
@@ -153,10 +138,7 @@ class TrainerControllerTest {
         doThrow(new UserAuthenticationException("No user authenticated")).when(facade).updateTrainer(any(TrainerUpdateRequest.class), eq(USERNAME));
 
         String content = mockMvc.perform(put(BASE_PATH + "/" + USERNAME).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isUnauthorized())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
+                .andExpect(status().isUnauthorized()).andReturn().getResponse().getContentAsString();
 
         ErrorResponse errorResponse = objectMapper.readValue(content, ErrorResponse.class);
         assertThat(errorResponse.getErrorCode()).isEqualTo(ApiError.AUTHENTICATION_ERROR.getCode());
@@ -174,10 +156,7 @@ class TrainerControllerTest {
         doThrow(new PersistenceException()).when(facade).updateTrainer(any(TrainerUpdateRequest.class), eq(USERNAME));
 
         String content = mockMvc.perform(put(BASE_PATH + "/" + USERNAME).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isInternalServerError())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
+                .andExpect(status().isInternalServerError()).andReturn().getResponse().getContentAsString();
 
         ErrorResponse errorResponse = objectMapper.readValue(content, ErrorResponse.class);
         assertThat(errorResponse.getErrorCode()).isEqualTo(ApiError.DATABASE_ERROR.getCode());
@@ -195,10 +174,7 @@ class TrainerControllerTest {
         doThrow(new RuntimeException()).when(facade).updateTrainer(any(TrainerUpdateRequest.class), eq(USERNAME));
 
         String content = mockMvc.perform(put(BASE_PATH + "/" + USERNAME).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isInternalServerError())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
+                .andExpect(status().isInternalServerError()).andReturn().getResponse().getContentAsString();
 
         ErrorResponse errorResponse = objectMapper.readValue(content, ErrorResponse.class);
         assertThat(errorResponse.getErrorCode()).isEqualTo(ApiError.SERVICE_ERROR.getCode());
@@ -217,16 +193,12 @@ class TrainerControllerTest {
                 }
                 """;
 
-        TrainerCreateResponse response = new TrainerCreateResponse()
-                .username("tom.tomas")
-                .password("secret");
+        TrainerCreateResponse response = new TrainerCreateResponse().username("tom.tomas").password("secret");
 
         when(facade.createTrainer(any(TrainerCreateRequest.class))).thenReturn(response);
 
-        mockMvc.perform(post(BASE_PATH + "/register").contentType(MediaType.APPLICATION_JSON).content(requestJson))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username").value("tom.tomas"))
-                .andExpect(jsonPath("$.password").value("secret"));
+        mockMvc.perform(post(BASE_PATH + "/register").contentType(MediaType.APPLICATION_JSON).content(requestJson)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value("tom.tomas")).andExpect(jsonPath("$.password").value("secret"));
 
         verify(facade).createTrainer(any(TrainerCreateRequest.class));
     }
@@ -246,11 +218,8 @@ class TrainerControllerTest {
 
         when(facade.getTrainerByUsername("tom.tomas")).thenReturn(response);
 
-        mockMvc.perform(get(BASE_PATH + "/tom.tomas"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.firstName").value("Tom"))
-                .andExpect(jsonPath("$.lastName").value("Tomas"))
-                .andExpect(jsonPath("$.specialization").value("Yoga"))
+        mockMvc.perform(get(BASE_PATH + "/tom.tomas")).andExpect(status().isOk()).andExpect(jsonPath("$.firstName").value("Tom"))
+                .andExpect(jsonPath("$.lastName").value("Tomas")).andExpect(jsonPath("$.specialization").value("Yoga"))
                 .andExpect(jsonPath("$.isActive").value(true));
     }
 
@@ -325,8 +294,7 @@ class TrainerControllerTest {
         when(facade.getTrainerTrainingsByFilter(any(TrainerTrainingFilter.class))).thenReturn(List.of());
 
         mockMvc.perform(get(BASE_PATH + "/tom.tomas/trainings")
-                        .param("fromDate", "2024-01-01")
-                        .param("toDate", "2024-06-30")
+                        .param("fromDate", "2024-01-01").param("toDate", "2024-06-30")
                         .param("traineeName", "Alice"))
                 .andExpect(status().isOk());
 

@@ -1,8 +1,8 @@
 package com.gym.crm.mapper;
 
-import com.gym.crm.dto.TraineeRequestDTO;
-import com.gym.crm.dto.TraineeResponseDTO;
-import com.gym.crm.dto.TraineeUpdateDTO;
+import com.gym.crm.facade.dto.TraineeRequestDTO;
+import com.gym.crm.facade.dto.TraineeResponseDTO;
+import com.gym.crm.facade.dto.TraineeUpdateDTO;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.model.User;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,7 +29,12 @@ class TraineeMapperTest {
 
     @Test
     void toEntity_shouldMapAllFields() {
-        TraineeRequestDTO request = TraineeRequestDTO.builder().firstName(FIRST_NAME).lastName(LAST_NAME).dateOfBirth(DATE_OF_BIRTH).address(ADDRESS).build();
+        TraineeRequestDTO request = TraineeRequestDTO.builder()
+                .firstName(FIRST_NAME)
+                .lastName(LAST_NAME)
+                .dateOfBirth(DATE_OF_BIRTH)
+                .address(ADDRESS)
+                .build();
 
         Trainee actual = traineeMapper.toEntity(request);
 
@@ -42,7 +47,12 @@ class TraineeMapperTest {
 
     @Test
     void toEntity_shouldNotSetUsernameAndPassword() {
-        TraineeRequestDTO request = TraineeRequestDTO.builder().firstName(FIRST_NAME).lastName(LAST_NAME).dateOfBirth(DATE_OF_BIRTH).address(ADDRESS).build();
+        TraineeRequestDTO request = TraineeRequestDTO.builder()
+                .firstName(FIRST_NAME)
+                .lastName(LAST_NAME)
+                .dateOfBirth(DATE_OF_BIRTH)
+                .address(ADDRESS)
+                .build();
 
         Trainee actual = traineeMapper.toEntity(request);
 
@@ -52,7 +62,12 @@ class TraineeMapperTest {
 
     @Test
     void toResponseDto_shouldMapAllFields() {
-        Trainee trainee = Trainee.builder().id(ID).user(User.builder().id(ID).firstName(FIRST_NAME).lastName(LAST_NAME).username(USERNAME).isActive(true).build())
+        Trainee trainee = Trainee.builder().id(ID).user(User.builder()
+                        .id(ID)
+                        .firstName(FIRST_NAME)
+                        .lastName(LAST_NAME)
+                        .username(USERNAME)
+                        .isActive(true).build())
                 .dateOfBirth(DATE_OF_BIRTH)
                 .address(ADDRESS)
                 .build();
@@ -70,7 +85,12 @@ class TraineeMapperTest {
 
     @Test
     void toResponseDto_shouldHandleNullDateOfBirth() {
-        User user = User.builder().firstName(FIRST_NAME).lastName(LAST_NAME).username(USERNAME).isActive(true).build();
+        User user = User.builder()
+                .firstName(FIRST_NAME)
+                .lastName(LAST_NAME)
+                .username(USERNAME)
+                .isActive(true)
+                .build();
         Trainee trainee = Trainee.builder().user(user).dateOfBirth(null).build();
 
         TraineeResponseDTO actual = traineeMapper.toDto(trainee);
@@ -101,7 +121,13 @@ class TraineeMapperTest {
 
     @Test
     void toEntity_updateDto_shouldMapFields() {
-        TraineeUpdateDTO dto = TraineeUpdateDTO.builder().firstName(FIRST_NAME).lastName(LAST_NAME).isActive(true).address(ADDRESS).dateOfBirth(DATE_OF_BIRTH).build();
+        TraineeUpdateDTO dto = TraineeUpdateDTO.builder()
+                .firstName(FIRST_NAME)
+                .lastName(LAST_NAME)
+                .isActive(true)
+                .address(ADDRESS)
+                .dateOfBirth(DATE_OF_BIRTH)
+                .build();
 
         Trainee actual = traineeMapper.toEntity(dto);
 

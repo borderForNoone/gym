@@ -1,7 +1,7 @@
 package com.gym.crm.service;
 
-import com.gym.crm.dto.PasswordChangeRequest;
-import com.gym.crm.dto.ToggleActiveRequestDTO;
+import com.gym.crm.facade.dto.PasswordChangeRequest;
+import com.gym.crm.facade.dto.ToggleActiveRequestDTO;
 import com.gym.crm.model.User;
 import org.gym.crm.rest.LoginRequest;
 

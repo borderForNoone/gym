@@ -1,7 +1,7 @@
 package com.gym.crm.mapper;
 
-import com.gym.crm.dto.TrainingRequestDTO;
-import com.gym.crm.dto.TrainingResponseDTO;
+import com.gym.crm.facade.dto.TrainingRequestDTO;
+import com.gym.crm.facade.dto.TrainingResponseDTO;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.Training;
@@ -59,12 +59,40 @@ class TrainingMapperTest {
     }
 
     private Training buildTraining() {
-        User traineeUser = User.builder().id(TRAINEE_ID).firstName("Tom").lastName("Tomas").username("tom.tomas").password("password").isActive(true).build();
-        User trainerUser = User.builder().id(TRAINER_ID).firstName("Julia").lastName("Tomas").username("julia.tomas").password("password").isActive(true).build();
-        Trainee trainee = Trainee.builder().id(TRAINEE_ID).user(traineeUser).dateOfBirth(LocalDate.of(2000, 1, 1)).address("10 Sheep St").build();
-        Trainer trainer = Trainer.builder().id(TRAINER_ID).user(trainerUser).specialization(TrainingType.builder().trainingTypeName(TRAINING_TYPE_NAME).build()).build();
+        User traineeUser = User.builder()
+                .id(TRAINEE_ID)
+                .firstName("Tom")
+                .lastName("Tomas")
+                .username("tom.tomas")
+                .password("password")
+                .isActive(true)
+                .build();
+        User trainerUser = User.builder()
+                .id(TRAINER_ID)
+                .firstName("Julia")
+                .lastName("Tomas")
+                .username("julia.tomas")
+                .password("password")
+                .isActive(true)
+                .build();
+        Trainee trainee = Trainee.builder()
+                .id(TRAINEE_ID)
+                .user(traineeUser)
+                .dateOfBirth(LocalDate.of(2000, 1, 1))
+                .address("10 Sheep St")
+                .build();
+        Trainer trainer = Trainer.builder()
+                .id(TRAINER_ID)
+                .user(trainerUser)
+                .specialization(TrainingType.builder().trainingTypeName(TRAINING_TYPE_NAME).build()).build();
 
-        return Training.builder().id(VALID_ID).trainee(trainee).trainer(trainer).trainingName(TRAINING_NAME).trainingType(TrainingType.builder()
-                                .trainingTypeName(TRAINING_TYPE_NAME).build()).trainingDate(TRAINING_DATE).trainingDuration(TRAINING_DURATION).build();
+        return Training.builder()
+                .id(VALID_ID)
+                .trainee(trainee)
+                .trainer(trainer)
+                .trainingName(TRAINING_NAME)
+                .trainingType(TrainingType.builder().trainingTypeName(TRAINING_TYPE_NAME).build())
+                .trainingDate(TRAINING_DATE)
+                .trainingDuration(TRAINING_DURATION).build();
     }
 }

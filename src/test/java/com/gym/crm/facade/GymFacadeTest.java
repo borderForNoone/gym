@@ -1,22 +1,22 @@
 package com.gym.crm.facade;
 
 import com.gym.crm.auth.SessionContext;
-import com.gym.crm.dto.CreatedTrainee;
-import com.gym.crm.dto.CreatedTrainer;
-import com.gym.crm.dto.PasswordChangeRequest;
-import com.gym.crm.dto.ToggleActiveRequestDTO;
-import com.gym.crm.dto.TraineeInfoDTO;
-import com.gym.crm.dto.TraineeRequestDTO;
-import com.gym.crm.dto.TraineeResponseDTO;
-import com.gym.crm.dto.TraineeUpdateDTO;
-import com.gym.crm.dto.TrainerAssignmentUpdateDTO;
-import com.gym.crm.dto.TrainerInfoDTO;
-import com.gym.crm.dto.TrainerRequestDTO;
-import com.gym.crm.dto.TrainerResponseDTO;
-import com.gym.crm.dto.TrainerUpdateDTO;
-import com.gym.crm.dto.TrainingRequestDTO;
-import com.gym.crm.dto.TrainingResponseDTO;
-import com.gym.crm.dto.TrainingTypeDTO;
+import com.gym.crm.facade.dto.CreatedTrainee;
+import com.gym.crm.facade.dto.CreatedTrainer;
+import com.gym.crm.facade.dto.PasswordChangeRequest;
+import com.gym.crm.facade.dto.ToggleActiveRequestDTO;
+import com.gym.crm.facade.dto.TraineeInfoDTO;
+import com.gym.crm.facade.dto.TraineeRequestDTO;
+import com.gym.crm.facade.dto.TraineeResponseDTO;
+import com.gym.crm.facade.dto.TraineeUpdateDTO;
+import com.gym.crm.facade.dto.TrainerAssignmentUpdateDTO;
+import com.gym.crm.facade.dto.TrainerInfoDTO;
+import com.gym.crm.facade.dto.TrainerRequestDTO;
+import com.gym.crm.facade.dto.TrainerResponseDTO;
+import com.gym.crm.facade.dto.TrainerUpdateDTO;
+import com.gym.crm.facade.dto.TrainingRequestDTO;
+import com.gym.crm.facade.dto.TrainingResponseDTO;
+import com.gym.crm.facade.dto.TrainingTypeDTO;
 import com.gym.crm.mapper.TraineeMapper;
 import com.gym.crm.mapper.TraineeRestMapper;
 import com.gym.crm.mapper.TrainerMapper;
@@ -125,16 +125,7 @@ public class GymFacadeTest {
 
     @BeforeEach
     void setUp() {
-        facade = new GymFacade(
-                traineeService,
-                trainerService,
-                trainingService,
-                userProfileService,
-                traineeRestMapper,
-                trainerRestMapper,
-                trainingRestMapper,
-                sessionContext
-        );
+        facade = new GymFacade(traineeService, trainerService, trainingService, userProfileService, traineeRestMapper, trainerRestMapper, trainingRestMapper, sessionContext);
         facade.setTraineeMapper(traineeMapper);
         facade.setTrainerMapper(trainerMapper);
         facade.setTrainingMapper(trainingMapper);
@@ -156,8 +147,7 @@ public class GymFacadeTest {
 
         TraineeRequestDTO dto = buildTraineeRequestDTO();
 
-        Trainee saved = trainee.toBuilder().id(VALID_ID)
-                .user(trainee.getUser().toBuilder().id(VALID_ID).username(USERNAME).password(PASSWORD).isActive(true).build())
+        Trainee saved = trainee.toBuilder().id(VALID_ID).user(trainee.getUser().toBuilder().id(VALID_ID).username(USERNAME).password(PASSWORD).isActive(true).build())
                 .build();
         CreatedTrainee createdTrainee = new CreatedTrainee(saved, PASSWORD);
         TraineeCreateResponse expectedResponse = new TraineeCreateResponse(USERNAME, PASSWORD);
@@ -568,7 +558,13 @@ public class GymFacadeTest {
 
     private Trainee buildTrainee() {
         return Trainee.builder().dateOfBirth(LocalDate.of(1980, 1, 1)).address("123 Oak St")
-                .user(User.builder().firstName(FIRST_NAME).lastName(LAST_NAME).username(USERNAME).password(PASSWORD).isActive(true).build()).build();
+                .user(User.builder()
+                        .firstName(FIRST_NAME)
+                        .lastName(LAST_NAME)
+                        .username(USERNAME)
+                        .password(PASSWORD)
+                        .isActive(true).build())
+                .build();
     }
 
     private TraineeRequestDTO buildTraineeRequestDTO() {
@@ -581,7 +577,12 @@ public class GymFacadeTest {
 
     private Trainer buildTrainer() {
         return Trainer.builder().specialization(TrainingType.builder().trainingTypeName(TRAINING_TYPE_NAME).build()).user(User.builder()
-                        .firstName(FIRST_NAME).lastName(LAST_NAME).username(USERNAME).password(PASSWORD).isActive(true).build()).build();
+                        .firstName(FIRST_NAME)
+                        .lastName(LAST_NAME)
+                        .username(USERNAME)
+                        .password(PASSWORD)
+                        .isActive(true).build())
+                .build();
     }
 
     private TrainerResponseDTO buildTrainerResponseDTO() {

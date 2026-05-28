@@ -1,11 +1,7 @@
 package com.gym.crm.controller;
 
-import com.gym.crm.dto.TraineeRequestDTO;
-import com.gym.crm.dto.TraineeResponseDTO;
 import com.gym.crm.facade.GymFacade;
-import com.gym.crm.mapper.TraineeRestMapper;
 import com.gym.crm.search.filter.TraineeTrainingFilter;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.gym.crm.rest.ActivationStatusRequest;
 import org.gym.crm.rest.AssignedTrainerResponse;

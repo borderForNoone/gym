@@ -1,8 +1,8 @@
 package com.gym.crm.mapper;
 
-import com.gym.crm.dto.TrainerRequestDTO;
-import com.gym.crm.dto.TrainerResponseDTO;
-import com.gym.crm.dto.TrainerUpdateDTO;
+import com.gym.crm.facade.dto.TrainerRequestDTO;
+import com.gym.crm.facade.dto.TrainerResponseDTO;
+import com.gym.crm.facade.dto.TrainerUpdateDTO;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.TrainingType;
 import com.gym.crm.model.User;
@@ -62,7 +62,13 @@ class TrainerMapperTest {
     @Test
     void toResponseDto_shouldMapAllFields() {
         TrainingType specialization = TrainingType.builder().id(1L).trainingTypeName("fitness").build();
-        User user = User.builder().id(ID).firstName(FIRST_NAME).lastName(LAST_NAME).username(TRAINER_USERNAME).isActive(true).build();
+        User user = User.builder()
+                .id(ID)
+                .firstName(FIRST_NAME)
+                .lastName(LAST_NAME)
+                .username(TRAINER_USERNAME)
+                .isActive(true)
+                .build();
         Trainer trainer = Trainer.builder().id(ID).user(user).specialization(specialization).build();
 
         TrainerResponseDTO actual = trainerMapper.toDto(trainer);
@@ -92,7 +98,12 @@ class TrainerMapperTest {
 
     @Test
     void toEntity_update_shouldMapAllFields() {
-        TrainerUpdateDTO dto = TrainerUpdateDTO.builder().firstName(FIRST_NAME).lastName(LAST_NAME).isActive(true).specialization(FITNESS).build();
+        TrainerUpdateDTO dto = TrainerUpdateDTO.builder()
+                .firstName(FIRST_NAME)
+                .lastName(LAST_NAME)
+                .isActive(true)
+                .specialization(FITNESS)
+                .build();
 
         Trainer actual = trainerMapper.toEntity(dto);
 
@@ -116,7 +127,12 @@ class TrainerMapperTest {
 
     @Test
     void toDto_shouldHandleNullSpecialization() {
-        User user = User.builder().firstName(FIRST_NAME).lastName(LAST_NAME).username(TRAINER_USERNAME).isActive(true).build();
+        User user = User.builder()
+                .firstName(FIRST_NAME)
+                .lastName(LAST_NAME)
+                .username(TRAINER_USERNAME)
+                .isActive(true)
+                .build();
         Trainer trainer = Trainer.builder().user(user).specialization(null).build();
 
         TrainerResponseDTO actual = trainerMapper.toDto(trainer);

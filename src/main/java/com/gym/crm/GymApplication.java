@@ -1,13 +1,11 @@
 package com.gym.crm;
 
-import com.gym.crm.config.AppConfig;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+@SpringBootApplication
 public class GymApplication {
     public static void main(String[] args) {
-        try (AnnotationConfigApplicationContext context =
-                     new AnnotationConfigApplicationContext(AppConfig.class)) {
-        }
+        SpringApplication.run(GymApplication.class, args);
     }
-
 }

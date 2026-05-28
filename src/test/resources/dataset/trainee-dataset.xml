@@ -16,4 +16,7 @@
 
     <trainees_trainers trainee_id="1" trainer_id="1"/>
     <trainees_trainers trainee_id="2" trainer_id="1"/>
+
+    <trainings id="1" training_name="Morning Cardio" training_date="2024-05-10" training_duration="60" trainee_id="1" trainer_id="1" training_type_id="1"/>
+    <trainings id="2" training_name="Evening Strength" training_date="2024-05-12" training_duration="45" trainee_id="2" trainer_id="1" training_type_id="2"/>
 </dataset>

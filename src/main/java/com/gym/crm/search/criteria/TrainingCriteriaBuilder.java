@@ -2,7 +2,7 @@ package com.gym.crm.search.criteria;
 
 import com.gym.crm.model.Training;
 import com.gym.crm.search.filter.TrainingFilter;
-import com.gym.crm.util.Validator;
+import com.gym.crm.service.common.CoreValidator;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Expression;
@@ -10,12 +10,16 @@ import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 public abstract class TrainingCriteriaBuilder {
+    @Autowired
+    private CoreValidator coreValidator;
+
     public CriteriaQuery<Training> build(CriteriaBuilder criteriaBuilder, TrainingFilter filter) {
         CriteriaQuery<Training> criteriaQuery = criteriaBuilder.createQuery(Training.class);
         Root<Training> root = criteriaQuery.from(Training.class);
@@ -53,7 +57,7 @@ public abstract class TrainingCriteriaBuilder {
 
     private void addUsernamePredicate(CriteriaBuilder criteriaBuilder, Join<?, ?> join, TrainingFilter filter, List<Predicate> predicates) {
         String username = filter.getUsername();
-        Validator.validateNotBlank(username, "Username");
+        coreValidator.validateNotBlank(username, "Username");
 
         predicates.add(criteriaBuilder.equal(join.get("username"), username));
     }
