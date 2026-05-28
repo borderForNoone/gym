@@ -44,8 +44,6 @@ public class UserProfileServiceImpl implements UserProfileService {
     private final CoreValidator validator;
     private final UserInputValidator userInputValidator;
     private final PasswordEncoder passwordEncoder;
-
-    @Autowired
     private final CoreValidator coreValidator;
 
     @Transactional

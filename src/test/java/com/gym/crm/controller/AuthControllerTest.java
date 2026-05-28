@@ -8,7 +8,6 @@ import com.gym.crm.exception.EntityNotFoundException;
 import com.gym.crm.exception.UserAuthenticationException;
 import com.gym.crm.exception.UserAuthorizationException;
 import com.gym.crm.facade.GymFacade;
-import org.gym.crm.rest.ErrorResponse;
 import org.gym.crm.rest.LoginChangeRequest;
 import org.gym.crm.rest.LoginRequest;
 import org.junit.jupiter.api.Test;
@@ -20,7 +19,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;

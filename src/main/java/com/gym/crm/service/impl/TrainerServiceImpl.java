@@ -53,8 +53,6 @@ public class TrainerServiceImpl implements TrainerService {
     private final PasswordEncoder passwordEncoder;
     private final TrainerMapper mapper;
     private final TrainingTypeRepository trainingTypeRepository;
-
-    @Autowired
     private final CoreValidator coreValidator;
 
     @Transactional
