@@ -113,8 +113,7 @@ public class TraineeServiceImpl implements TraineeService {
     @Transactional
     @Override
     public void deleteByUsername(String username) {
-        Trainee trainee = traineeRepository.findByUser_Username(username)
-                .orElseThrow();
+        Trainee trainee = traineeRepository.findByUser_Username(username).orElseThrow();
 
         traineeRepository.delete(trainee);
     }

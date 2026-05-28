@@ -15,7 +15,7 @@ import lombok.experimental.SuperBuilder;
 
 @Getter
 @SuperBuilder(toBuilder = true)
-@ToString(exclude = {"trainee", "trainer", "password"})
+@ToString(exclude = {"password"})
 @EqualsAndHashCode(of = "id")
 @NoArgsConstructor
 @Entity
@@ -40,10 +40,4 @@ public class User {
 
     @Column(name = "is_active", nullable = false, columnDefinition = "TINYINT(1)")
     private Boolean isActive;
-
-    @OneToOne(mappedBy = "user")
-    private Trainee trainee;
-
-    @OneToOne(mappedBy = "user")
-    private Trainer trainer;
 }

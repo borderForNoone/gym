@@ -42,16 +42,20 @@ public class Trainee {
     @Column(name = "address", nullable = true, length = 255)
     private String address;
 
-    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, optional = false)
+    @OneToOne(cascade = {CascadeType.ALL}, orphanRemoval = true, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(joinColumns = @JoinColumn(name = "trainee_id"), inverseJoinColumns = @JoinColumn(name = "trainer_id"))
+    @ManyToMany
+    @JoinTable(
+            name = "trainees_trainers",
+            joinColumns = @JoinColumn(name = "trainee_id"),
+            inverseJoinColumns = @JoinColumn(name = "trainer_id")
+    )
     @Builder.Default
     private Set<Trainer> trainers = new HashSet<>();
 
-    @OneToMany(mappedBy = "trainee", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @OneToMany(mappedBy = "trainee", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private Set<Training> trainings = new HashSet<>();
 }

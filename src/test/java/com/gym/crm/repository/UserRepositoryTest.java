@@ -4,6 +4,7 @@ import com.github.springtestdbunit.annotation.DatabaseSetup;
 import com.gym.crm.model.User;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -19,12 +20,20 @@ class UserRepositoryTest extends BaseTestRepository<UserRepository> {
 
         assertThat(actual).isPresent();
 
-        User user = actual.get();
+        User actualUser = actual.get();
+        String actualFirstName = actualUser.getFirstName();
+        String actualLastName = actualUser.getLastName();
+        String actualUsername = actualUser.getUsername();
+        Boolean actualIsActive = actualUser.getIsActive();
+        String expectedFirstName = "Julia";
+        String expectedLastName = "Tomas";
+        String expectedUsername = USERNAME;
+        Boolean expectedIsActive = true;
 
-        assertThat(user.getFirstName()).isEqualTo("Julia");
-        assertThat(user.getLastName()).isEqualTo("Tomas");
-        assertThat(user.getUsername()).isEqualTo(USERNAME);
-        assertThat(user.getIsActive()).isTrue();
+        assertThat(actualFirstName).isEqualTo(expectedFirstName);
+        assertThat(actualLastName).isEqualTo(expectedLastName);
+        assertThat(actualUsername).isEqualTo(expectedUsername);
+        assertThat(actualIsActive).isEqualTo(expectedIsActive);
     }
 
     @Test
@@ -32,5 +41,56 @@ class UserRepositoryTest extends BaseTestRepository<UserRepository> {
         Optional<User> actual = repository.findByUsername(NOT_FOUND);
 
         assertThat(actual).isEmpty();
+    }
+
+    @Test
+    void findById_shouldReturnUser_whenExists() {
+        User julia = repository.findByUsername(USERNAME).orElseThrow();
+        Optional<User> actual = repository.findById(julia.getId());
+
+        assertThat(actual).isPresent();
+
+        User actualUser = actual.get();
+        String actualUsername = actualUser.getUsername();
+
+        assertThat(actualUsername).isEqualTo(USERNAME);
+    }
+
+    @Test
+    void findById_shouldReturnEmpty_whenNotExists() {
+        Optional<User> actual = repository.findById(999L);
+
+        assertThat(actual).isEmpty();
+    }
+
+    @Test
+    void findAll_shouldReturnAllUsers() {
+        List<User> actual = repository.findAll();
+        int actualSize = actual.size();
+        int expectedSize = 5;
+
+        assertThat(actualSize).isEqualTo(expectedSize);
+
+        List<String> actualUsernames = actual.stream()
+                .map(User::getUsername)
+                .toList();
+        List<String> expectedUsernames = List.of("Callum.Whitfield", "Julia.Tomas", "Ellis.Hargrove", "Tom.Trainer", "Simone.Radcliffe");
+
+        assertThat(actualUsernames).containsExactlyInAnyOrderElementsOf(expectedUsernames);
+    }
+
+    @Test
+    void existsById_shouldReturnTrue_whenExists() {
+        User julia = repository.findByUsername(USERNAME).orElseThrow();
+        boolean actual = repository.existsById(julia.getId());
+
+        assertThat(actual).isTrue();
+    }
+
+    @Test
+    void existsById_shouldReturnFalse_whenNotExists() {
+        boolean actual = repository.existsById(999L);
+
+        assertThat(actual).isFalse();
     }
 }
