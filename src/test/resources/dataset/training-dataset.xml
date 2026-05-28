@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dataset>
+    <training_types id="20" training_type_name="Yoga"/>
+
+    <users id="20" first_name="Alice" last_name="Smith" username="alice" password="pass" is_active="true"/>
+    <users id="21" first_name="Bob" last_name="Jones" username="bob" password="pass" is_active="true"/>
+
+    <trainees id="20" date_of_birth="1995-01-01" address="123 St" user_id="20"/>
+    <trainers id="20" specialization_id="20" user_id="21"/>
+
+    <trainings id="20" training_name="Morning Yoga" training_date="2024-03-10" training_duration="60" trainee_id="20" trainer_id="20" training_type_id="20"/>
+    <trainings id="21" training_name="Evening Yoga" training_date="2024-09-20" training_duration="60" trainee_id="20" trainer_id="20" training_type_id="20"/>
+</dataset>
