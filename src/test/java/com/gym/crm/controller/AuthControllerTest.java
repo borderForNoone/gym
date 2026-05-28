@@ -39,6 +39,7 @@ class AuthControllerTest {
     private MockMvc mockMvc;
     @Autowired
     private ObjectMapper mapper;
+
     @MockitoBean
     private GymFacade facade;
 

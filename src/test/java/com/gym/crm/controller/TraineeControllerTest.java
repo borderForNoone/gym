@@ -44,6 +44,7 @@ class TraineeControllerTest {
     private MockMvc mockMvc;
     @Autowired
     private ObjectMapper objectMapper;
+
     @MockitoBean
     private GymFacade facade;
 

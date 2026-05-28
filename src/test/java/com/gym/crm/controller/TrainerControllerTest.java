@@ -47,12 +47,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class TrainerControllerTest {
     private static final String BASE_PATH = "/api/v1/trainers";
 
-    @MockitoBean
-    private GymFacade facade;
     @Autowired
     private MockMvc mockMvc;
     @Autowired
     private ObjectMapper objectMapper;
+
+    @MockitoBean
+    private GymFacade facade;
 
     @Test
     void register_shouldReturnNotValid_whenFirstNameMissing() throws Exception {
