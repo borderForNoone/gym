@@ -259,12 +259,6 @@ class TrainerRepositoryTest extends BaseTestRepository<TrainerRepository> {
     void findAllNotAssignedToTrainee_returnsOnlyUnassignedTrainers() {
         List<TrainerInfoDTO> actual = repository.findAllNotAssignedToTrainee("alice");
 
-        assertThat(actual).isNotEmpty();
-
-        List<String> actualUsernames = actual.stream()
-                .map(TrainerInfoDTO::getUsername)
-                .toList();
-
-        assertThat(actualUsernames).doesNotContain("bob");
+        assertThat(actual).isNotEmpty().extracting(TrainerInfoDTO::getUsername).doesNotContain("bob");
     }
 }
