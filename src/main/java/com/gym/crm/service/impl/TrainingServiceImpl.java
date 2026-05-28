@@ -5,6 +5,7 @@ import com.gym.crm.facade.dto.TrainingTypeDTO;
 import com.gym.crm.mapper.TrainingMapper;
 import com.gym.crm.model.Training;
 import com.gym.crm.repository.TrainingRepository;
+import com.gym.crm.repository.TrainingRepositoryCriteria;
 import com.gym.crm.repository.TrainingTypeRepository;
 import com.gym.crm.search.filter.TraineeTrainingFilter;
 import com.gym.crm.search.filter.TrainerTrainingFilter;
@@ -26,6 +27,7 @@ public class TrainingServiceImpl implements TrainingService {
     private final TrainingMapper mapper;
     private final TrainingRepository trainingRepository;
     private final TrainingTypeRepository trainingTypeRepository;
+    private final TrainingRepositoryCriteria trainingRepositoryCriteria;
 
     @Transactional
     @Override
@@ -41,7 +43,8 @@ public class TrainingServiceImpl implements TrainingService {
         validator.validate(filter, "Filter");
         log.info("Getting trainee trainings by filter: {}", filter);
 
-        return trainingRepository.findByTraineeCriteria(filter.getUsername(), filter.getFromDate(), filter.getToDate()).stream()
+        return trainingRepositoryCriteria.findByTraineeCriteria(filter)
+                .stream()
                 .map(mapper::toDto)
                 .toList();
     }
@@ -52,7 +55,8 @@ public class TrainingServiceImpl implements TrainingService {
         validator.validate(filter, "Filter");
         log.info("Getting trainer trainings by filter: {}", filter);
 
-        return trainingRepository.findByTrainerCriteria(filter.getUsername(), filter.getFromDate(), filter.getToDate()).stream()
+        return trainingRepositoryCriteria.findByTrainerCriteria(filter)
+                .stream()
                 .map(mapper::toDto)
                 .toList();
     }

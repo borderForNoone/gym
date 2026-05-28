@@ -6,6 +6,7 @@ import com.gym.crm.mapper.TrainingMapper;
 import com.gym.crm.model.Training;
 import com.gym.crm.model.TrainingType;
 import com.gym.crm.repository.TrainingRepository;
+import com.gym.crm.repository.TrainingRepositoryCriteria;
 import com.gym.crm.repository.TrainingTypeRepository;
 import com.gym.crm.search.filter.TraineeTrainingFilter;
 import com.gym.crm.search.filter.TrainerTrainingFilter;
@@ -36,6 +37,8 @@ class TrainingServiceImplTest {
     private TrainingRepository trainingRepository;
     @Mock
     private TrainingTypeRepository trainingTypeRepository;
+    @Mock
+    private TrainingRepositoryCriteria trainingRepositoryCriteria;
 
     @InjectMocks
     private TrainingServiceImpl service;
@@ -57,13 +60,13 @@ class TrainingServiceImplTest {
         Training training = buildTraining();
         TrainingResponseDTO dto = buildTrainingResponseDTO();
 
-        when(trainingRepository.findByTraineeCriteria(filter.getUsername(), filter.getFromDate(), filter.getToDate())).thenReturn(List.of(training));
+        when(trainingRepositoryCriteria.findByTraineeCriteria(filter)).thenReturn(List.of(training));
         when(mapper.toDto(training)).thenReturn(dto);
 
         List<TrainingResponseDTO> result = service.getTraineeTrainings(filter);
 
         assertThat(result).hasSize(1).contains(dto);
-        verify(trainingRepository).findByTraineeCriteria(filter.getUsername(), filter.getFromDate(), filter.getToDate());
+        verify(trainingRepositoryCriteria).findByTraineeCriteria(filter);
         verify(mapper).toDto(training);
     }
 
@@ -71,9 +74,10 @@ class TrainingServiceImplTest {
     void getTraineeTrainings_shouldReturnEmptyList_whenNoTrainings() {
         TraineeTrainingFilter filter = buildTraineeFilter();
 
-        when(trainingRepository.findByTraineeCriteria(filter.getUsername(), filter.getFromDate(), filter.getToDate())).thenReturn(List.of());
+        when(trainingRepositoryCriteria.findByTraineeCriteria(filter)).thenReturn(List.of());
 
         assertThat(service.getTraineeTrainings(filter)).isEmpty();
+        verify(trainingRepositoryCriteria).findByTraineeCriteria(filter);
     }
 
     @Test
@@ -82,13 +86,13 @@ class TrainingServiceImplTest {
         Training training = buildTraining();
         TrainingResponseDTO dto = buildTrainingResponseDTO();
 
-        when(trainingRepository.findByTrainerCriteria(filter.getUsername(), filter.getFromDate(), filter.getToDate())).thenReturn(List.of(training));
+        when(trainingRepositoryCriteria.findByTrainerCriteria(filter)).thenReturn(List.of(training));
         when(mapper.toDto(training)).thenReturn(dto);
 
         List<TrainingResponseDTO> result = service.getTrainerTrainings(filter);
 
         assertThat(result).hasSize(1).contains(dto);
-        verify(trainingRepository).findByTrainerCriteria(filter.getUsername(), filter.getFromDate(), filter.getToDate());
+        verify(trainingRepositoryCriteria).findByTrainerCriteria(filter);
         verify(mapper).toDto(training);
     }
 
@@ -96,9 +100,10 @@ class TrainingServiceImplTest {
     void getTrainerTrainings_shouldReturnEmptyList_whenNoTrainings() {
         TrainerTrainingFilter filter = buildTrainerFilter();
 
-        when(trainingRepository.findByTrainerCriteria(filter.getUsername(), filter.getFromDate(), filter.getToDate())).thenReturn(List.of());
+        when(trainingRepositoryCriteria.findByTrainerCriteria(filter)).thenReturn(List.of());
 
         assertThat(service.getTrainerTrainings(filter)).isEmpty();
+        verify(trainingRepositoryCriteria).findByTrainerCriteria(filter);
     }
 
     @Test
