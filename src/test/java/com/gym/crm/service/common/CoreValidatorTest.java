@@ -86,19 +86,19 @@ class CoreValidatorTest {
 
     @Test
     void validateNotBlank_shouldThrow_whenNull() {
-        assertThatThrownBy(() -> CoreValidator.validateNotBlank(null, "username")).isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> coreValidator.validateNotBlank(null, "username")).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("username");
     }
 
     @Test
     void validateNotBlank_shouldThrow_whenBlank() {
-        assertThatThrownBy(() -> CoreValidator.validateNotBlank("   ", "username")).isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> coreValidator.validateNotBlank("   ", "username")).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("username");
     }
 
     @Test
     void validateNotBlank_shouldPass_whenValid() {
-        assertDoesNotThrow(() -> CoreValidator.validateNotBlank("tom", "username"));
+        assertDoesNotThrow(() -> coreValidator.validateNotBlank("tom", "username"));
     }
 
     @Test

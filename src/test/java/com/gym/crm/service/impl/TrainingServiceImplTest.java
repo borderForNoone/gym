@@ -128,17 +128,18 @@ class TrainingServiceImplTest {
     }
 
     private TrainingResponseDTO buildTrainingResponseDTO() {
-        return TrainingResponseDTO.builder().trainingName("Morning Cardio").trainingDate(LocalDate.of(2024, 3, 10)).trainingTypeName("Cardio")
+        return TrainingResponseDTO.builder()
+                .trainingName("Morning Cardio")
+                .trainingDate(LocalDate.of(2024, 3, 10))
+                .trainingTypeName("Cardio")
                 .trainingDuration(60).build();
     }
 
     private TraineeTrainingFilter buildTraineeFilter() {
-        return TraineeTrainingFilter.builder().username(TRAINEE_USERNAME).fromDate(LocalDate.of(2024, 1, 1))
-                .toDate(LocalDate.of(2024, 12, 31)).build();
+        return TraineeTrainingFilter.builder().username(TRAINEE_USERNAME).fromDate(LocalDate.of(2024, 1, 1)).toDate(LocalDate.of(2024, 12, 31)).build();
     }
 
     private TrainerTrainingFilter buildTrainerFilter() {
-        return TrainerTrainingFilter.builder().username(TRAINER_USERNAME).fromDate(LocalDate.of(2024, 1, 1))
-                .toDate(LocalDate.of(2024, 12, 31)).build();
+        return TrainerTrainingFilter.builder().username(TRAINER_USERNAME).fromDate(LocalDate.of(2024, 1, 1)).toDate(LocalDate.of(2024, 12, 31)).build();
     }
 }

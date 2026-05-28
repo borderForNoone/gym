@@ -17,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.Optional;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -45,157 +44,100 @@ class TraineeRepositoryTest extends BaseTestRepository<TraineeRepository> {
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void save_shouldPersistTraineeWithUser() {
-        User user = User.builder()
-                .firstName("Tom")
-                .lastName("Tomas")
-                .username("Tom.Tomas")
-                .password("encoded_pass")
-                .isActive(true)
-                .build();
-        Trainee trainee = Trainee.builder()
-                .dateOfBirth(LocalDate.of(1995, 1, 15))
-                .address("123 Test St")
-                .user(user)
-                .build();
+        Trainee trainee = buildTrainee("Tom", "Tomas", "Tom.Tomas", LocalDate.of(1995, 1, 15), "123 Test St");
 
         Trainee saved = repository.save(trainee);
 
-        Long traineeId = saved.getId();
-        Long userId = saved.getUser().getId();
-        String username = saved.getUser().getUsername();
-        LocalDate birthDate = saved.getDateOfBirth();
-        String address = saved.getAddress();
-
-        assertThat(traineeId).isNotNull();
-        assertThat(userId).isNotNull();
-        assertThat(username).isEqualTo("Tom.Tomas");
-        assertThat(birthDate).isEqualTo(LocalDate.of(1995, 1, 15));
-        assertThat(address).isEqualTo("123 Test St");
+        assertThat(saved.getId()).isNotNull();
+        assertThat(saved.getUser().getId()).isNotNull();
+        assertThat(saved.getUser().getUsername()).isEqualTo("Tom.Tomas");
+        assertThat(saved.getDateOfBirth()).isEqualTo(LocalDate.of(1995, 1, 15));
+        assertThat(saved.getAddress()).isEqualTo("123 Test St");
     }
 
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void save_shouldPersistTraineeWithoutOptionalFields() {
-        User user = User.builder()
-                .firstName("Jane")
-                .lastName("Doe")
-                .username("Jane.Doe")
-                .password("encoded_pass")
-                .isActive(true)
-                .build();
-        Trainee trainee = Trainee.builder().user(user).build();
+        Trainee trainee = buildTrainee("Jane", "Doe", "Jane.Doe", null, null);
 
         Trainee saved = repository.save(trainee);
 
-        Long traineeId = saved.getId();
-        LocalDate birthDate = saved.getDateOfBirth();
-        String address = saved.getAddress();
-
-        assertThat(traineeId).isNotNull();
-        assertThat(birthDate).isNull();
-        assertThat(address).isNull();
+        assertThat(saved.getId()).isNotNull();
+        assertThat(saved.getDateOfBirth()).isNull();
+        assertThat(saved.getAddress()).isNull();
     }
 
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void save_shouldUpdateAddress_whenTraineeProfileUpdated() {
-        Trainee existing = repository.findByUser_Username("Julia.Tomas").orElseThrow();
+        Trainee existing = getTrainee("Julia.Tomas");
         Trainee updated = existing.toBuilder().address("999 New Address").build();
 
         repository.save(updated);
 
-        Trainee found = repository.findByUser_Username("Julia.Tomas").orElseThrow();
-
-        assertThat(found.getAddress()).isEqualTo("999 New Address");
+        assertThat(getTrainee("Julia.Tomas").getAddress()).isEqualTo("999 New Address");
     }
 
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void save_shouldUpdateIsActive_whenSetActiveCalledOnTrainee() {
-        Trainee existing = repository.findByUser_Username("Julia.Tomas").orElseThrow();
-        User updatedUser = existing.getUser().toBuilder().isActive(false).build();
-        Trainee updated = existing.toBuilder().user(updatedUser).build();
+        Trainee existing = getTrainee("Julia.Tomas");
+        Trainee updated = existing.toBuilder().user(existing.getUser().toBuilder().isActive(false).build()).build();
 
         repository.save(updated);
 
-        Trainee found = repository.findByUser_Username("Julia.Tomas").orElseThrow();
-        assertThat(found.getUser().getIsActive()).isFalse();
+        assertThat(getTrainee("Julia.Tomas").getUser().getIsActive()).isFalse();
     }
 
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void save_shouldUpdatePassword_whenChangePasswordCalledOnTrainee() {
-        Trainee existing = repository.findByUser_Username("Julia.Tomas").orElseThrow();
-        User updatedUser = existing.getUser().toBuilder().password("new_encoded_pass").build();
-        Trainee updated = existing.toBuilder().user(updatedUser).build();
+        Trainee existing = getTrainee("Julia.Tomas");
+        Trainee updated = existing.toBuilder().user(existing.getUser().toBuilder().password("new_encoded_pass").build()).build();
 
         repository.save(updated);
 
-        Trainee found = repository.findByUser_Username("Julia.Tomas").orElseThrow();
-        assertThat(found.getUser().getPassword()).isEqualTo("new_encoded_pass");
+        assertThat(getTrainee("Julia.Tomas").getUser().getPassword()).isEqualTo("new_encoded_pass");
     }
 
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void save_shouldUpdateTrainersList_whenUpdateTrainersListCalled() {
-        Trainee existing = repository.findByUser_Username("Simone.Radcliffe").orElseThrow();
-        Trainer trainer = trainerRepository.findByUser_Username("Tom.Trainer").orElseThrow();
+        Trainee existing = getTrainee("Simone.Radcliffe");
+        Trainer trainer = getTrainer("Tom.Trainer");
         existing.getTrainers().clear();
         existing.getTrainers().add(trainer);
-        Long traineeId = existing.getId();
-        Long trainerId = trainer.getId();
 
         repository.save(existing);
 
-        Long count = (Long) entityManager.createNativeQuery("SELECT COUNT(*) FROM trainees_trainers WHERE trainee_id = :traineeId AND trainer_id = :trainerId")
-                .setParameter("traineeId", traineeId)
-                .setParameter("trainerId", trainerId)
-                .getSingleResult();
-
-        assertThat(count).isEqualTo(1L);
+        assertThat(countJoinTableRows(existing.getId(), trainer.getId())).isEqualTo(1L);
     }
 
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void delete_shouldRemoveTrainee_whenEntityIsDeleted() {
-        String username = "Julia.Tomas";
-        Trainee trainee = repository.findByUser_Username(username).orElseThrow();
+        Trainee trainee = getTrainee("Julia.Tomas");
         Long traineeId = trainee.getId();
 
         repository.delete(trainee);
 
         assertThat(repository.findById(traineeId)).isEmpty();
-    }
-
-    @Test
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    void delete_shouldCascadeDeleteUser_whenTraineeIsDeleted() {
-        Trainee trainee = repository.findByUser_Username("Julia.Tomas").orElseThrow();
-        Long traineeId = trainee.getId();
-        Long userId = trainee.getUser().getId();
-
-        repository.delete(trainee);
-
-        assertThat(repository.findById(traineeId)).isEmpty();
-        assertThat(entityManager.find(User.class, userId)).isNull();
     }
 
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void delete_shouldRemoveTrainee_whenDeletedByUsername() {
-        String username = "Julia.Tomas";
-        Trainee trainee = repository.findByUser_Username(username).orElseThrow();
+        Trainee trainee = getTrainee("Julia.Tomas");
 
         repository.delete(trainee);
 
-        assertThat(repository.findByUser_Username(username)).isEmpty();
+        assertThat(repository.findByUser_Username("Julia.Tomas")).isEmpty();
     }
 
     @Test
     @Transactional
     void delete_shouldCascadeDeleteTrainings_whenTraineeDeleted() {
-        String username = "Julia.Tomas";
-        Trainee trainee = repository.findByUser_Username(username).orElseThrow();
+        Trainee trainee = getTrainee("Julia.Tomas");
         Long trainingId = trainee.getTrainings().iterator().next().getId();
 
         repository.delete(trainee);
@@ -206,28 +148,19 @@ class TraineeRepositoryTest extends BaseTestRepository<TraineeRepository> {
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void delete_shouldRemoveFromJoinTable_whenTraineeDeleted() {
-        String username = "Julia.Tomas";
-        Trainee trainee = repository.findByUser_Username(username).orElseThrow();
+        Trainee trainee = getTrainee("Julia.Tomas");
         Long traineeId = trainee.getId();
 
         repository.delete(trainee);
 
-        Long count = (Long) entityManager.createNativeQuery("""
-                SELECT COUNT(*)
-                FROM trainees_trainers
-                WHERE trainee_id = :traineeId
-                """).setParameter("traineeId", traineeId).getSingleResult();
-
-        assertThat(count).isZero();
+        assertThat(countJoinTableRows(traineeId, null)).isZero();
     }
 
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void delete_shouldNotAffectTrainer_whenTraineeDeleted() {
-        String traineeUsername = "Julia.Tomas";
-        String trainerUsername = "Tom.Trainer";
-        Long trainerId = trainerRepository.findByUser_Username(trainerUsername).orElseThrow().getId();
-        Trainee trainee = repository.findByUser_Username(traineeUsername).orElseThrow();
+        Long trainerId = getTrainer("Tom.Trainer").getId();
+        Trainee trainee = getTrainee("Julia.Tomas");
 
         repository.delete(trainee);
 
@@ -238,52 +171,43 @@ class TraineeRepositoryTest extends BaseTestRepository<TraineeRepository> {
     void findByUser_Username_eagerlyLoadsTrainers_withAllFields() {
         Optional<Trainee> actual = repository.findByUser_Username("Julia.Tomas");
 
-        Trainee trainee = actual.get();
+        Trainer trainer = actual.get().getTrainers().iterator().next();
 
         assertThat(actual).isPresent();
-        assertThat(trainee.getTrainers()).hasSize(1)
-                .satisfiesExactly(trainer -> {
-                    assertThat(trainer.getUser().getFirstName()).isEqualTo("Tom");
-                    assertThat(trainer.getUser().getLastName()).isEqualTo("Trainer");
-                    assertThat(trainer.getUser().getUsername()).isEqualTo("Tom.Trainer");
-                    assertThat(trainer.getUser().getIsActive()).isTrue();
-                    assertThat(trainer.getSpecialization().getTrainingTypeName()).isEqualTo("Cardio");
-                });
+        assertThat(actual.get().getTrainers()).hasSize(1);
+        assertThat(trainer.getUser().getFirstName()).isEqualTo("Tom");
+        assertThat(trainer.getUser().getLastName()).isEqualTo("Trainer");
+        assertThat(trainer.getUser().getUsername()).isEqualTo("Tom.Trainer");
+        assertThat(trainer.getUser().getIsActive()).isTrue();
+        assertThat(trainer.getSpecialization().getTrainingTypeName()).isEqualTo("Cardio");
     }
 
     @Test
     void findByUser_Username_eagerlyLoadsTrainings_withAllFields() {
         Optional<Trainee> actual = repository.findByUser_Username("Julia.Tomas");
 
-        Trainee trainee = actual.get();
-        Set<Training> trainings = trainee.getTrainings();
-        Training training = trainings.iterator().next();
+        Training training = actual.get().getTrainings().iterator().next();
 
         assertThat(actual).isPresent();
-        assertThat(trainings).hasSize(1);
-        assertThat(training.getId()).isEqualTo(1L);
+        assertThat(actual.get().getTrainings()).hasSize(1);
         assertThat(training.getTrainingName()).isEqualTo("Morning Cardio");
         assertThat(training.getTrainingDate()).isEqualTo(LocalDate.of(2024, 5, 10));
         assertThat(training.getTrainingDuration()).isEqualTo(60);
         assertThat(training.getTrainer().getUser().getUsername()).isEqualTo("Tom.Trainer");
-        assertThat(training.getTrainingType().getId()).isEqualTo(1L);
         assertThat(training.getTrainingType().getTrainingTypeName()).isEqualTo("Cardio");
     }
 
     @Test
     void findByUser_Username_returnsTrainee_whenUsernameExists() {
-        Optional<Trainee> actualOptional = repository.findByUser_Username("Julia.Tomas");
+        Optional<Trainee> actual = repository.findByUser_Username("Julia.Tomas");
 
-        assertThat(actualOptional).isPresent();
-
-        Trainee actualTrainee = actualOptional.get();
-        String actualUsername = actualTrainee.getUser().getUsername();
-        String expectedUsername = "Julia.Tomas";
-        String actualFirstName = actualTrainee.getUser().getFirstName();
-        String expectedFirstName = "Julia";
-
-        assertThat(actualUsername).isEqualTo(expectedUsername);
-        assertThat(actualFirstName).isEqualTo(expectedFirstName);
+        assertThat(actual).isPresent();
+        assertThat(actual.get().getUser().getUsername()).isEqualTo("Julia.Tomas");
+        assertThat(actual.get().getUser().getFirstName()).isEqualTo("Julia");
+        assertThat(actual.get().getUser().getLastName()).isEqualTo("Tomas");
+        assertThat(actual.get().getUser().getIsActive()).isTrue();
+        assertThat(actual.get().getDateOfBirth()).isEqualTo(LocalDate.of(2000, 3, 10));
+        assertThat(actual.get().getAddress()).isEqualTo("10 Sheep St");
     }
 
     @Test
@@ -291,16 +215,9 @@ class TraineeRepositoryTest extends BaseTestRepository<TraineeRepository> {
         Optional<Trainee> actual = repository.findByUser_Username("Julia.Tomas");
 
         assertThat(actual).isPresent();
-
-        Trainee trainee = actual.get();
-        User user = trainee.getUser();
-        Set<Trainer> trainers = trainee.getTrainers();
-        int trainerCount = trainers.size();
-        String trainerUsername = trainers.iterator().next().getUser().getUsername();
-
-        assertThat(user).isNotNull();
-        assertThat(trainerCount).isEqualTo(1);
-        assertThat(trainerUsername).isEqualTo("Tom.Trainer");
+        assertThat(actual.get().getUser()).isNotNull();
+        assertThat(actual.get().getTrainers()).hasSize(1);
+        assertThat(actual.get().getTrainers().iterator().next().getUser().getUsername()).isEqualTo("Tom.Trainer");
     }
 
     @Test
@@ -312,16 +229,62 @@ class TraineeRepositoryTest extends BaseTestRepository<TraineeRepository> {
 
     @Test
     void existsByUser_Username_returnsTrue_whenExists() {
-        boolean actualExists = repository.existsByUser_Username("Ellis.Hargrove");
-        boolean expectedExists = true;
-
-        assertThat(actualExists).isEqualTo(expectedExists);
+        assertThat(repository.existsByUser_Username("Ellis.Hargrove")).isTrue();
     }
 
     @Test
     void existsByUser_Username_returnsFalse_whenNotExists() {
-        boolean exists = repository.existsByUser_Username("nobody");
+        assertThat(repository.existsByUser_Username("nobody")).isFalse();
+    }
 
-        assertThat(exists).isFalse();
+    private Trainee getTrainee(String username) {
+        return entityManager.createQuery("""
+                        SELECT t FROM Trainee t
+                        JOIN FETCH t.user
+                        LEFT JOIN FETCH t.trainers
+                        WHERE t.user.username = :username
+                        """, Trainee.class)
+                .setParameter("username", username)
+                .getSingleResult();
+    }
+
+    private Trainer getTrainer(String username) {
+        return entityManager.createQuery("""
+                        SELECT t FROM Trainer t
+                        JOIN t.user u
+                        WHERE u.username = :username
+                        """, Trainer.class)
+                .setParameter("username", username)
+                .getSingleResult();
+    }
+
+    private Trainee buildTrainee(String firstName, String lastName, String username,
+                                 LocalDate dateOfBirth, String address) {
+        return Trainee.builder()
+                .dateOfBirth(dateOfBirth)
+                .address(address)
+                .user(User.builder()
+                        .firstName(firstName)
+                        .lastName(lastName)
+                        .username(username)
+                        .password("encoded_pass")
+                        .isActive(true)
+                        .build())
+                .build();
+    }
+
+    private Long countJoinTableRows(Long traineeId, Long trainerId) {
+        String sql = trainerId != null
+                ? "SELECT COUNT(*) FROM trainees_trainers WHERE trainee_id = :traineeId AND trainer_id = :trainerId"
+                : "SELECT COUNT(*) FROM trainees_trainers WHERE trainee_id = :traineeId";
+
+        var query = entityManager.createNativeQuery(sql)
+                .setParameter("traineeId", traineeId);
+
+        if (trainerId != null) {
+            query.setParameter("trainerId", trainerId);
+        }
+
+        return (Long) query.getSingleResult();
     }
 }

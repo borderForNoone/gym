@@ -98,7 +98,12 @@ class TrainerMapperTest {
 
     @Test
     void toEntity_update_shouldMapAllFields() {
-        TrainerUpdateDTO dto = TrainerUpdateDTO.builder().firstName(FIRST_NAME).lastName(LAST_NAME).isActive(true).specialization(FITNESS).build();
+        TrainerUpdateDTO dto = TrainerUpdateDTO.builder()
+                .firstName(FIRST_NAME)
+                .lastName(LAST_NAME)
+                .isActive(true)
+                .specialization(FITNESS)
+                .build();
 
         Trainer actual = trainerMapper.toEntity(dto);
 

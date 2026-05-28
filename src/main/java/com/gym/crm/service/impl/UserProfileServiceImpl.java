@@ -17,6 +17,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.gym.crm.rest.LoginRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,11 +45,14 @@ public class UserProfileServiceImpl implements UserProfileService {
     private final UserInputValidator userInputValidator;
     private final PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private final CoreValidator coreValidator;
+
     @Transactional
     @Override
     public String generateUsername(String firstName, String lastName) {
-        CoreValidator.validateNotBlank(firstName, "First name");
-        CoreValidator.validateNotBlank(lastName, "Last name");
+        coreValidator.validateNotBlank(firstName, "First name");
+        coreValidator.validateNotBlank(lastName, "Last name");
 
         String baseUsername = firstName.trim() + "." + lastName.trim();
         validator.validateTextFieldSize(baseUsername, FieldName.USERNAME, 110);
@@ -80,8 +84,8 @@ public class UserProfileServiceImpl implements UserProfileService {
     @Transactional()
     @Override
     public Boolean authenticate(String username, String password) {
-        CoreValidator.validateNotBlank(username, USERNAME_LABEL);
-        CoreValidator.validateNotBlank(password, PASSWORD_LABEL);
+        coreValidator.validateNotBlank(username, USERNAME_LABEL);
+        coreValidator.validateNotBlank(password, PASSWORD_LABEL);
 
         return traineeRepository.findByUser_Username(username)
                 .map(Trainee::getUser).or(() -> trainerRepository.findByUser_Username(username).map(Trainer::getUser))
@@ -121,8 +125,8 @@ public class UserProfileServiceImpl implements UserProfileService {
     @Transactional()
     @Override
     public User login(LoginRequest request) {
-        CoreValidator.validateNotBlank(request.getUsername(), USERNAME_LABEL);
-        CoreValidator.validateNotBlank(request.getPassword(), PASSWORD_LABEL);
+        coreValidator.validateNotBlank(request.getUsername(), USERNAME_LABEL);
+        coreValidator.validateNotBlank(request.getPassword(), PASSWORD_LABEL);
 
         String username = request.getUsername();
 

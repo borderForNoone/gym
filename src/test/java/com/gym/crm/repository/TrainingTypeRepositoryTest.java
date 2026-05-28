@@ -18,14 +18,9 @@ class TrainingTypeRepositoryTest extends BaseTestRepository<TrainingTypeReposito
     void findByTrainingTypeName_returnsTrainingType_whenExists() {
         Optional<TrainingType> actual = repository.findByTrainingTypeName(YOGA);
 
-        TrainingType actualTrainingType = actual.get();
-        Long actualId = actualTrainingType.getId();
-        String actualTrainingTypeName = actualTrainingType.getTrainingTypeName();
-        Long expectedId = actualId;
-
         assertThat(actual).isPresent();
-        assertThat(actualId).isEqualTo(expectedId);
-        assertThat(actualTrainingTypeName).isEqualTo(YOGA);
+        assertThat(actual.get().getId()).isNotNull();
+        assertThat(actual.get().getTrainingTypeName()).isEqualTo(YOGA);
     }
 
     @Test
@@ -39,14 +34,7 @@ class TrainingTypeRepositoryTest extends BaseTestRepository<TrainingTypeReposito
     void findAll_returnsAllTrainingTypes() {
         List<TrainingType> actual = repository.findAll();
 
-        int actualSize = actual.size();
-        List<String> actualTrainingTypeNames = actual.stream()
-                .map(TrainingType::getTrainingTypeName)
-                .toList();
-        int expectedSize = 3;
-        List<String> expectedTrainingTypeNames = List.of("Yoga", "Pilates", "Cardio");
-
-        assertThat(actualSize).isEqualTo(expectedSize);
-        assertThat(actualTrainingTypeNames).containsExactlyInAnyOrderElementsOf(expectedTrainingTypeNames);
+        assertThat(actual).hasSize(3);
+        assertThat(actual).extracting(TrainingType::getTrainingTypeName).containsExactlyInAnyOrder("Yoga", "Pilates", "Cardio");
     }
 }

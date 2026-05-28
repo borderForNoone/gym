@@ -19,21 +19,10 @@ class UserRepositoryTest extends BaseTestRepository<UserRepository> {
         Optional<User> actual = repository.findByUsername(USERNAME);
 
         assertThat(actual).isPresent();
-
-        User actualUser = actual.get();
-        String actualFirstName = actualUser.getFirstName();
-        String actualLastName = actualUser.getLastName();
-        String actualUsername = actualUser.getUsername();
-        Boolean actualIsActive = actualUser.getIsActive();
-        String expectedFirstName = "Julia";
-        String expectedLastName = "Tomas";
-        String expectedUsername = USERNAME;
-        Boolean expectedIsActive = true;
-
-        assertThat(actualFirstName).isEqualTo(expectedFirstName);
-        assertThat(actualLastName).isEqualTo(expectedLastName);
-        assertThat(actualUsername).isEqualTo(expectedUsername);
-        assertThat(actualIsActive).isEqualTo(expectedIsActive);
+        assertThat(actual.get().getFirstName()).isEqualTo("Julia");
+        assertThat(actual.get().getLastName()).isEqualTo("Tomas");
+        assertThat(actual.get().getUsername()).isEqualTo(USERNAME);
+        assertThat(actual.get().getIsActive()).isTrue();
     }
 
     @Test
@@ -45,14 +34,12 @@ class UserRepositoryTest extends BaseTestRepository<UserRepository> {
 
     @Test
     void findById_shouldReturnUser_whenExists() {
-        User julia = repository.findByUsername(USERNAME).orElseThrow();
-        Optional<User> actual = repository.findById(julia.getId());
+        Long id = repository.findByUsername(USERNAME).orElseThrow().getId();
 
-        User actualUser = actual.get();
-        String actualUsername = actualUser.getUsername();
+        Optional<User> actual = repository.findById(id);
 
         assertThat(actual).isPresent();
-        assertThat(actualUsername).isEqualTo(USERNAME);
+        assertThat(actual.get().getUsername()).isEqualTo(USERNAME);
     }
 
     @Test
@@ -66,23 +53,16 @@ class UserRepositoryTest extends BaseTestRepository<UserRepository> {
     void findAll_shouldReturnAllUsers() {
         List<User> actual = repository.findAll();
 
-        int actualSize = actual.size();
-        int expectedSize = 5;
-        List<String> actualUsernames = actual.stream()
-                .map(User::getUsername)
-                .toList();
-        List<String> expectedUsernames = List.of("Callum.Whitfield", "Julia.Tomas", "Ellis.Hargrove", "Tom.Trainer", "Simone.Radcliffe");
-
-        assertThat(actualSize).isEqualTo(expectedSize);
-        assertThat(actualUsernames).containsExactlyInAnyOrderElementsOf(expectedUsernames);
+        assertThat(actual).hasSize(5);
+        assertThat(actual).extracting(User::getUsername).containsExactlyInAnyOrder("Callum.Whitfield", "Julia.Tomas", "Ellis.Hargrove", "Tom.Trainer",
+                        "Simone.Radcliffe");
     }
 
     @Test
     void existsById_shouldReturnTrue_whenExists() {
-        User julia = repository.findByUsername(USERNAME).orElseThrow();
-        boolean actual = repository.existsById(julia.getId());
+        Long id = repository.findByUsername(USERNAME).orElseThrow().getId();
 
-        assertThat(actual).isTrue();
+        assertThat(repository.existsById(id)).isTrue();
     }
 
     @Test

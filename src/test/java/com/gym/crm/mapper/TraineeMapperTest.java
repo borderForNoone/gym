@@ -29,7 +29,12 @@ class TraineeMapperTest {
 
     @Test
     void toEntity_shouldMapAllFields() {
-        TraineeRequestDTO request = TraineeRequestDTO.builder().firstName(FIRST_NAME).lastName(LAST_NAME).dateOfBirth(DATE_OF_BIRTH).address(ADDRESS).build();
+        TraineeRequestDTO request = TraineeRequestDTO.builder()
+                .firstName(FIRST_NAME)
+                .lastName(LAST_NAME)
+                .dateOfBirth(DATE_OF_BIRTH)
+                .address(ADDRESS)
+                .build();
 
         Trainee actual = traineeMapper.toEntity(request);
 
@@ -42,7 +47,12 @@ class TraineeMapperTest {
 
     @Test
     void toEntity_shouldNotSetUsernameAndPassword() {
-        TraineeRequestDTO request = TraineeRequestDTO.builder().firstName(FIRST_NAME).lastName(LAST_NAME).dateOfBirth(DATE_OF_BIRTH).address(ADDRESS).build();
+        TraineeRequestDTO request = TraineeRequestDTO.builder()
+                .firstName(FIRST_NAME)
+                .lastName(LAST_NAME)
+                .dateOfBirth(DATE_OF_BIRTH)
+                .address(ADDRESS)
+                .build();
 
         Trainee actual = traineeMapper.toEntity(request);
 
@@ -111,7 +121,13 @@ class TraineeMapperTest {
 
     @Test
     void toEntity_updateDto_shouldMapFields() {
-        TraineeUpdateDTO dto = TraineeUpdateDTO.builder().firstName(FIRST_NAME).lastName(LAST_NAME).isActive(true).address(ADDRESS).dateOfBirth(DATE_OF_BIRTH).build();
+        TraineeUpdateDTO dto = TraineeUpdateDTO.builder()
+                .firstName(FIRST_NAME)
+                .lastName(LAST_NAME)
+                .isActive(true)
+                .address(ADDRESS)
+                .dateOfBirth(DATE_OF_BIRTH)
+                .build();
 
         Trainee actual = traineeMapper.toEntity(dto);
 

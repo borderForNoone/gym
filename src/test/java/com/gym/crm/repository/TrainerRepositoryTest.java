@@ -6,7 +6,6 @@ import com.github.springtestdbunit.annotation.DatabaseTearDown;
 import com.gym.crm.facade.dto.TrainerInfoDTO;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.TrainingType;
-import com.gym.crm.model.User;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Propagation;
@@ -30,32 +29,22 @@ class TrainerRepositoryTest extends BaseTestRepository<TrainerRepository> {
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void save_shouldUpdateIsActive_whenSetActiveCalledOnTrainer() {
         Trainer existing = repository.findByUser_Username(USERNAME).orElseThrow();
-        User updatedUser = existing.getUser().toBuilder().isActive(false).build();
-        Trainer updatedTrainer = existing.toBuilder().user(updatedUser).build();
+        Trainer updated = existing.toBuilder().user(existing.getUser().toBuilder().isActive(false).build()).build();
 
-        repository.save(updatedTrainer);
+        repository.save(updated);
 
-        Trainer actual = repository.findByUser_Username(USERNAME).orElseThrow();
-        Boolean actualIsActive = actual.getUser().getIsActive();
-        Boolean expectedIsActive = false;
-
-        assertThat(actualIsActive).isEqualTo(expectedIsActive);
+        assertThat(repository.findByUser_Username(USERNAME).orElseThrow().getUser().getIsActive()).isFalse();
     }
 
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void save_shouldUpdatePassword_whenChangePasswordCalledOnTrainer() {
         Trainer existing = repository.findByUser_Username(USERNAME).orElseThrow();
-        User updatedUser = existing.getUser().toBuilder().password("new_encoded_pass").build();
-        Trainer updatedTrainer = existing.toBuilder().user(updatedUser).build();
+        Trainer updated = existing.toBuilder().user(existing.getUser().toBuilder().password("new_encoded_pass").build()).build();
 
-        repository.save(updatedTrainer);
+        repository.save(updated);
 
-        Trainer actual = repository.findByUser_Username(USERNAME).orElseThrow();
-        String actualPassword = actual.getUser().getPassword();
-        String expectedPassword = "new_encoded_pass";
-
-        assertThat(actualPassword).isEqualTo(expectedPassword);
+        assertThat(repository.findByUser_Username(USERNAME).orElseThrow().getUser().getPassword()).isEqualTo("new_encoded_pass");
     }
 
     @Test
@@ -63,63 +52,37 @@ class TrainerRepositoryTest extends BaseTestRepository<TrainerRepository> {
     void save_shouldUpdateSpecialization_whenUpdateTrainerCalled() {
         Trainer existing = repository.findByUser_Username(USERNAME).orElseThrow();
         TrainingType pilates = trainingTypeRepository.findByTrainingTypeName("Pilates").orElseThrow();
-        Trainer updatedTrainer = existing.toBuilder().specialization(pilates).build();
+        Trainer updated = existing.toBuilder().specialization(pilates).build();
 
-        repository.save(updatedTrainer);
+        repository.save(updated);
 
-        Trainer actual = repository.findByUser_Username(USERNAME).orElseThrow();
-        String actualSpecialization = actual.getSpecialization().getTrainingTypeName();
-        String expectedSpecialization = "Pilates";
-
-        assertThat(actualSpecialization).isEqualTo(expectedSpecialization);
+        assertThat(repository.findByUser_Username(USERNAME).orElseThrow().getSpecialization().getTrainingTypeName()).isEqualTo("Pilates");
     }
 
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void save_shouldUpdateName_whenUpdateProfileCalledOnTrainer() {
         Trainer existing = repository.findByUser_Username(USERNAME).orElseThrow();
+        Trainer updated = existing.toBuilder().user(existing.getUser().toBuilder().firstName("CallumUpdated").lastName("WhitfieldUpdated").build()).build();
 
-        User updatedUser = existing.getUser().toBuilder().firstName("CallumUpdated").lastName("WhitfieldUpdated").build();
-        Trainer updatedTrainer = existing.toBuilder().user(updatedUser).build();
-
-        repository.save(updatedTrainer);
+        repository.save(updated);
 
         Trainer actual = repository.findByUser_Username(USERNAME).orElseThrow();
-        String actualFirstName = actual.getUser().getFirstName();
-        String expectedFirstName = "CallumUpdated";
-        String actualLastName = actual.getUser().getLastName();
-        String expectedLastName = "WhitfieldUpdated";
-
-        assertThat(actualFirstName).isEqualTo(expectedFirstName);
-        assertThat(actualLastName).isEqualTo(expectedLastName);
+        assertThat(actual.getUser().getFirstName()).isEqualTo("CallumUpdated");
+        assertThat(actual.getUser().getLastName()).isEqualTo("WhitfieldUpdated");
     }
 
     @Test
     void findByUser_Username_returnsTrainer_whenExists() {
-        Optional<Trainer> result = repository.findByUser_Username(USERNAME);
+        Optional<Trainer> actual = repository.findByUser_Username(USERNAME);
 
-        assertThat(result).isPresent();
-
-        Trainer actual = result.get();
-        String actualUsername = actual.getUser().getUsername();
-        String expectedUsername = "Callum.Whitfield";
-        String actualFirstName = actual.getUser().getFirstName();
-        String expectedFirstName = "Callum";
-        String actualLastName = actual.getUser().getLastName();
-        String expectedLastName = "Whitfield";
-        String actualPassword = actual.getUser().getPassword();
-        String expectedPassword = "pass111";
-        Boolean actualIsActive = actual.getUser().getIsActive();
-        Boolean expectedIsActive = true;
-        String actualSpecialization = actual.getSpecialization().getTrainingTypeName();
-        String expectedSpecialization = "Yoga";
-
-        assertThat(actualUsername).isEqualTo(expectedUsername);
-        assertThat(actualFirstName).isEqualTo(expectedFirstName);
-        assertThat(actualLastName).isEqualTo(expectedLastName);
-        assertThat(actualPassword).isEqualTo(expectedPassword);
-        assertThat(actualIsActive).isEqualTo(expectedIsActive);
-        assertThat(actualSpecialization).isEqualTo(expectedSpecialization);
+        assertThat(actual).isPresent();
+        assertThat(actual.get().getUser().getUsername()).isEqualTo("Callum.Whitfield");
+        assertThat(actual.get().getUser().getFirstName()).isEqualTo("Callum");
+        assertThat(actual.get().getUser().getLastName()).isEqualTo("Whitfield");
+        assertThat(actual.get().getUser().getPassword()).isEqualTo("pass111");
+        assertThat(actual.get().getUser().getIsActive()).isTrue();
+        assertThat(actual.get().getSpecialization().getTrainingTypeName()).isEqualTo("Yoga");
     }
 
     @Test
@@ -132,75 +95,44 @@ class TrainerRepositoryTest extends BaseTestRepository<TrainerRepository> {
     @Test
     void existsByUser_Username_returnsTrue_whenExists() {
         boolean actual = repository.existsByUser_Username(USERNAME);
-        boolean expected = true;
 
-        assertThat(actual).isEqualTo(expected);
+        assertThat(actual).isTrue();
     }
 
     @Test
     void existsByUser_Username_returnsFalse_whenNotExists() {
         boolean actual = repository.existsByUser_Username("nobody");
-        boolean expected = false;
 
-        assertThat(actual).isEqualTo(expected);
+        assertThat(actual).isFalse();
     }
 
     @Test
     void findByUser_UsernameNotIn_excludesGivenUsernames() {
         List<Trainer> actual = repository.findByUser_UsernameNotIn(List.of(USERNAME));
-        int actualSize = actual.size();
-        int expectedSize = 1;
 
-        assertThat(actualSize).isEqualTo(expectedSize);
-
-        Trainer actualTrainer = actual.getFirst();
-        String actualUsername = actualTrainer.getUser().getUsername();
-        String expectedUsername = "Nora.Pemberton";
-        String actualFirstName = actualTrainer.getUser().getFirstName();
-        String expectedFirstName = "Nora";
-        String actualLastName = actualTrainer.getUser().getLastName();
-        String expectedLastName = "Pemberton";
-        String actualPassword = actualTrainer.getUser().getPassword();
-        String expectedPassword = "pass222";
-        Boolean actualIsActive = actualTrainer.getUser().getIsActive();
-        Boolean expectedIsActive = true;
-        String actualSpecialization = actualTrainer.getSpecialization().getTrainingTypeName();
-        String expectedSpecialization = "Pilates";
-
-        assertThat(actualUsername).isEqualTo(expectedUsername);
-        assertThat(actualFirstName).isEqualTo(expectedFirstName);
-        assertThat(actualLastName).isEqualTo(expectedLastName);
-        assertThat(actualPassword).isEqualTo(expectedPassword);
-        assertThat(actualIsActive).isEqualTo(expectedIsActive);
-        assertThat(actualSpecialization).isEqualTo(expectedSpecialization);
+        assertThat(actual).hasSize(1);
+        assertThat(actual.getFirst().getUser().getUsername()).isEqualTo("Nora.Pemberton");
+        assertThat(actual.getFirst().getUser().getFirstName()).isEqualTo("Nora");
+        assertThat(actual.getFirst().getUser().getLastName()).isEqualTo("Pemberton");
+        assertThat(actual.getFirst().getUser().getPassword()).isEqualTo("pass222");
+        assertThat(actual.getFirst().getUser().getIsActive()).isTrue();
+        assertThat(actual.getFirst().getSpecialization().getTrainingTypeName()).isEqualTo("Pilates");
     }
 
     @Test
     void findByUser_UsernameNotIn_returnsAll_whenNoUsernameMatches() {
         List<Trainer> actual = repository.findByUser_UsernameNotIn(List.of("nonexistent.user"));
-        int actualSize = actual.size();
-        int expectedSize = 2;
 
-        Trainer firstTrainer = actual.get(0);
-        Trainer secondTrainer = actual.get(1);
-        List<String> actualUsernames = List.of(firstTrainer.getUser().getUsername(), secondTrainer.getUser().getUsername());
-
-        assertThat(actualSize).isEqualTo(expectedSize);
-        assertThat(actualUsernames).containsExactlyInAnyOrder("Callum.Whitfield", "Nora.Pemberton");
+        assertThat(actual).hasSize(2);
+        assertThat(actual).extracting(trainer -> trainer.getUser().getUsername()).containsExactlyInAnyOrder("Callum.Whitfield", "Nora.Pemberton");
     }
 
     @Test
     void findByUser_UsernameIn_returnsMatchingTrainers() {
         List<Trainer> actual = repository.findByUser_UsernameIn(List.of(USERNAME, SECOND_USERNAME));
 
-        int actualSize = actual.size();
-        int expectedSize = 2;
-        Trainer firstTrainer = actual.get(0);
-        Trainer secondTrainer = actual.get(1);
-        List<String> actualUsernames = List.of(firstTrainer.getUser().getUsername(), secondTrainer.getUser().getUsername());
-
-        assertThat(actualSize).isEqualTo(expectedSize);
-        assertThat(actualUsernames).containsExactlyInAnyOrder("Callum.Whitfield", "Nora.Pemberton");
+        assertThat(actual).hasSize(2);
+        assertThat(actual).extracting(trainer -> trainer.getUser().getUsername()).containsExactlyInAnyOrder("Callum.Whitfield", "Nora.Pemberton");
     }
 
     @Test

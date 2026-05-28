@@ -24,6 +24,7 @@ import com.gym.crm.service.common.UserInputValidator;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,12 +48,14 @@ public class TrainerServiceImpl implements TrainerService {
     private final TrainerRepository trainerRepository;
     private final TrainingRepository trainingRepository;
     private final UserProfileService userProfileService;
-    private final TrainerTrainingCriteriaBuilder criteriaBuilder;
     private final CoreValidator validator;
     private final UserInputValidator userInputValidator;
     private final PasswordEncoder passwordEncoder;
     private final TrainerMapper mapper;
     private final TrainingTypeRepository trainingTypeRepository;
+
+    @Autowired
+    private final CoreValidator coreValidator;
 
     @Transactional
     @Override
@@ -140,7 +143,7 @@ public class TrainerServiceImpl implements TrainerService {
     @Transactional
     @Override
     public void setActive(String username, boolean active) {
-        CoreValidator.validateNotBlank(username, USERNAME_LABEL);
+        coreValidator.validateNotBlank(username, USERNAME_LABEL);
 
         Trainer trainer = trainerRepository.findByUser_Username(username).orElseThrow(() -> new EntityNotFoundException(format(TRAINER_NOT_FOUND, username)));
         User currentUser = trainer.getUser();

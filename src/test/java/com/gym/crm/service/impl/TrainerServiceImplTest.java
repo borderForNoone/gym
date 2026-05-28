@@ -160,8 +160,7 @@ class TrainerServiceImplTest {
 
     @Test
     void getTrainings_shouldReturnList() {
-        TrainerTrainingFilter filter = TrainerTrainingFilter.builder().username("Callum.Whitfield").fromDate(LocalDate.of(2024, 1, 1))
-                .toDate(LocalDate.of(2024, 12, 31)).build();
+        TrainerTrainingFilter filter = TrainerTrainingFilter.builder().username("Callum.Whitfield").fromDate(LocalDate.of(2024, 1, 1)).toDate(LocalDate.of(2024, 12, 31)).build();
 
         when(trainingRepository.findByTrainerCriteria(filter.getUsername(), filter.getFromDate(), filter.getToDate())).thenReturn(List.of());
 
@@ -188,7 +187,8 @@ class TrainerServiceImplTest {
                 .username("trainer1")
                 .firstName("Old")
                 .lastName("Name")
-                .isActive(true).build();
+                .isActive(true)
+                .build();
         Trainer trainer = Trainer.builder().user(existingUser).specialization(TrainingType.builder().trainingTypeName("FITNESS").build()).build();
         User incomingUser = User.builder().firstName("New").lastName("Surname").build();
         Trainer updatedData = Trainer.builder().user(incomingUser).build();

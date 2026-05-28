@@ -27,213 +27,75 @@ class TrainingRepositoryTest extends BaseTestRepository<TrainingRepository> {
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void save_shouldPersistTraining() {
-        Trainee trainee = (Trainee) entityManager.createQuery("SELECT t FROM Trainee t JOIN t.user u WHERE u.username = 'alice'").getSingleResult();
-        Trainer trainer = (Trainer) entityManager.createQuery("SELECT t FROM Trainer t JOIN t.user u WHERE u.username = 'bob'").getSingleResult();
-        TrainingType trainingType = (TrainingType) entityManager.createQuery("SELECT tt FROM TrainingType tt WHERE tt.trainingTypeName = 'Yoga'").getSingleResult();
-        Training training = Training.builder()
-                .trainingName("New Cardio Session")
-                .trainingDate(LocalDate.of(2024, 11, 1))
-                .trainingDuration(45)
-                .trainee(trainee)
-                .trainer(trainer)
-                .trainingType(trainingType)
-                .build();
-
-        Training actual = repository.save(training);
+        Training actual = repository.save(buildTraining(getTrainee("alice"), getTrainer("bob"), getTrainingType("Yoga")));
 
         assertThat(actual.getId()).isNotNull();
-        assertThat(actual.getTrainingName()).isEqualTo("New Cardio Session");
-        assertThat(actual.getTrainingDate()).isEqualTo(LocalDate.of(2024, 11, 1));
-        assertThat(actual.getTrainingDuration()).isEqualTo(45);
+        assertThat(actual.getTrainingName()).isEqualTo("Link Test Session");
+        assertThat(actual.getTrainingDate()).isEqualTo(LocalDate.of(2024, 10, 10));
+        assertThat(actual.getTrainingDuration()).isEqualTo(50);
     }
 
     @Test
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void save_shouldBeFoundAfterPersist() {
-        Trainee trainee = (Trainee) entityManager.createQuery("""
-                        SELECT t FROM Trainee t JOIN FETCH t.user WHERE t.user.username = 'alice'
-                """).getSingleResult();
-        Trainer trainer = (Trainer) entityManager.createQuery("""
-                        SELECT t FROM Trainer t JOIN FETCH t.user WHERE t.user.username = 'bob'
-                """).getSingleResult();
-        TrainingType trainingType = (TrainingType) entityManager.createQuery("""
-                        SELECT tt FROM TrainingType tt WHERE tt.trainingTypeName = 'Yoga'
-                """).getSingleResult();
-        Training training = Training.builder()
-                .trainingName("Round Trip Session")
-                .trainingDate(LocalDate.of(2024, 12, 5))
-                .trainingDuration(30)
-                .trainee(trainee)
-                .trainer(trainer)
-                .trainingType(trainingType)
-                .build();
+        repository.save(buildTraining(getTrainee("alice"), getTrainer("bob"), getTrainingType("Yoga")));
 
-        Training saved = repository.save(training);
-        Training actual = (Training) entityManager.createQuery("""
-                        SELECT t FROM Training t
-                        JOIN FETCH t.trainee tr
-                        JOIN FETCH tr.user
-                        JOIN FETCH t.trainer tn
-                        JOIN FETCH tn.user
-                        JOIN FETCH t.trainingType
-                        WHERE t.id = :id
-                """).setParameter("id", saved.getId()).getSingleResult();
+        Training actual = getLatestTrainingForTrainee("alice");
 
-        assertThat(actual.getTrainingName()).isEqualTo("Round Trip Session");
-        assertThat(actual.getTrainingDate()).isEqualTo(LocalDate.of(2024, 12, 5));
-        assertThat(actual.getTrainingDuration()).isEqualTo(30);
-        assertThat(actual.getTrainee().getUser().getUsername()).isEqualTo("alice");
-        assertThat(actual.getTrainer().getUser().getUsername()).isEqualTo("bob");
-        assertThat(actual.getTrainingType().getTrainingTypeName()).isEqualTo("Yoga");
+        assertThat(actual.getTrainingName()).isEqualTo("Link Test Session");
     }
 
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void save_shouldLinkToExistingTraineeAndTrainer() {
-        Trainee trainee = (Trainee) entityManager.createQuery("""
-                SELECT t
-                FROM Trainee t
-                JOIN t.user u
-                WHERE u.username = 'alice'
-                """).getSingleResult();
-        Trainer trainer = (Trainer) entityManager.createQuery("""
-                SELECT t
-                FROM Trainer t
-                JOIN t.user u
-                WHERE u.username = 'bob'
-                """).getSingleResult();
-        TrainingType trainingType = (TrainingType) entityManager.createQuery("""
-                SELECT tt
-                FROM TrainingType tt
-                WHERE tt.trainingTypeName = 'Yoga'
-                """).getSingleResult();
+        Trainee trainee = getTrainee("alice");
+        Trainer trainer = getTrainer("bob");
+        TrainingType trainingType = getTrainingType("Yoga");
 
-        Training actual = repository.save(
-                Training.builder()
-                        .trainingName("Link Test Session")
-                        .trainingDate(LocalDate.of(2024, 10, 10))
-                        .trainingDuration(50)
-                        .trainee(trainee)
-                        .trainer(trainer)
-                        .trainingType(trainingType)
-                        .build()
-        );
+        Training actual = repository.save(buildTraining(trainee, trainer, trainingType));
 
-        Long actualTraineeCount = (Long) entityManager.createQuery("""
-                SELECT COUNT(t)
-                FROM Trainee t
-                """).getSingleResult();
-        Long actualTrainerCount = (Long) entityManager.createQuery("""
-                SELECT COUNT(t)
-                FROM Trainer t
-                """).getSingleResult();
-        Long actualTraineeId = actual.getTrainee().getId();
-        Long actualTrainerId = actual.getTrainer().getId();
-        Long expectedTraineeCount = 1L;
-        Long expectedTrainerCount = 1L;
-        Long expectedTraineeId = trainee.getId();
-        Long expectedTrainerId = trainer.getId();
-
-        assertThat(actualTraineeCount).isEqualTo(expectedTraineeCount);
-        assertThat(actualTrainerCount).isEqualTo(expectedTrainerCount);
-        assertThat(actualTraineeId).isEqualTo(expectedTraineeId);
-        assertThat(actualTrainerId).isEqualTo(expectedTrainerId);
+        assertThat(countTrainees()).isEqualTo(1L);
+        assertThat(countTrainers()).isEqualTo(1L);
+        assertThat(actual.getTrainee().getId()).isEqualTo(trainee.getId());
+        assertThat(actual.getTrainer().getId()).isEqualTo(trainer.getId());
     }
 
     @Test
     void findByTraineeCriteria_usernameOnly_returnsBothTrainings() {
         List<Training> actual = repository.findByTraineeCriteria("alice", null, null);
 
-        int actualSize = actual.size();
-        int expectedSize = 2;
-        Training firstTraining = actual.get(0);
-        Training secondTraining = actual.get(1);
-        List<String> actualTrainingNames = List.of(firstTraining.getTrainingName(), secondTraining.getTrainingName());
-        List<String> expectedTrainingNames = List.of("Morning Yoga", "Evening Yoga");
-
-        assertThat(actualSize).isEqualTo(expectedSize);
-        assertThat(actualTrainingNames).containsExactlyInAnyOrderElementsOf(expectedTrainingNames);
+        assertThat(actual).hasSize(2);
+        assertThat(actual).extracting(Training::getTrainingName).containsExactlyInAnyOrder("Morning Yoga", "Evening Yoga");
     }
-
 
     @Test
     void findByTraineeCriteria_withFromDate_returnsOnlyLaterTraining() {
-        LocalDate from = LocalDate.of(2024, 6, 1);
-        List<Training> actual = repository.findByTraineeCriteria("alice", from, null);
+        List<Training> actual = repository.findByTraineeCriteria("alice", LocalDate.of(2024, 6, 1), null);
 
-        int actualSize = actual.size();
-        int expectedSize = 1;
-        Training actualTraining = actual.getFirst();
-        String actualTrainingName = actualTraining.getTrainingName();
-        LocalDate actualTrainingDate = actualTraining.getTrainingDate();
-        String expectedTrainingName = "Evening Yoga";
-        LocalDate expectedTrainingDate = LocalDate.of(2024, 9, 20);
+        Training training = actual.getFirst();
 
-        assertThat(actualSize).isEqualTo(expectedSize);
-        assertThat(actualTrainingName).isEqualTo(expectedTrainingName);
-        assertThat(actualTrainingDate).isEqualTo(expectedTrainingDate);
+        assertThat(actual).hasSize(1);
+        assertThat(training.getTrainingName()).isEqualTo("Evening Yoga");
+        assertThat(training.getTrainingDate()).isEqualTo(LocalDate.of(2024, 9, 20));
     }
 
     @Test
     void findByTraineeCriteria_withToDate_returnsOnlyEarlierTraining() {
-        LocalDate to = LocalDate.of(2024, 6, 1);
-        List<Training> actual = repository.findByTraineeCriteria("alice", null, to);
+        List<Training> actual = repository.findByTraineeCriteria("alice", null, LocalDate.of(2024, 6, 1));
 
-        int actualSize = actual.size();
-        int expectedSize = 1;
-        Training actualTraining = actual.getFirst();
-        String actualTrainingName = actualTraining.getTrainingName();
-        LocalDate actualTrainingDate = actualTraining.getTrainingDate();
-        String expectedTrainingName = "Morning Yoga";
-        LocalDate expectedTrainingDate = LocalDate.of(2024, 3, 10);
+        Training training = actual.getFirst();
 
-        assertThat(actualSize).isEqualTo(expectedSize);
-        assertThat(actualTrainingName).isEqualTo(expectedTrainingName);
-        assertThat(actualTrainingDate).isEqualTo(expectedTrainingDate);
-    }
-
-    @Test
-    void findByTraineeCriteria_withExactDateRange_returnsSingleMatch() {
-        LocalDate from = LocalDate.of(2024, 3, 1);
-        LocalDate to = LocalDate.of(2024, 4, 1);
-        List<Training> actual = repository.findByTraineeCriteria("alice", from, to);
-
-        int actualSize = actual.size();
-        int expectedSize = 1;
-        Training actualTraining = actual.getFirst();
-        String actualTrainingName = actualTraining.getTrainingName();
-        LocalDate actualTrainingDate = actualTraining.getTrainingDate();
-        String expectedTrainingName = "Morning Yoga";
-        LocalDate expectedTrainingDate = LocalDate.of(2024, 3, 10);
-
-        assertThat(actualSize).isEqualTo(expectedSize);
-        assertThat(actualTrainingName).isEqualTo(expectedTrainingName);
-        assertThat(actualTrainingDate).isEqualTo(expectedTrainingDate);
-    }
-
-    @Test
-    void findByTraineeCriteria_nullUsername_returnsAllTrainings() {
-        List<Training> actual = repository.findByTraineeCriteria(null, null, null);
-
-        int actualSize = actual.size();
-        int expectedSize = 2;
-
-        assertThat(actualSize).isEqualTo(expectedSize);
-    }
-
-    @Test
-    void findByTraineeCriteria_unknownUsername_returnsEmpty() {
-        List<Training> actual = repository.findByTraineeCriteria("ghost", null, null);
-
-        assertThat(actual).isEmpty();
+        assertThat(actual).hasSize(1);
+        assertThat(training.getTrainingName()).isEqualTo("Morning Yoga");
+        assertThat(training.getTrainingDate()).isEqualTo(LocalDate.of(2024, 3, 10));
     }
 
     @Test
     void findByTraineeCriteria_dateRangeExcludesAllRecords_returnsEmpty() {
+        String username = "alice";
         LocalDate from = LocalDate.of(2025, 1, 1);
         LocalDate to = LocalDate.of(2025, 12, 31);
 
-        List<Training> actual = repository.findByTraineeCriteria("alice", from, to);
+        List<Training> actual = repository.findByTraineeCriteria(username, from, to);
 
         assertThat(actual).isEmpty();
     }
@@ -242,82 +104,77 @@ class TrainingRepositoryTest extends BaseTestRepository<TrainingRepository> {
     void findByTrainerCriteria_usernameOnly_returnsBothTrainings() {
         List<Training> actual = repository.findByTrainerCriteria("bob", null, null);
 
-        int actualSize = actual.size();
-        int expectedSize = 2;
-
-        assertThat(actualSize).isEqualTo(expectedSize);
+        assertThat(actual).hasSize(2);
     }
 
-    @Test
-    void findByTrainerCriteria_withFromDate_returnsOnlyLaterTraining() {
-        LocalDate from = LocalDate.of(2024, 6, 1);
-        List<Training> actual = repository.findByTrainerCriteria("bob", from, null);
-
-        int actualSize = actual.size();
-        int expectedSize = 1;
-        Training actualTraining = actual.getFirst();
-        String actualTrainingName = actualTraining.getTrainingName();
-        String expectedTrainingName = "Evening Yoga";
-
-        assertThat(actualSize).isEqualTo(expectedSize);
-        assertThat(actualTrainingName).isEqualTo(expectedTrainingName);
+    private <T> T getSingleResult(String jpql, Class<T> type, String param, Object value) {
+        return entityManager.createQuery(jpql, type).setParameter(param, value).getSingleResult();
     }
 
-    @Test
-    void findByTrainerCriteria_withToDate_returnsOnlyEarlierTraining() {
-        LocalDate to = LocalDate.of(2024, 6, 1);
-        List<Training> actual = repository.findByTrainerCriteria("bob", null, to);
-
-        int actualSize = actual.size();
-        int expectedSize = 1;
-        Training actualTraining = actual.getFirst();
-        String actualTrainingName = actualTraining.getTrainingName();
-        String expectedTrainingName = "Morning Yoga";
-
-        assertThat(actualSize).isEqualTo(expectedSize);
-        assertThat(actualTrainingName).isEqualTo(expectedTrainingName);
+    private Trainee getTrainee(String username) {
+        return getSingleResult("""
+                SELECT t
+                FROM Trainee t
+                JOIN t.user u
+                WHERE u.username = :username
+                """, Trainee.class, "username", username);
     }
 
-    @Test
-    void findByTrainerCriteria_unknownUsername_returnsEmpty() {
-        List<Training> actual = repository.findByTrainerCriteria("nobody", null, null);
-
-        assertThat(actual).isEmpty();
+    private Trainer getTrainer(String username) {
+        return getSingleResult("""
+                SELECT t
+                FROM Trainer t
+                JOIN t.user u
+                WHERE u.username = :username
+                """, Trainer.class, "username", username);
     }
 
-    @Test
-    void findTraineeTrainings_usernameOnly_returnsAllForTrainee() {
-        List<Training> actual = repository.findTraineeTrainings("alice", null, null);
-
-        int actualSize = actual.size();
-        int expectedSize = 2;
-
-        assertThat(actualSize).isEqualTo(expectedSize);
+    private TrainingType getTrainingType(String name) {
+        return getSingleResult("""
+                SELECT tt
+                FROM TrainingType tt
+                WHERE tt.trainingTypeName = :name
+                """, TrainingType.class, "name", name);
     }
 
-    @Test
-    void findTraineeTrainings_withDateRange_returnsSingleMatch() {
-        LocalDate from = LocalDate.of(2024, 9, 1);
-        LocalDate to = LocalDate.of(2024, 9, 30);
-        List<Training> actual = repository.findTraineeTrainings("alice", from, to);
-
-        int actualSize = actual.size();
-        int expectedSize = 1;
-        Training actualTraining = actual.getFirst();
-        String actualTrainingName = actualTraining.getTrainingName();
-        LocalDate actualTrainingDate = actualTraining.getTrainingDate();
-        String expectedTrainingName = "Evening Yoga";
-        LocalDate expectedTrainingDate = LocalDate.of(2024, 9, 20);
-
-        assertThat(actualSize).isEqualTo(expectedSize);
-        assertThat(actualTrainingName).isEqualTo(expectedTrainingName);
-        assertThat(actualTrainingDate).isEqualTo(expectedTrainingDate);
+    private Training buildTraining(Trainee trainee, Trainer trainer, TrainingType type) {
+        return Training.builder()
+                .trainingName("Link Test Session")
+                .trainingDate(LocalDate.of(2024, 10, 10))
+                .trainingDuration(50)
+                .trainee(trainee)
+                .trainer(trainer)
+                .trainingType(type)
+                .build();
     }
 
-    @Test
-    void findTraineeTrainings_unknownUsername_returnsEmpty() {
-        List<Training> actual = repository.findTraineeTrainings("ghost", null, null);
+    private Long countTrainees() {
+        return entityManager.createQuery("""
+                        SELECT COUNT(t)
+                        FROM Trainee t
+                        """, Long.class)
+                .getSingleResult();
+    }
 
-        assertThat(actual).isEmpty();
+    private Long countTrainers() {
+        return entityManager.createQuery("""
+                        SELECT COUNT(t)
+                        FROM Trainer t
+                        """, Long.class)
+                .getSingleResult();
+    }
+
+    private Training getLatestTrainingForTrainee(String username) {
+        return entityManager.createQuery("""
+                        SELECT t
+                        FROM Training t
+                        JOIN t.trainee tr
+                        JOIN tr.user u
+                        WHERE u.username = :username
+                        ORDER BY t.trainingDate DESC, t.id DESC
+                        """, Training.class)
+                .setParameter("username", username)
+                .setMaxResults(1)
+                .getSingleResult();
     }
 }

@@ -45,7 +45,7 @@ public class CoreValidator {
         }
     }
 
-    public static void validateNotBlank(String value, String fieldName) {
+    public void validateNotBlank(String value, String fieldName) {
         if (Objects.isNull(value) || value.isBlank()) {
             throw new IllegalArgumentException(format(BLANK_FIELD_MESSAGE, fieldName));
         }
