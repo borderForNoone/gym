@@ -114,147 +114,78 @@ class TrainingRepositoryCriteriaTest extends BaseTestRepository<TrainingReposito
     }
 
     private static Stream<Arguments> traineeFilterProviderExisting() {
-        return Stream.of(
-                Arguments.of(
-                        TraineeTrainingFilter.builder()
-                                .username(TRAINEE_USERNAME1)
-                                .build(),
-                        2,
-                        List.of(20L, 21L)
-                ),
-
-                Arguments.of(
-                        TraineeTrainingFilter.builder()
+        return Stream.of(Arguments.of(TraineeTrainingFilter.builder()
+                                .username(TRAINEE_USERNAME1).build(),
+                        2, List.of(20L, 21L)),
+                Arguments.of(TraineeTrainingFilter.builder()
                                 .username(TRAINEE_USERNAME1)
                                 .fromDate(LocalDate.of(2024, 3, 1))
-                                .toDate(LocalDate.of(2024, 3, 31))
-                                .build(),
-                        1,
-                        List.of(20L)
-                ),
-
-                Arguments.of(
-                        TraineeTrainingFilter.builder()
+                                .toDate(LocalDate.of(2024, 3, 31)).build(),
+                        1, List.of(20L)),
+                Arguments.of(TraineeTrainingFilter.builder()
                                 .username(TRAINEE_USERNAME1)
                                 .fromDate(LocalDate.of(2024, 9, 1))
-                                .toDate(LocalDate.of(2024, 9, 30))
-                                .build(),
-                        1,
-                        List.of(21L)
-                ),
-
-                Arguments.of(
-                        TraineeTrainingFilter.builder()
+                                .toDate(LocalDate.of(2024, 9, 30)).build(),
+                        1, List.of(21L)),
+                Arguments.of(TraineeTrainingFilter.builder()
                                 .username(TRAINEE_USERNAME1)
-                                .trainingTypeName(YOGA)
-                                .build(),
-                        2,
-                        List.of(20L, 21L)
-                )
+                                .trainingTypeName(YOGA).build(),
+                        2, List.of(20L, 21L))
         );
     }
 
     private static Stream<Arguments> traineeFilterProviderNonExisting() {
-        return Stream.of(
-                Arguments.of(
-                        TraineeTrainingFilter.builder()
-                                .username(TRAINEE_USERNAME1)
-                                .fromDate(LocalDate.of(2020, 1, 1))
-                                .toDate(LocalDate.of(2020, 12, 31))
-                                .build()
-                ),
-
-                Arguments.of(
-                        TraineeTrainingFilter.builder()
-                                .username(TRAINEE_USERNAME1)
-                                .trainingTypeName("Cardio")
-                                .build()
-                ),
-
-                Arguments.of(
-                        TraineeTrainingFilter.builder()
-                                .username(TRAINEE_USERNAME1)
-                                .joinFullName("NonExisting Trainer")
-                                .build()
-                )
+        return Stream.of(Arguments.of(TraineeTrainingFilter.builder()
+                        .username(TRAINEE_USERNAME1)
+                        .fromDate(LocalDate.of(2020, 1, 1))
+                        .toDate(LocalDate.of(2020, 12, 31)).build()),
+                Arguments.of(TraineeTrainingFilter.builder()
+                        .username(TRAINEE_USERNAME1)
+                        .trainingTypeName("Cardio").build()),
+                Arguments.of(TraineeTrainingFilter.builder()
+                        .username(TRAINEE_USERNAME1)
+                        .joinFullName("NonExisting Trainer").build())
         );
     }
 
     private static Stream<Arguments> trainerFilterProviderExisting() {
-        return Stream.of(
-                Arguments.of(
-                        TrainerTrainingFilter.builder()
+        return Stream.of(Arguments.of(TrainerTrainingFilter.builder()
                                 .username(TRAINER_USERNAME)
-                                .joinFullName("Alice Smith")
-                                .build(),
-                        2,
-                        List.of(20L, 21L)
-                ),
-
-                Arguments.of(
-                        TrainerTrainingFilter.builder()
+                                .joinFullName("Alice Smith").build(),
+                        2, List.of(20L, 21L)),
+                Arguments.of(TrainerTrainingFilter.builder()
                                 .username(TRAINER_USERNAME)
                                 .fromDate(LocalDate.of(2024, 3, 1))
-                                .toDate(LocalDate.of(2024, 3, 31))
-                                .build(),
-                        1,
-                        List.of(20L)
-                ),
-
-                Arguments.of(
-                        TrainerTrainingFilter.builder()
+                                .toDate(LocalDate.of(2024, 3, 31)).build(),
+                        1, List.of(20L)),
+                Arguments.of(TrainerTrainingFilter.builder()
                                 .username(TRAINER_USERNAME)
                                 .fromDate(LocalDate.of(2024, 9, 1))
-                                .toDate(LocalDate.of(2024, 9, 30))
-                                .build(),
-                        1,
-                        List.of(21L)
-                ),
-
-                Arguments.of(
-                        TrainerTrainingFilter.builder()
+                                .toDate(LocalDate.of(2024, 9, 30)).build(),
+                        1, List.of(21L)),
+                Arguments.of(TrainerTrainingFilter.builder()
                                 .username(TRAINER_USERNAME)
-                                .toDate(LocalDate.of(2024, 3, 31))
-                                .build(),
-                        1,
-                        List.of(20L)
-                ),
-
-                Arguments.of(
-                        TrainerTrainingFilter.builder()
+                                .toDate(LocalDate.of(2024, 3, 31)).build(),
+                        1, List.of(20L)),
+                Arguments.of(TrainerTrainingFilter.builder()
                                 .username(TRAINER_USERNAME)
-                                .fromDate(LocalDate.of(2024, 9, 1))
-                                .build(),
-                        1,
-                        List.of(21L)
-                )
+                                .fromDate(LocalDate.of(2024, 9, 1)).build(),
+                        1, List.of(21L))
         );
     }
 
     private static Stream<Arguments> trainerFilterProviderNonExisting() {
-        return Stream.of(
-                Arguments.of(
-                        TrainerTrainingFilter.builder()
-                                .username(TRAINER_USERNAME)
-                                .joinFullName("NonExistent")
-                                .build()
-                ),
-
-                Arguments.of(
-                        TrainerTrainingFilter.builder()
-                                .username(TRAINER_USERNAME)
-                                .fromDate(LocalDate.of(2023, 1, 1))
-                                .toDate(LocalDate.of(2023, 12, 31))
-                                .build()
-                ),
-
-                Arguments.of(
-                        TrainerTrainingFilter.builder()
-                                .username(TRAINER_USERNAME)
-                                .joinFullName("NonExistent")
-                                .fromDate(LocalDate.of(2023, 1, 1))
-                                .build()
-                )
+        return Stream.of(Arguments.of(TrainerTrainingFilter.builder()
+                        .username(TRAINER_USERNAME)
+                        .joinFullName("NonExistent").build()),
+                Arguments.of(TrainerTrainingFilter.builder()
+                        .username(TRAINER_USERNAME)
+                        .fromDate(LocalDate.of(2023, 1, 1))
+                        .toDate(LocalDate.of(2023, 12, 31)).build()),
+                Arguments.of(TrainerTrainingFilter.builder()
+                        .username(TRAINER_USERNAME)
+                        .joinFullName("NonExistent")
+                        .fromDate(LocalDate.of(2023, 1, 1)).build())
         );
     }
 }
