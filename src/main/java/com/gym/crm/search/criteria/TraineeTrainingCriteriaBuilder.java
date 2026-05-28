@@ -1,11 +1,11 @@
 package com.gym.crm.search.criteria;
 
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
 import com.gym.crm.model.Training;
 import com.gym.crm.search.filter.TraineeTrainingFilter;
 import com.gym.crm.search.filter.TrainingFilter;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -30,7 +30,8 @@ public class TraineeTrainingCriteriaBuilder extends TrainingCriteriaBuilder {
         return "trainer";
     }
 
-    private void addTrainingTypePredicate(CriteriaBuilder cb, Root<Training> root, TraineeTrainingFilter filter, List<Predicate> predicates) {
-        Optional.ofNullable(filter.getTrainingTypeName()).ifPresent(name -> predicates.add(cb.equal(root.get("trainingType").get("trainingTypeName"), name)));
+    private void addTrainingTypePredicate(CriteriaBuilder criteriaBuilder, Root<Training> root, TraineeTrainingFilter filter, List<Predicate> predicates) {
+        Optional.ofNullable(filter.getTrainingTypeName())
+                .ifPresent(name -> predicates.add(criteriaBuilder.equal(root.get("trainingType").get("trainingTypeName"), name)));
     }
 }
