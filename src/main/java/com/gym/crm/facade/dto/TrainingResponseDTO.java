@@ -19,4 +19,6 @@ public class TrainingResponseDTO {
     private final String trainingTypeName;
     private final LocalDate trainingDate;
     private final int trainingDuration;
+    private final String traineeUsername;
+    private final String trainerUsername;
 }
