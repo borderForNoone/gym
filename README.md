@@ -35,7 +35,7 @@ FLUSH PRIVILEGES;
 Add following configuration for environment variables:
 
 ```text
-DB_URL=jdbc:mysql://localhost:3306/gym_crm
+DB_URL=jdbc:mysql://localhost:3306/gym_db
 DB_USERNAME=gymuser
 DB_PASSWORD=gympass
 ```
