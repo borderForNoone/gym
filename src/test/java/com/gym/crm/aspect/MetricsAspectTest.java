@@ -39,13 +39,13 @@ class MetricsAspectTest {
     private ProceedingJoinPoint joinPoint;
 
     @InjectMocks
-    private MetricsAspect metricsAspect;
+    private MetricsAspect aspect;
 
     @Test
     void trackTraineeRegistration_shouldIncrementSuccess_whenNoException() throws Throwable {
         when(joinPoint.proceed()).thenReturn(traineeResponseDTO);
 
-        metricsAspect.trackTraineeRegistration(joinPoint);
+        aspect.trackTraineeRegistration(joinPoint);
 
         verify(registrationMetrics).incrementTraineeCount(true);
         verify(registrationMetrics, never()).incrementTraineeCount(false);
@@ -55,7 +55,7 @@ class MetricsAspectTest {
     void trackTraineeRegistration_shouldIncrementFailure_whenExceptionThrown() throws Throwable {
         when(joinPoint.proceed()).thenThrow(new RuntimeException("error"));
 
-        assertThrows(RuntimeException.class, () -> metricsAspect.trackTraineeRegistration(joinPoint));
+        assertThrows(RuntimeException.class, () -> aspect.trackTraineeRegistration(joinPoint));
 
         verify(registrationMetrics).incrementTraineeCount(false);
         verify(registrationMetrics, never()).incrementTraineeCount(true);
@@ -65,7 +65,7 @@ class MetricsAspectTest {
     void trackTrainerRegistration_shouldIncrementSuccess_whenNoException() throws Throwable {
         when(joinPoint.proceed()).thenReturn(trainerResponseDTO);
 
-        metricsAspect.trackTrainerRegistration(joinPoint);
+        aspect.trackTrainerRegistration(joinPoint);
 
         verify(registrationMetrics).incrementTrainerCount(true);
         verify(registrationMetrics, never()).incrementTrainerCount(false);
@@ -75,7 +75,7 @@ class MetricsAspectTest {
     void trackTrainerRegistration_shouldIncrementFailure_whenExceptionThrown() throws Throwable {
         when(joinPoint.proceed()).thenThrow(new RuntimeException("error"));
 
-        assertThrows(RuntimeException.class, () -> metricsAspect.trackTrainerRegistration(joinPoint));
+        assertThrows(RuntimeException.class, () -> aspect.trackTrainerRegistration(joinPoint));
 
         verify(registrationMetrics).incrementTrainerCount(false);
         verify(registrationMetrics, never()).incrementTrainerCount(true);
@@ -85,7 +85,7 @@ class MetricsAspectTest {
     void trackLogin_shouldIncrementSuccess_whenNoException() throws Throwable {
         when(joinPoint.proceed()).thenReturn(authResponseDTO);
 
-        metricsAspect.trackLogin(joinPoint);
+        aspect.trackLogin(joinPoint);
 
         verify(loginMetrics).incrementCount(true);
         verify(loginMetrics, never()).incrementCount(false);
@@ -95,7 +95,7 @@ class MetricsAspectTest {
     void trackLogin_shouldIncrementFailure_whenExceptionThrown() throws Throwable {
         when(joinPoint.proceed()).thenThrow(new BadCredentialsException("invalid"));
 
-        assertThrows(BadCredentialsException.class, () -> metricsAspect.trackLogin(joinPoint));
+        assertThrows(BadCredentialsException.class, () -> aspect.trackLogin(joinPoint));
 
         verify(loginMetrics).incrementCount(false);
         verify(loginMetrics, never()).incrementCount(true);
@@ -105,7 +105,7 @@ class MetricsAspectTest {
     void trackTrainingCreation_shouldIncrementCounter_whenResultIsTrainingResponseDTO() throws Throwable {
         when(joinPoint.proceed()).thenReturn(trainingResponseDTO);
 
-        metricsAspect.trackTrainingCreation(joinPoint);
+        aspect.trackTrainingCreation(joinPoint);
 
         verify(trainingMetrics).incrementCounter("Cardio");
     }
@@ -114,7 +114,7 @@ class MetricsAspectTest {
     void trackTrainingCreation_shouldNotIncrementCounter_whenResultIsNotTrainingResponseDTO() throws Throwable {
         when(joinPoint.proceed()).thenReturn(null);
 
-        metricsAspect.trackTrainingCreation(joinPoint);
+        aspect.trackTrainingCreation(joinPoint);
 
         verify(trainingMetrics, never()).incrementCounter(any());
     }
