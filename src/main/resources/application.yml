@@ -11,6 +11,15 @@ spring:
     change-log: classpath:db/migration/master.xml
     enabled: true
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always
+
 app:
   api:
     base-path: /api/v1
