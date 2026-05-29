@@ -7,6 +7,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.Status;
 
+import java.util.Map;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 
@@ -17,21 +19,32 @@ class DiskSpaceHealthIndicatorTest {
 
     @Test
     void health_shouldReturnUp_whenEnoughDiskSpace() {
-        doReturn(200L * 1024 * 1024).when(indicator).getFreeSpace();
+        long freeSpace = 200L * 1024 * 1024;
+        Status expectedStatus = Status.UP;
 
-        Health health = indicator.health();
+        doReturn(freeSpace).when(indicator).getFreeSpace();
 
-        assertThat(health.getStatus()).isEqualTo(Status.UP);
-        assertThat(health.getDetails()).containsEntry("free_memory_bytes", 200L * 1024 * 1024);
+        Health actual = indicator.health();
+
+        Status actualStatus = actual.getStatus();
+        Map<String, Object> actualDetails = actual.getDetails();
+        assertThat(actualStatus).isEqualTo(expectedStatus);
+        assertThat(actualDetails).containsEntry("free_memory_bytes", freeSpace);
     }
 
     @Test
     void health_shouldReturnDown_whenLowDiskSpace() {
-        doReturn(50L * 1024 * 1024).when(indicator).getFreeSpace();
+        long freeSpace = 50L * 1024 * 1024;
+        Status expectedStatus = Status.DOWN;
+        String expectedMessage = "Low disk space";
 
-        Health health = indicator.health();
+        doReturn(freeSpace).when(indicator).getFreeSpace();
 
-        assertThat(health.getStatus()).isEqualTo(Status.DOWN);
-        assertThat(health.getDetails()).containsEntry("message", "Low disk space");
+        Health actual = indicator.health();
+
+        Status actualStatus = actual.getStatus();
+        Map<String, Object> actualDetails = actual.getDetails();
+        assertThat(actualStatus).isEqualTo(expectedStatus);
+        assertThat(actualDetails).containsEntry("message", expectedMessage);
     }
 }
