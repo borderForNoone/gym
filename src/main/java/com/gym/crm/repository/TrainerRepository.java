@@ -37,4 +37,6 @@ public interface TrainerRepository extends JpaRepository<Trainer, Long> {
             )
             """)
     List<TrainerInfoDTO> findAllNotAssignedToTrainee(@Param("traineeUsername") String traineeUsername);
+
+    double countByUserIsActive(boolean isActive);
 }
