@@ -24,7 +24,7 @@
         <sonar.coverage.exclusions>**/config/**</sonar.coverage.exclusions>
         <sonar.coverage.exclusions>**/criteria/**</sonar.coverage.exclusions>
         <sonar.exclusions>**/config/**</sonar.exclusions>
-        <sonar.exclusion>**/GaugeMetrics.java</sonar.exclusion>
+        <sonar.exclusions>**/GaugeMetrics.java</sonar.exclusions>
         <lombok.version>1.18.30</lombok.version>
     </properties>
 
