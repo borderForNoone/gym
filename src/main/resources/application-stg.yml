@@ -4,13 +4,10 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
   jpa:
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
+    show-sql: false
 
 logging:
   level:
     root: INFO
     org.springframework: INFO
-    com.gym.crm: DEBUG
+    com.gym.crm: INFO
