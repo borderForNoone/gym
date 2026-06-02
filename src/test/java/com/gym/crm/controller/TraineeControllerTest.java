@@ -7,16 +7,19 @@ import com.gym.crm.exception.EntityNotFoundException;
 import com.gym.crm.exception.UserAuthenticationException;
 import com.gym.crm.exception.ValidationFailedException;
 import com.gym.crm.facade.GymFacade;
+import com.gym.crm.utils.JsonUtil;
 import org.gym.crm.rest.GetTraineeTrainingResponse;
 import org.gym.crm.rest.TraineeCreateRequest;
 import org.gym.crm.rest.TraineeCreateResponse;
 import org.gym.crm.rest.TraineeGetResponse;
 import org.gym.crm.rest.TraineeUpdateRequest;
+import org.gym.crm.rest.TraineeUpdateResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -31,11 +34,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(TraineeController.class)
 @Import(ApiExceptionHandler.class)
+@TestPropertySource(properties = "app.api.base-path=/api/v1")
 class TraineeControllerTest {
     private static final String BASE_URL = "/api/v1/trainees";
     private static final String USERNAME = "tom.tomas";
@@ -116,5 +121,32 @@ class TraineeControllerTest {
         mockMvc.perform(get(BASE_URL + "/" + USERNAME + "/trainings")).andExpect(status().isOk());
 
         verify(facade).getTraineeTrainingsByFilter(any());
+    }
+
+    @Test
+    void shouldRegisterTrainee() throws Exception {
+        String request = JsonUtil.readJson("json/trainee/register-request.json");
+        String response = JsonUtil.readJson("json/trainee/register-response.json");
+        TraineeCreateResponse facadeResponse = new ObjectMapper().readValue(response, TraineeCreateResponse.class);
+
+        when(facade.createTrainee(any())).thenReturn(facadeResponse);
+
+        var result = mockMvc.perform(post(BASE_URL + "/register").contentType(MediaType.APPLICATION_JSON).content(request));
+        result.andExpect(status().isOk()).andExpect(content().json(response));
+    }
+
+    @Test
+    void shouldUpdateTrainee() throws Exception {
+        // given
+        String request = JsonUtil.readJson("json/trainee/update-request.json");
+        String response = JsonUtil.readJson("json/trainee/update-response.json");
+        TraineeUpdateResponse facadeResponse = objectMapper.readValue(response, TraineeUpdateResponse.class); // ← замість new ObjectMapper()
+        when(facade.updateTrainee(any(), eq(USERNAME))).thenReturn(facadeResponse);
+
+        // when
+        var result = mockMvc.perform(put(BASE_URL + "/" + USERNAME).contentType(MediaType.APPLICATION_JSON).content(request));
+
+        // then
+        result.andExpect(status().isOk()).andExpect(content().json(response));
     }
 }

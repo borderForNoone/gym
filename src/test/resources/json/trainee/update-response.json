@@ -1,0 +1,16 @@
+{
+  "username": "tom.tomas",
+  "firstName": "Tom",
+  "lastName": "Tomas",
+  "dateOfBirth": "1990-01-01",
+  "address": "Kyiv, Ukraine",
+  "isActive": true,
+  "trainers": [
+    {
+      "username": "tom1.tomas1",
+      "firstName": "Tom1",
+      "lastName": "Tomas1",
+      "specialization": null
+    }
+  ]
+}
