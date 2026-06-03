@@ -553,7 +553,11 @@ paths:
               $ref: '#/components/schemas/LoginRequest'
       responses:
         '200':
-          description: Successful login
+          description: JWT Token
+          content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/LoginResponse'
         '404':
           description: Invalid user credentials
           content:
@@ -1114,6 +1118,20 @@ components:
           format: password
           description: password
           example: '123456'
+    LoginResponse:
+      type: object
+      required:
+        - username
+        - token
+      properties:
+        username:
+          type: string
+          description: User's username
+          example: ricardo.milos
+        token:
+          type: string
+          description: JWT Token
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNzA4MzQ1MTIzLCJleHAiOjE3MDgzNTUxMjN9.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
     LoginChangeRequest:
       type: object
       required:
