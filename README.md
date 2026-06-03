@@ -4,7 +4,6 @@
 ![Build](https://github.com/borderForNoone/gym-crm/actions/workflows/ci.yml/badge.svg?branch=develop)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=borderForNoone_gym-crm&metric=coverage)](https://sonarcloud.io/summary/overall?id=borderForNoone_gym-crm)
 [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=borderForNoone_gym-crm&metric=alert_status)](https://sonarcloud.io/summary/overall?id=borderForNoone_gym-crm)
-# Getting Started (Local Setup)
 
 ## Prerequisites
 
@@ -25,7 +24,7 @@ cd gym-crm
 Run the following script to create the database and add a user:
 
 ```sql
-CREATE DATABASE gym_db;
+CREATE DATABASE gym_crm;
 CREATE USER 'gymuser'@'localhost' IDENTIFIED BY 'gympass';
 GRANT ALL PRIVILEGES ON gym_db.* TO 'gymuser'@'localhost';
 FLUSH PRIVILEGES;
@@ -94,13 +93,13 @@ Base local URL: http://localhost:8080/gym-crm/actuator
 ### Custom Metrics
 
 * **User Registrations**: http://localhost:8080/gym-crm/actuator/metrics/gym.auth.login.attempts
-  * Tags: `type` (trainee, trainer), `status` (success, failure)
+    * Tags: `type` (trainee, trainer), `status` (success, failure)
 * **Login Attempts**: http://localhost:8080/gym-crm/actuator/metrics/gym.auth.login.attempts
-  * Tags: `status` (success, failure)
+    * Tags: `status` (success, failure)
 * **Trainings Created**: http://localhost:8080/gym-crm/actuator/metrics/gym.training.creations
-  * Tags: `type` (training type name e.g. Yoga, Pilates)
-  * *Note: Returns 404 until at least one training has been created.*
+    * Tags: `type` (training type name e.g. Yoga, Pilates)
+    * *Note: Returns 404 until at least one training has been created.*
 * **Active Users**: http://localhost:8080/gym-crm/actuator/metrics/gym.users.active
-  * Tags: `type` (trainee, trainer)
+    * Tags: `type` (trainee, trainer)
 * **Total Users**: http://localhost:8080/gym-crm/actuator/metrics/gym.users.total
-  * Tags: `type` (trainee, trainer)
+    * Tags: `type` (trainee, trainer)

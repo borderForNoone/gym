@@ -1,0 +1,7 @@
+{
+  "firstName": "Tom",
+  "lastName": "Tomas",
+  "dateOfBirth": "1990-01-01",
+  "address": "Kyiv, Ukraine",
+  "isActive": true
+}

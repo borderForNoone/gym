@@ -11,10 +11,11 @@ spring:
         format_sql: true
 
 springdoc:
-  api-docs:
-    path: /v3/api-docs
   swagger-ui:
+    url: /gia-api.yml
     path: /swagger-ui/index.html
+  api-docs:
+    enabled: true
 
 logging:
   level:
