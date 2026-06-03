@@ -11,6 +11,13 @@ spring:
     change-log: classpath:db/migration/master.xml
     enabled: true
 
+springdoc:
+  swagger-ui:
+    url: /gia-api.yml
+    path: /swagger-ui/index.html
+  api-docs:
+    enabled: true
+
 management:
   endpoints:
     web:
