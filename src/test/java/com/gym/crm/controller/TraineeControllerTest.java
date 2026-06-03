@@ -15,6 +15,7 @@ import org.gym.crm.rest.TraineeGetResponse;
 import org.gym.crm.rest.TraineeUpdateRequest;
 import org.gym.crm.rest.TraineeUpdateResponse;
 import org.junit.jupiter.api.Test;
+import org.skyscreamer.jsonassert.JSONAssert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -22,6 +23,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -137,16 +139,17 @@ class TraineeControllerTest {
 
     @Test
     void shouldUpdateTrainee() throws Exception {
-        // given
         String request = JsonUtil.readJson("json/trainee/update-request.json");
-        String response = JsonUtil.readJson("json/trainee/update-response.json");
-        TraineeUpdateResponse facadeResponse = objectMapper.readValue(response, TraineeUpdateResponse.class); // ← замість new ObjectMapper()
+        String expectedResponse = JsonUtil.readJson("json/trainee/update-response.json");
+        TraineeUpdateResponse facadeResponse = objectMapper.readValue(expectedResponse, TraineeUpdateResponse.class);
+
         when(facade.updateTrainee(any(), eq(USERNAME))).thenReturn(facadeResponse);
 
-        // when
-        var result = mockMvc.perform(put(BASE_URL + "/" + USERNAME).contentType(MediaType.APPLICATION_JSON).content(request));
-
-        // then
-        result.andExpect(status().isOk()).andExpect(content().json(response));
+        MvcResult result = mockMvc.perform(put(BASE_URL + "/" + USERNAME).contentType(MediaType.APPLICATION_JSON).content(request))
+                .andExpect(status().isOk())
+                .andReturn();
+        String actualResponse = result.getResponse().getContentAsString();
+        JSONAssert.assertEquals(expectedResponse, actualResponse, true);
+        verify(facade).updateTrainee(any(), eq(USERNAME));
     }
 }
