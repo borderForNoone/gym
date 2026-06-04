@@ -9,5 +9,5 @@ import lombok.ToString;
 @ToString
 public class AuthResponseDTO {
     private String username;
-    private String message;
+    private String token;
 }

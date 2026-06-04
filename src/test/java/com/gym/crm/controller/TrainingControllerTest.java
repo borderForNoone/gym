@@ -5,6 +5,8 @@ import com.gym.crm.exception.ApiError;
 import com.gym.crm.exception.ApiExceptionHandler;
 import com.gym.crm.exception.ValidationFailedException;
 import com.gym.crm.facade.GymFacade;
+import com.gym.crm.security.CustomUserDetailsService;
+import com.gym.crm.security.JwtService;
 import org.gym.crm.rest.TrainingCreateRequest;
 import org.gym.crm.rest.TrainingTypeResponse;
 import org.junit.jupiter.api.Test;
@@ -43,6 +45,10 @@ class TrainingControllerTest {
 
     @MockitoBean
     private GymFacade facade;
+    @MockitoBean
+    private JwtService jwtService;
+    @MockitoBean
+    private CustomUserDetailsService userDetailsService;
 
     @Test
     void addTraining_shouldReturnOkAndDelegateToFacade() throws Exception {

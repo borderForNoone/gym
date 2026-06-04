@@ -7,6 +7,8 @@ import com.gym.crm.exception.EntityNotFoundException;
 import com.gym.crm.exception.UserAuthenticationException;
 import com.gym.crm.exception.ValidationFailedException;
 import com.gym.crm.facade.GymFacade;
+import com.gym.crm.security.CustomUserDetailsService;
+import com.gym.crm.security.JwtService;
 import com.gym.crm.utils.JsonUtil;
 import org.gym.crm.rest.GetTraineeTrainingResponse;
 import org.gym.crm.rest.TraineeCreateRequest;
@@ -56,6 +58,10 @@ class TraineeControllerTest {
 
     @MockitoBean
     private GymFacade facade;
+    @MockitoBean
+    private JwtService jwtService;
+    @MockitoBean
+    private CustomUserDetailsService userDetailsService;
 
     @Test
     void register_shouldReturnOk() throws Exception {

@@ -2,6 +2,8 @@ package com.gym.crm.facade;
 
 import com.gym.crm.auth.Authenticated;
 import com.gym.crm.auth.SessionContext;
+import com.gym.crm.facade.dto.AuthRequestDTO;
+import com.gym.crm.facade.dto.AuthResponseDTO;
 import com.gym.crm.facade.dto.CreatedTrainee;
 import com.gym.crm.facade.dto.CreatedTrainer;
 import com.gym.crm.facade.dto.PasswordChangeRequest;
@@ -25,7 +27,6 @@ import com.gym.crm.mapper.TrainingMapper;
 import com.gym.crm.mapper.TrainingRestMapper;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.model.Training;
-import com.gym.crm.model.User;
 import com.gym.crm.search.filter.TraineeTrainingFilter;
 import com.gym.crm.search.filter.TrainerTrainingFilter;
 import com.gym.crm.service.TraineeService;
@@ -40,6 +41,7 @@ import org.gym.crm.rest.GetTraineeTrainingResponse;
 import org.gym.crm.rest.GetTrainerTrainingResponse;
 import org.gym.crm.rest.LoginChangeRequest;
 import org.gym.crm.rest.LoginRequest;
+import org.gym.crm.rest.LoginResponse;
 import org.gym.crm.rest.TraineeAssignedTrainersUpdateRequest;
 import org.gym.crm.rest.TraineeAssignedTrainersUpdateResponse;
 import org.gym.crm.rest.TraineeCreateRequest;
@@ -223,10 +225,18 @@ public class GymFacade {
         userProfileService.changePassword(requestDTO);
     }
 
-    public void login(LoginRequest request) {
-        User user = userProfileService.login(request);
+    public LoginResponse login(LoginRequest request) {
+        AuthRequestDTO dto = AuthRequestDTO.builder()
+                .username(request.getUsername())
+                .password(request.getPassword())
+                .build();
+        AuthResponseDTO responseDTO = userProfileService.authenticate(dto.getUsername(), dto.getPassword());
 
-        sessionContext.setAuthenticatedUser(user);
+        LoginResponse loginResponse = new LoginResponse();
+        loginResponse.setUsername(responseDTO.getUsername());
+        loginResponse.setToken(responseDTO.getToken());
+
+        return loginResponse;
     }
 
     @Authenticated

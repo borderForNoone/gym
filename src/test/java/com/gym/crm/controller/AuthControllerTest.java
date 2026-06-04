@@ -8,9 +8,14 @@ import com.gym.crm.exception.EntityNotFoundException;
 import com.gym.crm.exception.UserAuthenticationException;
 import com.gym.crm.exception.UserAuthorizationException;
 import com.gym.crm.facade.GymFacade;
+import com.gym.crm.security.CustomUserDetailsService;
+import com.gym.crm.security.JwtService;
+import com.gym.crm.utils.JsonUtil;
 import org.gym.crm.rest.LoginChangeRequest;
 import org.gym.crm.rest.LoginRequest;
+import org.gym.crm.rest.LoginResponse;
 import org.junit.jupiter.api.Test;
+import org.skyscreamer.jsonassert.JSONAssert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -23,6 +28,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -44,20 +50,35 @@ class AuthControllerTest {
 
     @MockitoBean
     private GymFacade facade;
+    @MockitoBean
+    private JwtService jwtService;
+    @MockitoBean
+    private CustomUserDetailsService customUserDetailsService;
 
     @Test
     void login_shouldReturnOk() throws Exception {
-        mockMvc.perform(post(BASE_URL + "/login").contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(buildLoginRequest())))
-                .andExpect(status().isOk());
+        String requestBody = JsonUtil.readJson("json/auth/login_request.json");
+        String expectedResponse = JsonUtil.readJson("json/auth/login_response.json");
+        LoginResponse response = mapper.readValue(expectedResponse, LoginResponse.class);
 
+        when(facade.login(any(LoginRequest.class))).thenReturn(response);
+
+        String actualResponse = mockMvc.perform(post(BASE_URL + "/login").contentType(MediaType.APPLICATION_JSON).content(requestBody))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        JSONAssert.assertEquals(expectedResponse, actualResponse, true);
         verify(facade).login(any(LoginRequest.class));
     }
 
     @Test
     void changePassword_shouldReturnOk() throws Exception {
-        mockMvc.perform(put(BASE_URL + "/password").contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(buildLoginChangeRequest())))
-                .andExpect(status().isOk());
+        String requestBody = JsonUtil.readJson("json/auth/change_password_request.json");
 
+        ResultActions result = mockMvc.perform(put(BASE_URL + "/password").contentType(MediaType.APPLICATION_JSON).content(requestBody));
+
+        result.andExpect(status().isOk());
         verify(facade).changePassword(any(LoginChangeRequest.class));
     }
 

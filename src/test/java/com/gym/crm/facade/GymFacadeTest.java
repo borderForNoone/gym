@@ -1,6 +1,7 @@
 package com.gym.crm.facade;
 
 import com.gym.crm.auth.SessionContext;
+import com.gym.crm.facade.dto.AuthResponseDTO;
 import com.gym.crm.facade.dto.CreatedTrainee;
 import com.gym.crm.facade.dto.CreatedTrainer;
 import com.gym.crm.facade.dto.PasswordChangeRequest;
@@ -40,6 +41,7 @@ import org.gym.crm.rest.GetTraineeTrainingResponse;
 import org.gym.crm.rest.GetTrainerTrainingResponse;
 import org.gym.crm.rest.LoginChangeRequest;
 import org.gym.crm.rest.LoginRequest;
+import org.gym.crm.rest.LoginResponse;
 import org.gym.crm.rest.TraineeAssignedTrainersUpdateRequest;
 import org.gym.crm.rest.TraineeAssignedTrainersUpdateResponse;
 import org.gym.crm.rest.TraineeCreateRequest;
@@ -391,12 +393,22 @@ public class GymFacadeTest {
     }
 
     @Test
-    void login_shouldDelegateToUserProfileService() {
-        LoginRequest request = new LoginRequest(USERNAME, PASSWORD);
+    void login_shouldReturnLoginResponse_withTokenAndUsername() {
+        LoginRequest request = new LoginRequest();
+        request.setUsername(USERNAME);
+        request.setPassword(PASSWORD);
+        AuthResponseDTO authResponse = AuthResponseDTO.builder()
+                .username(USERNAME)
+                .token("jwt-token")
+                .build();
 
-        facade.login(request);
+        when(userProfileService.authenticate(USERNAME, PASSWORD)).thenReturn(authResponse);
 
-        verify(userProfileService).login(request);
+        LoginResponse result = facade.login(request);
+
+        assertThat(result.getUsername()).isEqualTo(USERNAME);
+        assertThat(result.getToken()).isEqualTo("jwt-token");
+        verify(userProfileService).authenticate(USERNAME, PASSWORD);
     }
 
     @Test

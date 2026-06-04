@@ -1,6 +1,7 @@
 package com.gym.crm.service.impl;
 
 import com.gym.crm.exception.BadCredentialsException;
+import com.gym.crm.facade.dto.AuthResponseDTO;
 import com.gym.crm.facade.dto.PasswordChangeRequest;
 import com.gym.crm.facade.dto.ToggleActiveRequestDTO;
 import com.gym.crm.model.Trainee;
@@ -8,6 +9,7 @@ import com.gym.crm.model.Trainer;
 import com.gym.crm.model.User;
 import com.gym.crm.repository.TraineeRepository;
 import com.gym.crm.repository.TrainerRepository;
+import com.gym.crm.security.JwtService;
 import com.gym.crm.service.common.CoreValidator;
 import com.gym.crm.service.common.UserInputValidator;
 import org.gym.crm.rest.LoginRequest;
@@ -22,6 +24,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.AssertionsForClassTypes.catchThrowable;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
@@ -40,31 +43,65 @@ class UserProfileServiceImplTest {
     private UserInputValidator userInputValidator;
     @Mock
     private PasswordEncoder passwordEncoder;
+    @Mock
+    private JwtService jwtService;
 
     @InjectMocks
     private UserProfileServiceImpl service;
 
     @Test
-    void authenticate_shouldReturnTrue_whenPasswordValid() {
+    void authenticate_shouldReturnAuthResponse_whenCredentialsValid() {
         User user = User.builder().username("user").password("hash").isActive(true).build();
         Trainee trainee = Trainee.builder().user(user).build();
 
         when(traineeRepository.findByUser_Username("user")).thenReturn(Optional.of(trainee));
         when(passwordEncoder.matches("pass", "hash")).thenReturn(true);
+        when(jwtService.generateToken("user")).thenReturn("jwt-token");
 
-        Boolean result = service.authenticate("user", "pass");
+        AuthResponseDTO result = service.authenticate("user", "pass");
 
-        assertThat(result).isTrue();
+        assertThat(result.getUsername()).isEqualTo("user");
+        assertThat(result.getToken()).isEqualTo("jwt-token");
+        verify(jwtService).generateToken("user");
     }
 
     @Test
-    void authenticate_shouldReturnFalse_whenUserNotFound() {
+    void authenticate_shouldThrow_whenUserNotFound() {
         when(traineeRepository.findByUser_Username("user")).thenReturn(Optional.empty());
         when(trainerRepository.findByUser_Username("user")).thenReturn(Optional.empty());
 
-        Boolean result = service.authenticate("user", "pass");
+        Throwable actual = catchThrowable(() -> service.authenticate("user", "pass"));
 
-        assertThat(result).isFalse();
+        assertThat(actual).isInstanceOf(com.gym.crm.exception.EntityNotFoundException.class).hasMessageContaining("User not found");
+    }
+
+    @Test
+    void authenticate_shouldThrow_whenPasswordInvalid() {
+        User user = User.builder().username("user").password("hash").isActive(true).build();
+        Trainee trainee = Trainee.builder().user(user).build();
+
+        when(traineeRepository.findByUser_Username("user")).thenReturn(Optional.of(trainee));
+        when(passwordEncoder.matches("wrong", "hash")).thenReturn(false);
+
+        Throwable actual = catchThrowable(() -> service.authenticate("user", "wrong"));
+
+        assertThat(actual).isInstanceOf(BadCredentialsException.class).hasMessageContaining("Invalid credentials");
+    }
+
+    @Test
+    void authenticate_shouldFindTrainer_whenTraineeNotFound() {
+        User user = User.builder().username("trainer1").password("hash").isActive(true).build();
+        Trainer trainer = Trainer.builder().user(user).build();
+
+        when(traineeRepository.findByUser_Username("trainer1")).thenReturn(Optional.empty());
+        when(trainerRepository.findByUser_Username("trainer1")).thenReturn(Optional.of(trainer));
+        when(passwordEncoder.matches("pass", "hash")).thenReturn(true);
+        when(jwtService.generateToken("trainer1")).thenReturn("jwt-token");
+
+        AuthResponseDTO actual = service.authenticate("trainer1", "pass");
+
+        assertThat(actual.getUsername()).isEqualTo("trainer1");
+        assertThat(actual.getToken()).isEqualTo("jwt-token");
     }
 
     @Test
