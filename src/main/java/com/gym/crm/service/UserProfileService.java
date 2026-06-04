@@ -1,5 +1,6 @@
 package com.gym.crm.service;
 
+import com.gym.crm.facade.dto.AuthResponseDTO;
 import com.gym.crm.facade.dto.PasswordChangeRequest;
 import com.gym.crm.facade.dto.ToggleActiveRequestDTO;
 import com.gym.crm.model.User;
@@ -10,7 +11,7 @@ public interface UserProfileService {
 
     String generatePassword();
 
-    Boolean authenticate(String username, String password);
+    AuthResponseDTO authenticate(String username, String password);
 
     void changePassword(PasswordChangeRequest requestDTO);
 

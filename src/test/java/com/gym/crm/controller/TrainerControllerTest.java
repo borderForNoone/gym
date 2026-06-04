@@ -7,6 +7,8 @@ import com.gym.crm.exception.UserAuthenticationException;
 import com.gym.crm.exception.ValidationFailedException;
 import com.gym.crm.facade.GymFacade;
 import com.gym.crm.search.filter.TrainerTrainingFilter;
+import com.gym.crm.security.CustomUserDetailsService;
+import com.gym.crm.security.JwtService;
 import jakarta.persistence.PersistenceException;
 import org.gym.crm.rest.ActivationStatusRequest;
 import org.gym.crm.rest.ErrorResponse;
@@ -56,6 +58,10 @@ class TrainerControllerTest {
 
     @MockitoBean
     private GymFacade facade;
+    @MockitoBean
+    private JwtService jwtService;
+    @MockitoBean
+    private CustomUserDetailsService userDetailsService;
 
     @Test
     void register_shouldReturnNotValid_whenFirstNameMissing() throws Exception {

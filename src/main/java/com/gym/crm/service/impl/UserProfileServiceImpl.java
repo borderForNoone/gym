@@ -2,6 +2,7 @@ package com.gym.crm.service.impl;
 
 import com.gym.crm.exception.BadCredentialsException;
 import com.gym.crm.exception.EntityNotFoundException;
+import com.gym.crm.facade.dto.AuthResponseDTO;
 import com.gym.crm.facade.dto.PasswordChangeRequest;
 import com.gym.crm.facade.dto.ToggleActiveRequestDTO;
 import com.gym.crm.model.FieldName;
@@ -10,6 +11,7 @@ import com.gym.crm.model.Trainer;
 import com.gym.crm.model.User;
 import com.gym.crm.repository.TraineeRepository;
 import com.gym.crm.repository.TrainerRepository;
+import com.gym.crm.security.JwtService;
 import com.gym.crm.service.UserProfileService;
 import com.gym.crm.service.common.CoreValidator;
 import com.gym.crm.service.common.UserInputValidator;
@@ -17,7 +19,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.gym.crm.rest.LoginRequest;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,6 +46,7 @@ public class UserProfileServiceImpl implements UserProfileService {
     private final UserInputValidator userInputValidator;
     private final PasswordEncoder passwordEncoder;
     private final CoreValidator coreValidator;
+    private final JwtService jwtService;
 
     @Transactional
     @Override
@@ -79,15 +81,23 @@ public class UserProfileServiceImpl implements UserProfileService {
                 .collect(Collectors.joining());
     }
 
-    @Transactional()
+    @Transactional
     @Override
-    public Boolean authenticate(String username, String password) {
+    public AuthResponseDTO authenticate(String username, String password) {
         coreValidator.validateNotBlank(username, USERNAME_LABEL);
         coreValidator.validateNotBlank(password, PASSWORD_LABEL);
 
-        return traineeRepository.findByUser_Username(username)
-                .map(Trainee::getUser).or(() -> trainerRepository.findByUser_Username(username).map(Trainer::getUser))
-                .map(user -> passwordEncoder.matches(password, user.getPassword())).orElse(false);
+        User user = traineeRepository.findByUser_Username(username)
+                .map(Trainee::getUser)
+                .or(() -> trainerRepository.findByUser_Username(username).map(Trainer::getUser))
+                .orElseThrow(() -> new EntityNotFoundException("User not found: " + username));
+
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new BadCredentialsException("Invalid credentials for user: " + username);
+        }
+
+        String token = jwtService.generateToken(username);
+        return AuthResponseDTO.builder().username(username).token(token).build();
     }
 
     @Transactional

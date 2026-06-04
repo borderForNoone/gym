@@ -11,6 +11,7 @@ import com.gym.crm.facade.GymFacade;
 import org.gym.crm.rest.ErrorResponse;
 import org.gym.crm.rest.LoginChangeRequest;
 import org.gym.crm.rest.LoginRequest;
+import org.gym.crm.rest.LoginResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -27,7 +28,11 @@ public class AuthController {
 
     @Operation(summary = "Login with username and password", description = "Authenticates user by username and password")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successful login"),
+            @ApiResponse(responseCode = "200", description = "JWT Token",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = LoginResponse.class)
+                    )),
             @ApiResponse(responseCode = "404", description = "Invalid user credentials",
                     content = @Content(
                             mediaType = "application/json",
@@ -40,10 +45,10 @@ public class AuthController {
                     ))
     })
     @PostMapping("/login")
-    public ResponseEntity<Void> login(@RequestBody LoginRequest request) {
-        facade.login(request);
+    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
+        LoginResponse response = facade.login(request);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "Change login password", description = "Changes the password for a given user")

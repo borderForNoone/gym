@@ -26,6 +26,7 @@ public class TestConstants {
     private static final LocalDate TRAINING_DATE = LocalDate.of(2024, 1, 15);
     private static final int TRAINING_DURATION = 60;
     private static final long VALID_ID = 1L;
+    private static final String TOKEN = "token";
 
     private static final String AUTH_SUCCESS_MESSAGE = "Authentication successful!";
 
@@ -33,7 +34,7 @@ public class TestConstants {
     public static AuthResponseDTO buildAuthResponseDTO() {
         return AuthResponseDTO.builder()
                 .username(USERNAME)
-                .message(AUTH_SUCCESS_MESSAGE)
+                .token(TOKEN)
                 .build();
     }
 
