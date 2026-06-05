@@ -10,7 +10,9 @@ import com.gym.crm.exception.UserAuthorizationException;
 import com.gym.crm.facade.GymFacade;
 import com.gym.crm.security.CustomUserDetailsService;
 import com.gym.crm.security.JwtService;
+import com.gym.crm.security.TokenBlacklistService;
 import com.gym.crm.utils.JsonUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import org.gym.crm.rest.LoginChangeRequest;
 import org.gym.crm.rest.LoginRequest;
 import org.gym.crm.rest.LoginResponse;
@@ -54,6 +56,24 @@ class AuthControllerTest {
     private JwtService jwtService;
     @MockitoBean
     private CustomUserDetailsService customUserDetailsService;
+    @MockitoBean
+    private TokenBlacklistService tokenBlacklistService;
+
+    @Test
+    void logout_shouldReturnOk_whenLogoutIsSuccessful() throws Exception {
+        mockMvc.perform(post(BASE_URL + "/logout")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void logout_shouldReturnClientError_whenLogoutFails() throws Exception {
+        doThrow(new UserAuthenticationException("Missing or malformed Authorization header")).when(facade).logout(any(HttpServletRequest.class));
+
+        mockMvc.perform(post(BASE_URL + "/logout")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnauthorized());
+    }
 
     @Test
     void login_shouldReturnOk() throws Exception {

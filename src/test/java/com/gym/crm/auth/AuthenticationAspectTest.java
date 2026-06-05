@@ -2,68 +2,65 @@ package com.gym.crm.auth;
 
 import com.gym.crm.exception.UserAuthenticationException;
 import com.gym.crm.exception.UserAuthorizationException;
-import com.gym.crm.model.User;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
 class AuthenticationAspectTest {
-    @Mock
-    private SessionContext sessionContext;
+    private static final String USERNAME = "Simone.Radcliffe";
 
-    @InjectMocks
-    private AuthenticationAspect aspect;
+    private final AuthenticationAspect aspect = new AuthenticationAspect();
 
-    private User authenticatedUser;
-
-    @BeforeEach
-    void setUp() {
-        authenticatedUser = User.builder()
-                .username("Tom.Tomas")
-                .build();
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
     }
 
     @Test
-    void checkAuthentication_shouldPass_whenUserMatchesSession() {
-        when(sessionContext.getAuthenticatedUser()).thenReturn(authenticatedUser);
+    void checkAuthentication_shouldThrow_whenUsernameIsNull() {
+        UserAuthenticationException exception = assertThrows(UserAuthenticationException.class, () -> aspect.checkAuthentication(null));
 
-        assertDoesNotThrow(() -> aspect.checkAuthentication("Tom.Tomas"));
+        assertThat(exception.getMessage()).isEqualTo("User is not authenticated: no request to check authentication");
     }
 
     @Test
-    void checkAuthentication_shouldThrow_whenNoUserInSession() {
-        when(sessionContext.getAuthenticatedUser()).thenReturn(null);
+    void checkAuthentication_shouldThrow_whenNoAuthenticationInContext() {
+        UserAuthenticationException exception = assertThrows(UserAuthenticationException.class, () -> aspect.checkAuthentication(USERNAME));
 
-        UserAuthenticationException ex = assertThrows(UserAuthenticationException.class, () -> aspect.checkAuthentication("Tom.Tomas"));
-
-        assertTrue(ex.getMessage().contains("No user authenticated"));
+        assertThat(exception.getMessage()).isEqualTo("No user authenticated");
     }
 
     @Test
-    void checkAuthentication_shouldThrow_whenUsernameArgumentIsNull() {
-        when(sessionContext.getAuthenticatedUser()).thenReturn(authenticatedUser);
+    void checkAuthentication_shouldThrow_whenAuthenticationIsNotAuthenticated() {
+        UsernamePasswordAuthenticationToken unauthenticated = new UsernamePasswordAuthenticationToken(USERNAME, null, null);
+        unauthenticated.setAuthenticated(false);
+        SecurityContextHolder.getContext().setAuthentication(unauthenticated);
 
-        UserAuthenticationException ex = assertThrows(UserAuthenticationException.class, () -> aspect.checkAuthentication(null));
+        UserAuthenticationException exception = assertThrows(UserAuthenticationException.class, () -> aspect.checkAuthentication(USERNAME));
 
-        assertTrue(ex.getMessage().contains("no request to check authentication"));
+        assertThat(exception.getMessage()).isEqualTo("No user authenticated");
     }
 
     @Test
-    void checkAuthentication_shouldThrow_whenUsernameDoesNotMatchSession() {
-        when(sessionContext.getAuthenticatedUser()).thenReturn(authenticatedUser);
+    void checkAuthentication_shouldThrow_whenUsernameDoesNotMatch() {
+        Authentication authentication = new UsernamePasswordAuthenticationToken("OtherUser", null, null);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        UserAuthorizationException ex = assertThrows(UserAuthorizationException.class, () -> aspect.checkAuthentication("Julia.Tomas"));
+        UserAuthorizationException exception = assertThrows(UserAuthorizationException.class, () -> aspect.checkAuthentication(USERNAME));
 
-        assertTrue(ex.getMessage().contains("Tom.Tomas"));
-        assertTrue(ex.getMessage().contains("Julia.Tomas"));
+        assertThat(exception.getMessage()).contains(String.format("Authenticated user with username: OtherUser does not match with requested user with username: %s", USERNAME));
+    }
+
+    @Test
+    void checkAuthentication_shouldPass_whenUsernameMatches() {
+        Authentication authentication = new UsernamePasswordAuthenticationToken(USERNAME, null, null);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        aspect.checkAuthentication(USERNAME);
     }
 }

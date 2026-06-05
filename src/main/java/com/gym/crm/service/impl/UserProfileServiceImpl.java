@@ -185,4 +185,8 @@ public class UserProfileServiceImpl implements UserProfileService {
     private boolean isUsernameTaken(String username) {
         return traineeRepository.existsByUser_Username(username) || trainerRepository.existsByUser_Username(username);
     }
+
+    public boolean checkPassword(String rawPassword, String encodedPassword) {
+        return passwordEncoder.matches(rawPassword, encodedPassword);
+    }
 }

@@ -4,6 +4,8 @@ import com.gym.crm.facade.dto.AuthResponseDTO;
 import com.gym.crm.facade.dto.PasswordChangeRequest;
 import com.gym.crm.facade.dto.ToggleActiveRequestDTO;
 import com.gym.crm.model.User;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import org.gym.crm.rest.LoginRequest;
 
 public interface UserProfileService {
@@ -18,4 +20,8 @@ public interface UserProfileService {
     User login(LoginRequest request);
 
     void toggleActive(ToggleActiveRequestDTO request);
+
+    boolean checkPassword(@NotBlank(message = "New password is required")
+                          @Size(min = 10, max = 100, message = "Password must be between 10 and 100 characters long")
+                          String password, String password1);
 }

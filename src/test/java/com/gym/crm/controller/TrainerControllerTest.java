@@ -9,6 +9,7 @@ import com.gym.crm.facade.GymFacade;
 import com.gym.crm.search.filter.TrainerTrainingFilter;
 import com.gym.crm.security.CustomUserDetailsService;
 import com.gym.crm.security.JwtService;
+import com.gym.crm.security.TokenBlacklistService;
 import jakarta.persistence.PersistenceException;
 import org.gym.crm.rest.ActivationStatusRequest;
 import org.gym.crm.rest.ErrorResponse;
@@ -62,6 +63,8 @@ class TrainerControllerTest {
     private JwtService jwtService;
     @MockitoBean
     private CustomUserDetailsService userDetailsService;
+    @MockitoBean
+    private TokenBlacklistService tokenBlacklistService;
 
     @Test
     void register_shouldReturnNotValid_whenFirstNameMissing() throws Exception {

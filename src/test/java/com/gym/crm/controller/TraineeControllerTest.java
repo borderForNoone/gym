@@ -9,6 +9,7 @@ import com.gym.crm.exception.ValidationFailedException;
 import com.gym.crm.facade.GymFacade;
 import com.gym.crm.security.CustomUserDetailsService;
 import com.gym.crm.security.JwtService;
+import com.gym.crm.security.TokenBlacklistService;
 import com.gym.crm.utils.JsonUtil;
 import org.gym.crm.rest.GetTraineeTrainingResponse;
 import org.gym.crm.rest.TraineeCreateRequest;
@@ -62,6 +63,8 @@ class TraineeControllerTest {
     private JwtService jwtService;
     @MockitoBean
     private CustomUserDetailsService userDetailsService;
+    @MockitoBean
+    private TokenBlacklistService tokenBlacklistService;
 
     @Test
     void register_shouldReturnOk() throws Exception {

@@ -1,6 +1,5 @@
 package com.gym.crm.facade;
 
-import com.gym.crm.auth.SessionContext;
 import com.gym.crm.facade.dto.AuthResponseDTO;
 import com.gym.crm.facade.dto.CreatedTrainee;
 import com.gym.crm.facade.dto.CreatedTrainer;
@@ -35,6 +34,8 @@ import com.gym.crm.service.TraineeService;
 import com.gym.crm.service.TrainerService;
 import com.gym.crm.service.TrainingService;
 import com.gym.crm.service.UserProfileService;
+import com.gym.crm.service.common.AuthenticationService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.gym.crm.rest.ActivationStatusRequest;
 import org.gym.crm.rest.AssignedTrainerResponse;
 import org.gym.crm.rest.GetTraineeTrainingResponse;
@@ -62,6 +63,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockHttpServletRequest;
 
 import javax.naming.AuthenticationException;
 import java.time.LocalDate;
@@ -114,7 +116,7 @@ public class GymFacadeTest {
     @Mock
     private TrainingRestMapper trainingRestMapper;
     @Mock
-    private SessionContext sessionContext;
+    private AuthenticationService authenticationService;
 
     private GymFacade facade;
     private Trainee trainee;
@@ -127,7 +129,7 @@ public class GymFacadeTest {
 
     @BeforeEach
     void setUp() {
-        facade = new GymFacade(traineeService, trainerService, trainingService, userProfileService, traineeRestMapper, trainerRestMapper, trainingRestMapper, sessionContext);
+        facade = new GymFacade(traineeService, trainerService, trainingService, userProfileService, traineeRestMapper, trainerRestMapper, trainingRestMapper, authenticationService);
         facade.setTraineeMapper(traineeMapper);
         facade.setTrainerMapper(trainerMapper);
         facade.setTrainingMapper(trainingMapper);
@@ -139,6 +141,15 @@ public class GymFacadeTest {
         training = buildTraining();
         trainingRequestDTO = buildTrainingRequestDTO();
         trainingResponseDTO = buildTrainingResponseDTO();
+    }
+
+    @Test
+    void logout_shouldCallClearContext() {
+        HttpServletRequest request = new MockHttpServletRequest();
+
+        facade.logout(request);
+
+        verify(authenticationService).logout(request);
     }
 
     @Test

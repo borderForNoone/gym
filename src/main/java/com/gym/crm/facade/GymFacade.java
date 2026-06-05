@@ -1,7 +1,6 @@
 package com.gym.crm.facade;
 
 import com.gym.crm.auth.Authenticated;
-import com.gym.crm.auth.SessionContext;
 import com.gym.crm.facade.dto.AuthRequestDTO;
 import com.gym.crm.facade.dto.AuthResponseDTO;
 import com.gym.crm.facade.dto.CreatedTrainee;
@@ -33,6 +32,8 @@ import com.gym.crm.service.TraineeService;
 import com.gym.crm.service.TrainerService;
 import com.gym.crm.service.TrainingService;
 import com.gym.crm.service.UserProfileService;
+import com.gym.crm.service.common.AuthenticationService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.gym.crm.rest.ActivationStatusRequest;
@@ -72,7 +73,7 @@ public class GymFacade {
     private final TraineeRestMapper traineeRestMapper;
     private final TrainerRestMapper trainerRestMapper;
     private final TrainingRestMapper trainingRestMapper;
-    private final SessionContext sessionContext;
+    private final AuthenticationService authenticationService;
 
     @Setter(onMethod_ = {@Autowired})
     private TraineeMapper traineeMapper;
@@ -80,6 +81,11 @@ public class GymFacade {
     private TrainerMapper trainerMapper;
     @Setter(onMethod_ = {@Autowired})
     private TrainingMapper trainingMapper;
+
+    @Authenticated
+    public void logout(HttpServletRequest request) {
+        authenticationService.logout(request);
+    }
 
     public TraineeCreateResponse createTrainee(TraineeCreateRequest request) {
         TraineeRequestDTO dto = traineeRestMapper.toDto(request);

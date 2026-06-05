@@ -1,6 +1,7 @@
 package com.gym.crm.security;
 
 import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,6 +16,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.io.IOException;
 import java.util.Collections;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -39,6 +41,8 @@ class JwtAuthenticationFilterTest {
     private CustomUserDetailsService userDetailsService;
     @Mock
     private FilterChain filterChain;
+    @Mock
+    private TokenBlacklistService tokenBlacklistService;
 
     private JwtAuthenticationFilter filter;
     private MockHttpServletRequest request;
@@ -47,7 +51,7 @@ class JwtAuthenticationFilterTest {
     @BeforeEach
     void setUp() {
         SecurityContextHolder.clearContext();
-        filter = new JwtAuthenticationFilter(jwtService, userDetailsService);
+        filter = new JwtAuthenticationFilter(jwtService, userDetailsService, tokenBlacklistService);
         request = new MockHttpServletRequest();
         response = new MockHttpServletResponse();
     }
@@ -55,7 +59,7 @@ class JwtAuthenticationFilterTest {
     @Test
     void shouldAuthenticateAndContinueChain_whenTokenIsValidAndUsernamePresent() throws Exception {
         request.addHeader(HttpHeaders.AUTHORIZATION, VALID_BEARER_TOKEN);
-
+        when(tokenBlacklistService.isBlacklisted(VALID_TOKEN)).thenReturn(false);
         when(jwtService.isTokenValid(VALID_TOKEN)).thenReturn(true);
         when(jwtService.extractUsername(VALID_TOKEN)).thenReturn(USERNAME);
         when(userDetailsService.loadUserByUsername(USERNAME)).thenReturn(userDetails);
@@ -67,9 +71,24 @@ class JwtAuthenticationFilterTest {
         assertThat(authentication.getName()).isEqualTo(USERNAME);
         assertThat(authentication.isAuthenticated()).isTrue();
         verify(filterChain).doFilter(request, response);
+        verify(tokenBlacklistService).isBlacklisted(VALID_TOKEN);
         verify(jwtService).isTokenValid(VALID_TOKEN);
         verify(jwtService).extractUsername(VALID_TOKEN);
         verify(userDetailsService).loadUserByUsername(USERNAME);
+    }
+
+    @Test
+    void doFilterInternal_shouldContinueChain_whenTokenIsBlacklisted() throws ServletException, IOException {
+        request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer blacklistedToken");
+        when(tokenBlacklistService.isBlacklisted("blacklistedToken")).thenReturn(true);
+
+        filter.doFilterInternal(request, response, filterChain);
+
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        verify(filterChain, times(1)).doFilter(request, response);
+        verify(tokenBlacklistService).isBlacklisted(anyString());
+        verifyNoInteractions(jwtService);
+        verifyNoInteractions(userDetailsService);
     }
 
     @Test
@@ -97,6 +116,7 @@ class JwtAuthenticationFilterTest {
     @Test
     void doFilterInternal_shouldContinueChain_whenTokenIsInvalid() throws Exception {
         request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer invalidToken");
+        when(tokenBlacklistService.isBlacklisted("invalidToken")).thenReturn(false);
         when(jwtService.isTokenValid("invalidToken")).thenReturn(false);
 
         filter.doFilterInternal(request, response, filterChain);
@@ -104,6 +124,7 @@ class JwtAuthenticationFilterTest {
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
         verify(filterChain, times(1)).doFilter(request, response);
         verify(jwtService).isTokenValid(anyString());
+        verify(tokenBlacklistService).isBlacklisted(anyString());
         verify(jwtService, never()).extractUsername(anyString());
         verifyNoInteractions(userDetailsService);
     }
@@ -112,12 +133,13 @@ class JwtAuthenticationFilterTest {
     void doFilterInternal_shouldContinueChain_whenAlreadyAuthenticated() throws Exception {
         request.addHeader(HttpHeaders.AUTHORIZATION, VALID_BEARER_TOKEN);
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken("user", "pass", Collections.emptyList()));
-
+        when(tokenBlacklistService.isBlacklisted(VALID_TOKEN)).thenReturn(false);
         when(jwtService.isTokenValid(VALID_TOKEN)).thenReturn(true);
 
         filter.doFilterInternal(request, response, filterChain);
 
         verify(filterChain, times(1)).doFilter(request, response);
+        verify(tokenBlacklistService).isBlacklisted(anyString());
         verify(jwtService).isTokenValid(VALID_TOKEN);
         verify(jwtService, never()).extractUsername(anyString());
         verifyNoInteractions(userDetailsService);
@@ -126,7 +148,7 @@ class JwtAuthenticationFilterTest {
     @Test
     void doFilterInternal_shouldContinueChain_whenUsernameIsNull() throws Exception {
         request.addHeader(HttpHeaders.AUTHORIZATION, VALID_BEARER_TOKEN);
-
+        when(tokenBlacklistService.isBlacklisted(VALID_TOKEN)).thenReturn(false);
         when(jwtService.isTokenValid(VALID_TOKEN)).thenReturn(true);
         when(jwtService.extractUsername(VALID_TOKEN)).thenReturn(null);
 
@@ -134,6 +156,7 @@ class JwtAuthenticationFilterTest {
 
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
         verify(filterChain, times(1)).doFilter(request, response);
+        verify(tokenBlacklistService).isBlacklisted(anyString());
         verify(jwtService).isTokenValid(VALID_TOKEN);
         verify(jwtService).extractUsername(VALID_TOKEN);
         verifyNoInteractions(userDetailsService);
