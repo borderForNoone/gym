@@ -2,16 +2,17 @@ package com.gym.crm.exception;
 
 import io.micrometer.common.util.StringUtils;
 import jakarta.persistence.PersistenceException;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.gym.crm.rest.ErrorResponse;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import org.springframework.security.access.AccessDeniedException;
 import java.util.stream.Collectors;
 
 import static com.gym.crm.exception.ApiError.AUTHENTICATION_ERROR;
@@ -24,6 +25,22 @@ import static com.gym.crm.exception.ApiError.VALIDATION_ERROR;
 @Slf4j
 @RestControllerAdvice
 public class ApiExceptionHandler {
+    private static final String VALIDATION_ERROR_LOG_MESSAGE = "Validation error: {}";
+
+    @ExceptionHandler(LockedException.class)
+    public ResponseEntity<ErrorResponse> handleLockedException(LockedException ex) {
+        log.warn("User authentication failed: {}", ex.getMessage());
+
+        return buildErrorResponse(AUTHENTICATION_ERROR, ex.getMessage());
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDeniedException(AccessDeniedException ex) {
+        log.warn("User is not authorized for request operation: {}", ex.getMessage());
+
+        return buildErrorResponse(AUTHORIZATION_ERROR, ex.getMessage());
+    }
+
     @ExceptionHandler(ValidationFailedException.class)
     public ResponseEntity<ErrorResponse> handleValidationFailedException(ValidationFailedException ex) {
         log.warn("Validation error: {}", ex.getMessage());
@@ -81,6 +98,16 @@ public class ApiExceptionHandler {
         log.error("Unhandled exception:", ex);
 
         return buildErrorResponse(SERVICE_ERROR, ex.getMessage());
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleConstraintViolationException(ConstraintViolationException ex) {
+        String errorMessage = ex.getConstraintViolations().stream()
+                .map(ConstraintViolation::getMessage)
+                .collect(Collectors.joining("; "));
+        log.warn(VALIDATION_ERROR_LOG_MESSAGE, errorMessage);
+
+        return buildErrorResponse(VALIDATION_ERROR, errorMessage);
     }
 
     private ResponseEntity<ErrorResponse> buildErrorResponse(ApiError apiError, String message) {
