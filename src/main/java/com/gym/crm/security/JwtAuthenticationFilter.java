@@ -22,6 +22,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final CustomUserDetailsService userDetailsService;
+    private final TokenBlacklistService tokenBlacklistService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -32,7 +33,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String token = header.substring(BEARER_PREFIX.length());
-        if (!jwtService.isTokenValid(token) || SecurityContextHolder.getContext().getAuthentication() != null) {
+        if (shouldSkipAuthentication(token)) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -45,6 +46,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         setAuthentication(username, request);
         filterChain.doFilter(request, response);
+    }
+
+    private boolean shouldSkipAuthentication(String token) {
+        return tokenBlacklistService.isBlacklisted(token)
+                || !jwtService.isTokenValid(token)
+                || SecurityContextHolder.getContext().getAuthentication() != null;
     }
 
     private void setAuthentication(String username, HttpServletRequest request) {

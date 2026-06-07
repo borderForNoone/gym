@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import com.gym.crm.facade.GymFacade;
 import org.gym.crm.rest.ErrorResponse;
@@ -25,6 +26,27 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AuthController {
     private final GymFacade facade;
+
+    @Operation(summary = "Logout", description = "Invalidate JWT")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "User logged out successfully"),
+            @ApiResponse(responseCode = "401", description = " Missing or malformed Authorization header",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    )),
+            @ApiResponse(responseCode = "500", description = "Internal server error",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    ))
+    })
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(HttpServletRequest request) {
+        facade.logout(request);
+
+        return ResponseEntity.ok().build();
+    }
 
     @Operation(summary = "Login with username and password", description = "Authenticates user by username and password")
     @ApiResponses(value = {
