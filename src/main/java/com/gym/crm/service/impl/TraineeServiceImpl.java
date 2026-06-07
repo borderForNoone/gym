@@ -101,7 +101,7 @@ public class TraineeServiceImpl implements TraineeService {
         Trainee trainee = traineeRepository.findByUser_Username(username).orElseThrow();
         User user = trainee.getUser();
 
-        if (Boolean.TRUE.equals(user.getIsActive()) == active) {
+        if (user.getIsActive() != null && user.getIsActive() == active) {
             throw new IllegalStateException("Already in this state");
         }
 

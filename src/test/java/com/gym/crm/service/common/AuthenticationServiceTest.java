@@ -77,9 +77,9 @@ class AuthenticationServiceTest {
     @Test
     void authenticate_shouldThrowLockedException_whenUserIsLocked() {
         doThrow(new LockedException("locked for 5 minutes")).when(bruteForceProtectionService).checkIfLocked(USERNAME);
+        AuthRequestDTO request = buildAuthRequest();
 
-        assertThrows(LockedException.class, () -> service.authenticate(buildAuthRequest()));
-
+        assertThrows(LockedException.class, () -> service.authenticate(request));
         verify(repository, never()).findByUsername(any());
     }
 

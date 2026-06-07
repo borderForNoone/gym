@@ -43,7 +43,7 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(ValidationFailedException.class)
     public ResponseEntity<ErrorResponse> handleValidationFailedException(ValidationFailedException ex) {
-        log.warn("Validation error: {}", ex.getMessage());
+        log.warn(VALIDATION_ERROR_LOG_MESSAGE, ex.getMessage());
 
         return buildErrorResponse(VALIDATION_ERROR, ex.getMessage());
     }

@@ -36,7 +36,8 @@ public class BruteForceProtectionService {
     }
 
     public void checkIfLocked(String username) {
-        if (Boolean.TRUE.equals(template.hasKey(LOCK_PREFIX + username))) {
+        Boolean isLocked = template.hasKey(LOCK_PREFIX + username);
+        if (isLocked != null && isLocked) {
             throw new LockedException(String.format("User %s is locked for %s minutes due to too many failed login attempts", username, LOCK_DURATION_MINUTES));
         }
     }
