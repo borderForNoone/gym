@@ -17,3 +17,5 @@ spring:
 app:
   api:
     base-path: /api/v1
+  cors:
+    allowed-origins: http://localhost:3000
