@@ -32,7 +32,7 @@ class ApiExceptionHandlerTest {
         assertThat(response.getStatusCode().value()).isEqualTo(400);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getErrorCode()).isEqualTo(ApiError.VALIDATION_ERROR.getCode());
-        assertThat(response.getBody().getErrorMessage()).isEqualTo("Validation error: Date of birth must be in the past");
+        assertThat(response.getBody().getErrorMessage()).isEqualTo("Validation error");
     }
 
     @Test
@@ -51,7 +51,7 @@ class ApiExceptionHandlerTest {
         assertThat(response.getStatusCode().value()).isEqualTo(400);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getErrorCode()).isEqualTo(ApiError.VALIDATION_ERROR.getCode());
-        assertThat(response.getBody().getErrorMessage()).isEqualTo("Validation error: firstName must not be blank; lastName must not be blank");
+        assertThat(response.getBody().getErrorMessage()).isEqualTo("Validation error");
     }
 
     @Test
@@ -70,9 +70,7 @@ class ApiExceptionHandlerTest {
         assertThat(response.getStatusCode().value()).isEqualTo(400);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getErrorCode()).isEqualTo(ApiError.VALIDATION_ERROR.getCode());
-        assertThat(response.getBody().getErrorMessage()).contains("Validation error:")
-                .contains("Username must not be blank")
-                .contains("ID must be positive");
+        assertThat(response.getBody().getErrorMessage()).isEqualTo("Validation error");
     }
 
     @Test
@@ -85,7 +83,7 @@ class ApiExceptionHandlerTest {
         assertThat(response.getStatusCode().value()).isEqualTo(401);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getErrorCode()).isEqualTo(ApiError.AUTHENTICATION_ERROR.getCode());
-        assertThat(response.getBody().getErrorMessage()).isEqualTo("Authentication fails: Invalid credentials for user");
+        assertThat(response.getBody().getErrorMessage()).isEqualTo("Authentication fails");
     }
 
     @Test
@@ -98,7 +96,7 @@ class ApiExceptionHandlerTest {
         assertThat(response.getStatusCode().value()).isEqualTo(401);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getErrorCode()).isEqualTo(ApiError.AUTHENTICATION_ERROR.getCode());
-        assertThat(response.getBody().getErrorMessage()).isEqualTo("Authentication fails: No user authenticated");
+        assertThat(response.getBody().getErrorMessage()).isEqualTo("Authentication fails");
     }
 
     @Test
@@ -111,7 +109,7 @@ class ApiExceptionHandlerTest {
         assertThat(response.getStatusCode().value()).isEqualTo(401);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getErrorCode()).isEqualTo(ApiError.AUTHENTICATION_ERROR.getCode());
-        assertThat(response.getBody().getErrorMessage()).isEqualTo("Authentication fails: User is locked for 5 minutes due to too many failed login attempts");
+        assertThat(response.getBody().getErrorMessage()).isEqualTo("Authentication fails");
     }
 
     @Test
@@ -124,7 +122,7 @@ class ApiExceptionHandlerTest {
         assertThat(response.getStatusCode().value()).isEqualTo(403);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getErrorCode()).isEqualTo(ApiError.AUTHORIZATION_ERROR.getCode());
-        assertThat(response.getBody().getErrorMessage()).isEqualTo("User is not authorized for request operation: Authenticated user with username: username does not match with requested user with username");
+        assertThat(response.getBody().getErrorMessage()).isEqualTo("User is not authorized for request operation");
     }
 
     @Test
@@ -137,7 +135,7 @@ class ApiExceptionHandlerTest {
         assertThat(response.getStatusCode().value()).isEqualTo(403);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getErrorCode()).isEqualTo(ApiError.AUTHORIZATION_ERROR.getCode());
-        assertThat(response.getBody().getErrorMessage()).isEqualTo("User is not authorized for request operation: Access denied");
+        assertThat(response.getBody().getErrorMessage()).isEqualTo("User is not authorized for request operation");
     }
 
     @Test
@@ -150,7 +148,7 @@ class ApiExceptionHandlerTest {
         assertThat(response.getStatusCode().value()).isEqualTo(404);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getErrorCode()).isEqualTo(ApiError.NOT_FOUND_ERROR.getCode());
-        assertThat(response.getBody().getErrorMessage()).isEqualTo("Requested data was not found: User not found");
+        assertThat(response.getBody().getErrorMessage()).isEqualTo("Requested data was not found");
     }
 
     @Test

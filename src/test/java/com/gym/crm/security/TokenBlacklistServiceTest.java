@@ -7,6 +7,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -22,7 +23,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class TokenBlacklistServiceTest {
     private static final String TOKEN = "token";
-    private static final String BLACKLIST_KEY = "blacklist:" + TOKEN;
+    private static final String BLACKLIST_KEY = "blacklist:";
 
     @Mock
     private StringRedisTemplate template;
@@ -35,26 +36,27 @@ class TokenBlacklistServiceTest {
 
     @Test
     void isBlacklisted_shouldReturnFalse_whenTokenNotBlacklisted() {
-        when(template.hasKey(BLACKLIST_KEY)).thenReturn(false);
+        when(template.hasKey("blacklist:" + TOKEN)).thenReturn(false);
 
         boolean actual = tokenBlacklistService.isBlacklisted(TOKEN);
 
         assertThat(actual).isFalse();
-        verify(template).hasKey(BLACKLIST_KEY);
+        verify(template).hasKey("blacklist:" + TOKEN);
     }
 
     @Test
     void isBlacklisted_shouldReturnTrue_whenTokenBlacklisted() {
-        when(template.hasKey(BLACKLIST_KEY)).thenReturn(true);
+        when(template.hasKey("blacklist:" + TOKEN)).thenReturn(true);
 
         boolean actual = tokenBlacklistService.isBlacklisted(TOKEN);
 
         assertThat(actual).isTrue();
-        verify(template).hasKey(BLACKLIST_KEY);
+        verify(template).hasKey("blacklist:" + TOKEN);
     }
 
     @Test
     void blacklist_shouldAddTokenToBlacklist_whenCorrectTime() {
+        String hashToken = ReflectionTestUtils.invokeMethod(tokenBlacklistService, "hashToken", TOKEN);
         ValueOperations<String, String> valueOps = mock(ValueOperations.class);
         when(template.opsForValue()).thenReturn(valueOps);
         when(jwtService.extractExpiration(TOKEN)).thenReturn(new Date(System.currentTimeMillis() + 10000));
@@ -62,7 +64,7 @@ class TokenBlacklistServiceTest {
         tokenBlacklistService.blacklist(TOKEN);
 
         verify(template).opsForValue();
-        verify(valueOps).set(eq(BLACKLIST_KEY),
+        verify(valueOps).set(eq(BLACKLIST_KEY + hashToken),
                 eq("true"),
                 anyLong(),
                 eq(TimeUnit.MILLISECONDS));

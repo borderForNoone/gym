@@ -34,7 +34,6 @@ import com.gym.crm.service.TraineeService;
 import com.gym.crm.service.TrainerService;
 import com.gym.crm.service.TrainingService;
 import com.gym.crm.service.UserProfileService;
-import com.gym.crm.service.common.AuthenticationService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.gym.crm.rest.ActivationStatusRequest;
 import org.gym.crm.rest.AssignedTrainerResponse;
@@ -115,8 +114,6 @@ public class GymFacadeTest {
     private TrainingMapper trainingMapper;
     @Mock
     private TrainingRestMapper trainingRestMapper;
-    @Mock
-    private AuthenticationService authenticationService;
 
     private GymFacade facade;
     private Trainee trainee;
@@ -129,7 +126,7 @@ public class GymFacadeTest {
 
     @BeforeEach
     void setUp() {
-        facade = new GymFacade(traineeService, trainerService, trainingService, userProfileService, traineeRestMapper, trainerRestMapper, trainingRestMapper, authenticationService);
+        facade = new GymFacade(traineeService, trainerService, trainingService, userProfileService, traineeRestMapper, trainerRestMapper, trainingRestMapper);
         facade.setTraineeMapper(traineeMapper);
         facade.setTrainerMapper(trainerMapper);
         facade.setTrainingMapper(trainingMapper);
@@ -149,7 +146,7 @@ public class GymFacadeTest {
 
         facade.logout(request);
 
-        verify(authenticationService).logout(request);
+        verify(userProfileService).logout(request);
     }
 
     @Test

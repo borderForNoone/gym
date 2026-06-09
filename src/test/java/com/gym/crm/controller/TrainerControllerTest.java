@@ -82,7 +82,7 @@ class TrainerControllerTest {
 
         ErrorResponse errorResponse = objectMapper.readValue(content, ErrorResponse.class);
         assertThat(errorResponse.getErrorCode()).isEqualTo(ApiError.VALIDATION_ERROR.getCode());
-        assertThat(errorResponse.getErrorMessage()).isEqualTo("Validation error: firstName must not be null");
+        assertThat(errorResponse.getErrorMessage()).isEqualTo("Validation error");
         verify(facade).createTrainer(any(TrainerCreateRequest.class));
     }
 
@@ -94,7 +94,7 @@ class TrainerControllerTest {
 
         ErrorResponse errorResponse = objectMapper.readValue(content, ErrorResponse.class);
         assertThat(errorResponse.getErrorCode()).isEqualTo(ApiError.NOT_FOUND_ERROR.getCode());
-        assertThat(errorResponse.getErrorMessage()).isEqualTo("Requested data was not found: User not found");
+        assertThat(errorResponse.getErrorMessage()).isEqualTo("Requested data was not found");
         verify(facade).getTrainerByUsername(USERNAME);
     }
 
@@ -114,7 +114,7 @@ class TrainerControllerTest {
 
         ErrorResponse errorResponse = objectMapper.readValue(content, ErrorResponse.class);
         assertThat(errorResponse.getErrorCode()).isEqualTo(ApiError.VALIDATION_ERROR.getCode());
-        assertThat(errorResponse.getErrorMessage()).isEqualTo("Validation error: firstName must not be null");
+        assertThat(errorResponse.getErrorMessage()).isEqualTo("Validation error");
         verify(facade).updateTrainer(any(TrainerUpdateRequest.class), eq(USERNAME));
     }
 
@@ -135,7 +135,7 @@ class TrainerControllerTest {
 
         ErrorResponse errorResponse = objectMapper.readValue(content, ErrorResponse.class);
         assertThat(errorResponse.getErrorCode()).isEqualTo(ApiError.NOT_FOUND_ERROR.getCode());
-        assertThat(errorResponse.getErrorMessage()).isEqualTo("Requested data was not found: User not found");
+        assertThat(errorResponse.getErrorMessage()).isEqualTo("Requested data was not found");
         verify(facade).updateTrainer(any(TrainerUpdateRequest.class), eq(USERNAME));
     }
 
@@ -153,7 +153,7 @@ class TrainerControllerTest {
 
         ErrorResponse errorResponse = objectMapper.readValue(content, ErrorResponse.class);
         assertThat(errorResponse.getErrorCode()).isEqualTo(ApiError.AUTHENTICATION_ERROR.getCode());
-        assertThat(errorResponse.getErrorMessage()).isEqualTo("Authentication fails: No user authenticated");
+        assertThat(errorResponse.getErrorMessage()).isEqualTo("Authentication fails");
         verify(facade).updateTrainer(any(TrainerUpdateRequest.class), eq(USERNAME));
     }
 

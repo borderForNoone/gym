@@ -9,7 +9,9 @@ import com.gym.crm.model.Trainer;
 import com.gym.crm.model.User;
 import com.gym.crm.repository.TraineeRepository;
 import com.gym.crm.repository.TrainerRepository;
+import com.gym.crm.security.BruteForceProtectionService;
 import com.gym.crm.security.JwtService;
+import com.gym.crm.security.TokenBlacklistService;
 import com.gym.crm.service.common.CoreValidator;
 import com.gym.crm.service.common.UserInputValidator;
 import org.gym.crm.rest.LoginRequest;
@@ -18,6 +20,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpHeaders;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
@@ -45,6 +49,10 @@ class UserProfileServiceImplTest {
     private PasswordEncoder passwordEncoder;
     @Mock
     private JwtService jwtService;
+    @Mock
+    private BruteForceProtectionService bruteForceProtectionService;
+    @Mock
+    private TokenBlacklistService tokenBlacklistService;
 
     @InjectMocks
     private UserProfileServiceImpl service;
@@ -86,6 +94,19 @@ class UserProfileServiceImplTest {
         Throwable actual = catchThrowable(() -> service.authenticate("user", "wrong"));
 
         assertThat(actual).isInstanceOf(BadCredentialsException.class).hasMessageContaining("Invalid credentials");
+    }
+
+    @Test
+    void logout_shouldBlacklistTokenAndClearContext_whenHeaderIsValid() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer token");
+
+        when(jwtService.extractUsername("token")).thenReturn("user");
+
+        service.logout(request);
+
+        verify(jwtService).extractUsername("token");
+        verify(tokenBlacklistService).blacklist("token");
     }
 
     @Test
@@ -244,5 +265,31 @@ class UserProfileServiceImplTest {
 
         assertThatThrownBy(() -> service.toggleActive(request)).isInstanceOf(com.gym.crm.exception.EntityNotFoundException.class)
                 .hasMessageContaining("User not found");
+    }
+
+    @Test
+    void authenticate_shouldCheckIfUserLocked() {
+        when(traineeRepository.findByUser_Username("user")).thenReturn(Optional.of(User.builder().username("user").password("hash").build())
+                .map(user -> Trainee.builder().user(user).build()));
+        when(passwordEncoder.matches("pass", "hash")).thenReturn(true);
+        when(jwtService.generateToken("user")).thenReturn("token");
+
+        service.authenticate("user", "pass");
+
+        verify(bruteForceProtectionService).checkIfLocked("user");
+    }
+
+    @Test
+    void authenticate_shouldCallLoginSuccess_whenPasswordValid() {
+        User user = User.builder().username("user").password("hash").build();
+        Trainee trainee = Trainee.builder().user(user).build();
+
+        when(traineeRepository.findByUser_Username("user")).thenReturn(Optional.of(trainee));
+        when(passwordEncoder.matches("pass", "hash")).thenReturn(true);
+        when(jwtService.generateToken("user")).thenReturn("token");
+
+        service.authenticate("user", "pass");
+
+        verify(bruteForceProtectionService).loginSuccess("user");
     }
 }

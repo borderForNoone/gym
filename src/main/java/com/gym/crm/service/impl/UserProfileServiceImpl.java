@@ -2,6 +2,7 @@ package com.gym.crm.service.impl;
 
 import com.gym.crm.exception.BadCredentialsException;
 import com.gym.crm.exception.EntityNotFoundException;
+import com.gym.crm.exception.UserAuthenticationException;
 import com.gym.crm.facade.dto.AuthResponseDTO;
 import com.gym.crm.facade.dto.PasswordChangeRequest;
 import com.gym.crm.facade.dto.ToggleActiveRequestDTO;
@@ -11,14 +12,19 @@ import com.gym.crm.model.Trainer;
 import com.gym.crm.model.User;
 import com.gym.crm.repository.TraineeRepository;
 import com.gym.crm.repository.TrainerRepository;
+import com.gym.crm.security.BruteForceProtectionService;
 import com.gym.crm.security.JwtService;
+import com.gym.crm.security.TokenBlacklistService;
 import com.gym.crm.service.UserProfileService;
 import com.gym.crm.service.common.CoreValidator;
 import com.gym.crm.service.common.UserInputValidator;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.gym.crm.rest.LoginRequest;
+import org.springframework.http.HttpHeaders;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +39,8 @@ import static java.lang.String.format;
 @Service
 @RequiredArgsConstructor
 public class UserProfileServiceImpl implements UserProfileService {
+    private static final String BEARER_PREFIX = "Bearer ";
+    private static final String INVALID_HEADER_ERROR = "Missing or malformed Authorization header";
     private static final String USERNAME_LABEL = "Username";
     private static final String PASSWORD_LABEL = "Password";
     private static final String USER_NOT_FOUND_BY_USERNAME = "User not found by username: %s";
@@ -47,6 +55,8 @@ public class UserProfileServiceImpl implements UserProfileService {
     private final PasswordEncoder passwordEncoder;
     private final CoreValidator coreValidator;
     private final JwtService jwtService;
+    private final BruteForceProtectionService bruteForceProtectionService;
+    private final TokenBlacklistService tokenBlacklistService;
 
     @Transactional
     @Override
@@ -87,17 +97,27 @@ public class UserProfileServiceImpl implements UserProfileService {
         coreValidator.validateNotBlank(username, USERNAME_LABEL);
         coreValidator.validateNotBlank(password, PASSWORD_LABEL);
 
+        bruteForceProtectionService.checkIfLocked(username);
+
         User user = traineeRepository.findByUser_Username(username)
                 .map(Trainee::getUser)
                 .or(() -> trainerRepository.findByUser_Username(username).map(Trainer::getUser))
                 .orElseThrow(() -> new EntityNotFoundException("User not found: " + username));
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
+            bruteForceProtectionService.loginFailed(username);
             throw new BadCredentialsException("Invalid credentials for user: " + username);
         }
 
+        bruteForceProtectionService.loginSuccess(username);
+
         String token = jwtService.generateToken(username);
-        return AuthResponseDTO.builder().username(username).token(token).build();
+        log.info("User authenticated successfully: {}", username);
+
+        return AuthResponseDTO.builder()
+                .username(username)
+                .token(token)
+                .build();
     }
 
     @Transactional
@@ -148,6 +168,24 @@ public class UserProfileServiceImpl implements UserProfileService {
 
         log.info("User logged in: username={}", username);
         return user;
+    }
+
+    public void logout(HttpServletRequest request) {
+        String header = request.getHeader(HttpHeaders.AUTHORIZATION);
+
+        if (header == null || !header.startsWith(BEARER_PREFIX)) {
+            throw new UserAuthenticationException(INVALID_HEADER_ERROR);
+        }
+
+        String token = header.substring(BEARER_PREFIX.length());
+        String username = jwtService.extractUsername(token);
+
+        log.info("Logging out user: {}", username);
+
+        tokenBlacklistService.blacklist(token);
+        SecurityContextHolder.clearContext();
+
+        log.info("User logged out successfully: {}", username);
     }
 
     @Transactional
