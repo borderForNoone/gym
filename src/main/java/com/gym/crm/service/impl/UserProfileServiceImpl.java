@@ -3,7 +3,6 @@ package com.gym.crm.service.impl;
 import com.gym.crm.exception.BadCredentialsException;
 import com.gym.crm.exception.EntityNotFoundException;
 import com.gym.crm.exception.UserAuthenticationException;
-import com.gym.crm.facade.dto.AuthRequestDTO;
 import com.gym.crm.facade.dto.AuthResponseDTO;
 import com.gym.crm.facade.dto.PasswordChangeRequest;
 import com.gym.crm.facade.dto.ToggleActiveRequestDTO;

@@ -1,7 +1,6 @@
 package com.gym.crm.service.impl;
 
 import com.gym.crm.exception.BadCredentialsException;
-import com.gym.crm.facade.dto.AuthRequestDTO;
 import com.gym.crm.facade.dto.AuthResponseDTO;
 import com.gym.crm.facade.dto.PasswordChangeRequest;
 import com.gym.crm.facade.dto.ToggleActiveRequestDTO;
@@ -271,7 +270,7 @@ class UserProfileServiceImplTest {
     @Test
     void authenticate_shouldCheckIfUserLocked() {
         when(traineeRepository.findByUser_Username("user")).thenReturn(Optional.of(User.builder().username("user").password("hash").build())
-                        .map(user -> Trainee.builder().user(user).build()));
+                .map(user -> Trainee.builder().user(user).build()));
         when(passwordEncoder.matches("pass", "hash")).thenReturn(true);
         when(jwtService.generateToken("user")).thenReturn("token");
 
