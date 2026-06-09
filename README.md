@@ -18,7 +18,7 @@ To run this application, you should have the following installed:
 ## 1. Clone the project
 
 ```bash
-git clone https://github.com/juliakhomyn/gym-crm
+git clone https://github.com/borderForNoone/gym-crm
 cd gym-crm
 ```
 
