@@ -9,14 +9,16 @@
 
 To run this application, you should have the following installed:
 
-- **Java Development Kit (JDK) 17**
+- **Java Development Kit (JDK) 21**
 - **Maven**
 - **Git**
+- **Redis**
+- **MySQL Server**
 
 ## 1. Clone the project
 
 ```bash
-git clone https://github.com/juliakhomyn/gym-crm.git
+git clone https://github.com/juliakhomyn/gym-crm
 cd gym-crm
 ```
 

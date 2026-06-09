@@ -69,16 +69,17 @@ class TrainingControllerTest {
     void addTraining_shouldReturnBadRequest_whenRequiredFieldsMissing() throws Exception {
         TrainingCreateRequest request = buildValidRequest();
         request.setTraineeUsername(null);
+
         doThrow(new ValidationFailedException("traineeId must not be null, trainerId must not be null, trainingTypeName must not be blank"))
                 .when(facade).createTraining(any(TrainingCreateRequest.class));
 
         ResultActions result = mockMvc.perform(post(BASE_URL + "/trainings")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)));
-
         result.andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value(ApiError.VALIDATION_ERROR.getCode()))
-                .andExpect(jsonPath("$.errorMessage", containsString("traineeId must not be null")));
+                .andExpect(jsonPath("$.errorMessage").value("Validation error"));
+
         verify(facade).createTraining(any(TrainingCreateRequest.class));
     }
 
@@ -86,16 +87,15 @@ class TrainingControllerTest {
     void addTraining_shouldReturnBadRequest_whenDurationNegative() throws Exception {
         TrainingCreateRequest request = buildValidRequest();
         request.setTrainingDuration(-1);
-        doThrow(new ValidationFailedException("trainingDuration must be greater than or equal to 1"))
-                .when(facade).createTraining(any(TrainingCreateRequest.class));
+
+        doThrow(new ValidationFailedException("trainingDuration must be greater than or equal to 1")).when(facade).createTraining(any(TrainingCreateRequest.class));
 
         ResultActions result = mockMvc.perform(post(BASE_URL + "/trainings")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)));
 
-        result.andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errorCode").value(ApiError.VALIDATION_ERROR.getCode()))
-                .andExpect(jsonPath("$.errorMessage", containsString("trainingDuration")));
+        result.andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorCode").value(ApiError.VALIDATION_ERROR.getCode()))
+                .andExpect(jsonPath("$.errorMessage").value("Validation error"));
         verify(facade).createTraining(any(TrainingCreateRequest.class));
     }
 

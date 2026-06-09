@@ -113,13 +113,14 @@ class AuthControllerTest {
 
         result.andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.errorCode").value(ApiError.AUTHENTICATION_ERROR.getCode()))
-                .andExpect(jsonPath("$.errorMessage").value("Authentication fails: Invalid credentials for user"));
+                .andExpect(jsonPath("$.errorMessage").value("Authentication fails"));
         verify(facade).login(any(LoginRequest.class));
     }
 
     @Test
     void login_shouldReturnNotFound_whenUserNotFound() throws Exception {
-        doThrow(new EntityNotFoundException("User not found")).when(facade).login(any(LoginRequest.class));
+        doThrow(new EntityNotFoundException("User not found"))
+                .when(facade).login(any(LoginRequest.class));
 
         ResultActions result = mockMvc.perform(post(BASE_URL + "/login")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -127,13 +128,14 @@ class AuthControllerTest {
 
         result.andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errorCode").value(ApiError.NOT_FOUND_ERROR.getCode()))
-                .andExpect(jsonPath("$.errorMessage").value("Requested data was not found: User not found"));
+                .andExpect(jsonPath("$.errorMessage").value("Requested data was not found"));
         verify(facade).login(any(LoginRequest.class));
     }
 
     @Test
     void changePassword_shouldReturnUnauthorized_whenNoUserAuthenticated() throws Exception {
-        doThrow(new UserAuthenticationException("No user authenticated")).when(facade).changePassword(any(LoginChangeRequest.class));
+        doThrow(new UserAuthenticationException("No user authenticated"))
+                .when(facade).changePassword(any(LoginChangeRequest.class));
 
         ResultActions result = mockMvc.perform(put(BASE_URL + "/password")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -141,7 +143,7 @@ class AuthControllerTest {
 
         result.andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.errorCode").value(ApiError.AUTHENTICATION_ERROR.getCode()))
-                .andExpect(jsonPath("$.errorMessage").value("Authentication fails: No user authenticated"));
+                .andExpect(jsonPath("$.errorMessage").value("Authentication fails"));
         verify(facade).changePassword(any(LoginChangeRequest.class));
     }
 
@@ -157,14 +159,15 @@ class AuthControllerTest {
 
         result.andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.errorCode").value(ApiError.AUTHORIZATION_ERROR.getCode()))
-                .andExpect(jsonPath("$.errorMessage").value(
-                        "User is not authorized for request operation: Authenticated user with username: other does not match with requested user with username: " + USERNAME));
+                .andExpect(jsonPath("$.errorMessage").value("User is not authorized for request operation"));
+
         verify(facade).changePassword(any(LoginChangeRequest.class));
     }
 
     @Test
     void changePassword_shouldReturnNotFound_whenUserNotFound() throws Exception {
-        doThrow(new EntityNotFoundException("User not found")).when(facade).changePassword(any(LoginChangeRequest.class));
+        doThrow(new EntityNotFoundException("User not found"))
+                .when(facade).changePassword(any(LoginChangeRequest.class));
 
         ResultActions result = mockMvc.perform(put(BASE_URL + "/password")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -172,7 +175,7 @@ class AuthControllerTest {
 
         result.andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errorCode").value(ApiError.NOT_FOUND_ERROR.getCode()))
-                .andExpect(jsonPath("$.errorMessage").value("Requested data was not found: User not found"));
+                .andExpect(jsonPath("$.errorMessage").value("Requested data was not found"));
         verify(facade).changePassword(any(LoginChangeRequest.class));
     }
 
