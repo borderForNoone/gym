@@ -172,20 +172,17 @@ public class UserProfileServiceImpl implements UserProfileService {
 
     public void logout(HttpServletRequest request) {
         String header = request.getHeader(HttpHeaders.AUTHORIZATION);
-
         if (header == null || !header.startsWith(BEARER_PREFIX)) {
             throw new UserAuthenticationException(INVALID_HEADER_ERROR);
         }
 
         String token = header.substring(BEARER_PREFIX.length());
         String username = jwtService.extractUsername(token);
-
-        log.info("Logging out user: {}", username);
+        log.info("Logging out user: username={}", username);
 
         tokenBlacklistService.blacklist(token);
         SecurityContextHolder.clearContext();
-
-        log.info("User logged out successfully: {}", username);
+        log.info("User logged out successfully: username{}", username);
     }
 
     @Transactional

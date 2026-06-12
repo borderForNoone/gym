@@ -5,6 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,6 +16,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -49,9 +51,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private boolean shouldSkipAuthentication(String token) {
-        return tokenBlacklistService.isBlacklisted(token)
-                || !jwtService.isTokenValid(token)
-                || SecurityContextHolder.getContext().getAuthentication() != null;
+        if (tokenBlacklistService.isBlacklisted(token)) {
+            log.debug("shouldSkipAuthentication: token is blacklisted");
+            return true;
+        }
+
+        if (!jwtService.isTokenValid(token)) {
+            log.debug("shouldSkipAuthentication: token is invalid");
+            return true;
+        }
+
+        boolean hasAuth = SecurityContextHolder.getContext().getAuthentication() != null;
+        log.debug("shouldSkipAuthentication: hasAuth={}", hasAuth);
+        return hasAuth;
     }
 
     private void setAuthentication(String username, HttpServletRequest request) {
