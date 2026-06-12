@@ -11,6 +11,7 @@ import com.gym.crm.model.Trainer;
 import com.gym.crm.model.User;
 import com.gym.crm.repository.TraineeRepository;
 import com.gym.crm.repository.TrainerRepository;
+import com.gym.crm.security.BruteForceProtectionService;
 import com.gym.crm.security.JwtService;
 import com.gym.crm.service.UserProfileService;
 import com.gym.crm.service.common.CoreValidator;
@@ -47,6 +48,7 @@ public class UserProfileServiceImpl implements UserProfileService {
     private final PasswordEncoder passwordEncoder;
     private final CoreValidator coreValidator;
     private final JwtService jwtService;
+    private final BruteForceProtectionService bruteForceProtectionService;
 
     @Transactional
     @Override
@@ -87,15 +89,19 @@ public class UserProfileServiceImpl implements UserProfileService {
         coreValidator.validateNotBlank(username, USERNAME_LABEL);
         coreValidator.validateNotBlank(password, PASSWORD_LABEL);
 
+        bruteForceProtectionService.checkIfLocked(username);
+
         User user = traineeRepository.findByUser_Username(username)
                 .map(Trainee::getUser)
                 .or(() -> trainerRepository.findByUser_Username(username).map(Trainer::getUser))
                 .orElseThrow(() -> new EntityNotFoundException("User not found: " + username));
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
+            bruteForceProtectionService.loginFailed(username);
             throw new BadCredentialsException("Invalid credentials for user: " + username);
         }
 
+        bruteForceProtectionService.loginSuccess(username);
         String token = jwtService.generateToken(username);
         return AuthResponseDTO.builder().username(username).token(token).build();
     }

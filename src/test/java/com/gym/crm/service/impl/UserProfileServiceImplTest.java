@@ -9,6 +9,7 @@ import com.gym.crm.model.Trainer;
 import com.gym.crm.model.User;
 import com.gym.crm.repository.TraineeRepository;
 import com.gym.crm.repository.TrainerRepository;
+import com.gym.crm.security.BruteForceProtectionService;
 import com.gym.crm.security.JwtService;
 import com.gym.crm.service.common.CoreValidator;
 import com.gym.crm.service.common.UserInputValidator;
@@ -45,6 +46,8 @@ class UserProfileServiceImplTest {
     private PasswordEncoder passwordEncoder;
     @Mock
     private JwtService jwtService;
+    @Mock
+    private BruteForceProtectionService bruteForceProtectionService;
 
     @InjectMocks
     private UserProfileServiceImpl service;
