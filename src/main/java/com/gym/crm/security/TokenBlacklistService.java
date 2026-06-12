@@ -30,7 +30,6 @@ public class TokenBlacklistService {
                 "true",
                 remainingTime,
                 TimeUnit.MILLISECONDS);
-
     }
 
     private String hashToken(String token) {
